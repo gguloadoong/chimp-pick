@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String?  @unique
+  nickname     String   @unique
+  password     String?
+  avatarLevel  Int      @default(1)
+  bananaCoins  Int      @default(100)
+  isGuest      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  predictions  Prediction[]
+  stats        UserStats?
+  transactions Transaction[]
+}
+
+model UserStats {
+  id               String @id @default(cuid())
+  userId           String @unique
+  totalPredictions Int    @default(0)
+  wins             Int    @default(0)
+  losses           Int    @default(0)
+  winRate          Float  @default(0)
+  currentStreak    Int    @default(0)
+  maxStreak        Int    @default(0)
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Prediction {
+  id         String   @id @default(cuid())
+  userId     String
+  symbol     String
+  direction  String   // UP or DOWN
+  timeframe  String   // 1m, 5m, 1h, 1d
+  entryPrice Float
+  exitPrice  Float?
+  betAmount  Int
+  result     String   @default("PENDING") // PENDING, WIN, LOSE
+  reward     Int?
+  createdAt  DateTime @default(now())
+  resolvedAt DateTime?
+  expiresAt  DateTime
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([result])
+  @@index([expiresAt])
+}
+
+model Transaction {
+  id           String   @id @default(cuid())
+  userId       String
+  type         String   // BET, WIN, LOSE, BONUS, DAILY
+  amount       Int
+  balanceAfter Int
+  predictionId String?
+  description  String?
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+}
+
+model PriceCandle {
+  id        String   @id @default(cuid())
+  symbol    String
+  timeframe String
+  open      Float
+  high      Float
+  low       Float
+  close     Float
+  volume    Float
+  timestamp DateTime
+
+  @@unique([symbol, timeframe, timestamp])
+  @@index([symbol, timestamp])
+}

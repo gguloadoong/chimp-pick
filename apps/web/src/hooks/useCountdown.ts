@@ -7,11 +7,19 @@ function calcTimeLeft(targetDate: string | null): number {
   return Math.max(0, new Date(targetDate).getTime() - Date.now());
 }
 
-export function useCountdown(targetDate: string | null) {
+export function useCountdown(
+  targetDate: string | null,
+  startDate?: string | null,
+) {
   const [timeLeft, setTimeLeft] = useState(() => calcTimeLeft(targetDate));
   const [isExpired, setIsExpired] = useState(
     () => !!targetDate && calcTimeLeft(targetDate) <= 0,
   );
+
+  const totalDuration =
+    targetDate && startDate
+      ? new Date(targetDate).getTime() - new Date(startDate).getTime()
+      : 0;
 
   useEffect(() => {
     if (!targetDate) return;
@@ -43,8 +51,8 @@ export function useCountdown(targetDate: string | null) {
     isExpired,
     formatted: formatTime(timeLeft),
     percentage:
-      targetDate && timeLeft > 0
-        ? Math.max(0, (timeLeft / (timeLeft + 1)) * 100)
+      targetDate && totalDuration > 0 && timeLeft > 0
+        ? Math.max(0, Math.min(100, (timeLeft / totalDuration) * 100))
         : 0,
   };
 }

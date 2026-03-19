@@ -55,7 +55,10 @@ export default function GamePage() {
   const pricePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const resultPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const countdown = useCountdown(activePrediction?.expiresAt ?? null);
+  const countdown = useCountdown(
+    activePrediction?.expiresAt ?? null,
+    activePrediction?.createdAt ?? null,
+  );
 
   // Fetch price for a symbol
   const fetchPrice = useCallback(async (symbol: string) => {
@@ -131,11 +134,15 @@ export default function GamePage() {
           setResolvedPrediction(pred);
           if (resultPollRef.current) clearInterval(resultPollRef.current);
 
-          // Update balance
-          if (pred.result === "WIN" && pred.reward !== null) {
-            updateBananaCoins(pred.reward - pred.betAmount);
-          } else {
-            updateBananaCoins(-pred.betAmount);
+          // Sync balance from server (single source of truth)
+          try {
+            const me = await api.get<{ bananaCoins: number }>("/users/me");
+            updateBananaCoins(me.bananaCoins - (user?.bananaCoins ?? 0));
+          } catch {
+            // Fallback: compute delta locally
+            if (pred.result === "WIN" && pred.reward !== null) {
+              updateBananaCoins(pred.reward);
+            }
           }
         }
       } catch {
@@ -148,6 +155,7 @@ export default function GamePage() {
     return () => {
       if (resultPollRef.current) clearInterval(resultPollRef.current);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- user.bananaCoins changes shouldn't restart polling
   }, [activePrediction, setActivePrediction, updateBananaCoins]);
 
   // When countdown expires, trigger result poll immediately
@@ -171,13 +179,14 @@ export default function GamePage() {
       };
       const pred = await api.post<Prediction>("/predictions", body);
       setActivePrediction(pred);
+      updateBananaCoins(-betAmount);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "예측 제출에 실패했습니다";
       setError(msg);
     } finally {
       setIsSubmitting(false);
     }
-  }, [user, isSubmitting, activePrediction, betAmount, selectedSymbol, selectedTimeframe, setActivePrediction, setIsSubmitting]);
+  }, [user, isSubmitting, activePrediction, betAmount, selectedSymbol, selectedTimeframe, setActivePrediction, setIsSubmitting, updateBananaCoins]);
 
   const handleResultDismiss = useCallback(() => {
     setResolvedPrediction(null);

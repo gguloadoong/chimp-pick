@@ -36,6 +36,10 @@ export class GameService {
     const user = findUser(userId);
     if (!user) throw new NotFoundException('사용자를 찾을 수 없습니다.');
 
+    if (body.betAmount <= 0 || !Number.isInteger(body.betAmount)) {
+      throw new BadRequestException('베팅 금액은 1 이상의 정수여야 합니다.');
+    }
+
     if (user.bananaCoins < body.betAmount) {
       throw new BadRequestException('바나나코인이 부족합니다.');
     }

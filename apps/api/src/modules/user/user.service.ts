@@ -1,12 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { findUser, findUserStats, User, UserStats } from '../../mock/data';
+import {
+  findUser,
+  findUserStats,
+  sanitizeUser,
+  User,
+  UserStats,
+} from '../../mock/data';
 
 @Injectable()
 export class UserService {
-  getUser(userId: string): User {
+  getUser(userId: string): Omit<User, 'password'> {
     const user = findUser(userId);
     if (!user) throw new NotFoundException('사용자를 찾을 수 없습니다.');
-    return user;
+    return sanitizeUser(user);
   }
 
   getUserStats(userId: string): UserStats {

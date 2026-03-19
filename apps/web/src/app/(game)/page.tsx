@@ -158,13 +158,6 @@ export default function GamePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- user.bananaCoins changes shouldn't restart polling
   }, [activePrediction, setActivePrediction, updateBananaCoins]);
 
-  // When countdown expires, trigger result poll immediately
-  useEffect(() => {
-    if (countdown.isExpired && activePrediction) {
-      // The result poll will pick it up; just ensure it's running
-    }
-  }, [countdown.isExpired, activePrediction]);
-
   const handlePredict = useCallback(async (direction: "UP" | "DOWN") => {
     if (!user || isSubmitting || activePrediction) return;
     if (user.bananaCoins < betAmount) return;
@@ -261,7 +254,7 @@ export default function GamePage() {
                       currentPrice.change24h >= 0 ? "text-up" : "text-down",
                     ].join(" ")}
                   >
-                    {formatChange(currentPrice.change24h)} (24h)
+                    {formatChange(currentPrice.changePct24h)} (24h)
                   </p>
                 </>
               ) : (

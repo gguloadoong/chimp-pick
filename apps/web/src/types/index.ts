@@ -63,6 +63,7 @@ export interface PriceData {
   symbol: string;
   price: number;
   change24h: number;
+  changePct24h: number;
   high24h: number;
   low24h: number;
   volume24h: number;

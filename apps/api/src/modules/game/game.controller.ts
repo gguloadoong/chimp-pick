@@ -73,8 +73,10 @@ export class GameController {
 
   @UseGuards(AuthGuard)
   @Get(':id')
-  getPrediction(@Param('id') id: string) {
-    const prediction = predictions.find((p) => p.id === id);
+  getPrediction(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
+    const prediction = predictions.find(
+      (p) => p.id === id && p.userId === req.user.id,
+    );
     return buildResponse(prediction ?? null);
   }
 }

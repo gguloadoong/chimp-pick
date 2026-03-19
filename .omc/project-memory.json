@@ -1,0 +1,89 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1773946793959,
+  "projectRoot": "/Users/bong/chimp-pick",
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {},
+  "hotPaths": [
+    {
+      "path": ".project/roadmap.md",
+      "accessCount": 3,
+      "lastAccessed": 1773948306330,
+      "type": "file"
+    },
+    {
+      "path": ".project/backlog.md",
+      "accessCount": 3,
+      "lastAccessed": 1773948306796,
+      "type": "file"
+    },
+    {
+      "path": ".project/PRD.md",
+      "accessCount": 2,
+      "lastAccessed": 1773948307293,
+      "type": "file"
+    },
+    {
+      "path": ".project/tech-spec.md",
+      "accessCount": 2,
+      "lastAccessed": 1773948307619,
+      "type": "file"
+    },
+    {
+      "path": ".project/meeting-notes/kickoff-2026-03-20.md",
+      "accessCount": 2,
+      "lastAccessed": 1773948311842,
+      "type": "file"
+    },
+    {
+      "path": ".project/design-spec.md",
+      "accessCount": 1,
+      "lastAccessed": 1773947270027,
+      "type": "file"
+    },
+    {
+      "path": ".project/test-plan.md",
+      "accessCount": 1,
+      "lastAccessed": 1773947270923,
+      "type": "file"
+    },
+    {
+      "path": ".project/data-sources.md",
+      "accessCount": 1,
+      "lastAccessed": 1773948312023,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 1,
+      "lastAccessed": 1773948568049,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

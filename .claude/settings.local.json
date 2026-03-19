@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh repo:*)",
+      "Bash(ls:*)",
+      "Bash(claude --version)"
+    ]
+  }
+}

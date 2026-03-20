@@ -59,14 +59,14 @@ export function computeStats(predictions: Array<{ result: string; betAmount: num
   }
 
   let maxStreak = 0;
-  let streak = 0;
+  let winStreak = 0;
   for (const r of resolved) {
     if (r.result === "WIN") {
-      streak = streak > 0 ? streak + 1 : 1;
+      winStreak++;
+      if (winStreak > maxStreak) maxStreak = winStreak;
     } else {
-      streak = streak < 0 ? streak - 1 : -1;
+      winStreak = 0;
     }
-    if (Math.abs(streak) > maxStreak) maxStreak = Math.abs(streak);
   }
 
   const profitLoss = resolved.reduce((sum, p) => {

@@ -162,16 +162,16 @@ export function generateCandles(
 
 export function startPriceEngine(intervalMs = 2000): () => void {
   initPrices();
-  if (tickInterval) return () => {};
-
-  tickInterval = setInterval(() => {
-    for (const symbol of priceStates.keys()) {
-      generateTick(symbol);
-    }
-    for (const listener of listeners) {
-      listener();
-    }
-  }, intervalMs);
+  if (!tickInterval) {
+    tickInterval = setInterval(() => {
+      for (const symbol of priceStates.keys()) {
+        generateTick(symbol);
+      }
+      for (const listener of listeners) {
+        listener();
+      }
+    }, intervalMs);
+  }
 
   return () => {
     if (tickInterval) {

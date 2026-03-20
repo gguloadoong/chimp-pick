@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
 import ChimpCharacter from "@/components/character/ChimpCharacter";
@@ -8,15 +9,16 @@ export default function LoginPage() {
   const router = useRouter();
   const { ensureGuest, isAuthenticated } = useAuthStore();
 
+  useEffect(() => {
+    if (isAuthenticated) router.push("/");
+  }, [isAuthenticated, router]);
+
   const handleStart = () => {
     ensureGuest();
     router.push("/");
   };
 
-  if (isAuthenticated) {
-    router.push("/");
-    return null;
-  }
+  if (isAuthenticated) return null;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-primary px-4">

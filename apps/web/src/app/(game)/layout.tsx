@@ -2,7 +2,9 @@
 
 import { useEffect, type ReactNode } from "react";
 import { useAuthStore } from "@/stores/authStore";
+import { startPriceEngine } from "@/lib/game-engine";
 import { BottomNav } from "@/components/ui";
+import ChimpCharacter from "@/components/character/ChimpCharacter";
 
 interface GameLayoutProps {
   children: ReactNode;
@@ -10,34 +12,23 @@ interface GameLayoutProps {
 
 export default function GameLayout({ children }: GameLayoutProps) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const isLoading = useAuthStore((s) => s.isLoading);
-  const loginAsGuest = useAuthStore((s) => s.loginAsGuest);
+  const ensureGuest = useAuthStore((s) => s.ensureGuest);
 
-  // Auto-login as guest if not authenticated
+  // Auto-login as guest
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      loginAsGuest().catch(() => {
-        // API not available - set a local-only default user
-        useAuthStore.setState({
-          user: {
-            id: "local-user",
-            nickname: "침팬지유저",
-            avatarLevel: 1,
-            bananaCoins: 100,
-            isGuest: true,
-            createdAt: new Date().toISOString(),
-          },
-          isAuthenticated: true,
-          isLoading: false,
-        });
-      });
-    }
-  }, [isAuthenticated, isLoading, loginAsGuest]);
+    ensureGuest();
+  }, [ensureGuest]);
+
+  // Start price engine
+  useEffect(() => {
+    const stop = startPriceEngine(2000);
+    return stop;
+  }, []);
 
   if (!isAuthenticated) {
     return (
       <div className="flex flex-col flex-1 items-center justify-center bg-bg-primary">
-        <span className="text-6xl animate-float">🦍</span>
+        <ChimpCharacter mood="idle" size={80} className="animate-float" />
         <p className="mt-4 text-text-secondary text-sm font-heading font-semibold">
           침팬지 깨우는 중...
         </p>

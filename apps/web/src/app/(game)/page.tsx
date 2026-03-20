@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useCallback, useState, useRef } from "react";
-import { ArrowUp, ArrowDown, Wifi, WifiOff, Loader2 } from "lucide-react";
-import { useAuthStore } from "@/stores/authStore";
+import { useEffect, useCallback, useState, useMemo } from "react";
+import { ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
-import { api } from "@/lib/api";
+import { onPriceUpdate, getPrice } from "@/lib/game-engine";
 import { formatPrice, formatBanana, formatChange } from "@/lib/format";
 import { useCountdown } from "@/hooks/useCountdown";
 import {
@@ -13,9 +12,7 @@ import {
   BET_MULTIPLIER,
   MIN_BET,
   MAX_BET,
-  type PriceData,
   type Prediction,
-  type CreatePredictionRequest,
 } from "@/types";
 import { BananaCounter } from "@/components/ui";
 import SymbolSelector from "@/components/game/SymbolSelector";
@@ -23,9 +20,8 @@ import MiniChart from "@/components/game/MiniChart";
 import ResultOverlay from "@/components/game/ResultOverlay";
 import ChimpCharacter from "@/components/character/ChimpCharacter";
 
-const PRICE_POLL_INTERVAL = 2000;
-const RESULT_POLL_INTERVAL = 1000;
 const MAX_CHART_TICKS = 20;
+const FREE_BANANA_COOLDOWN_MS = 3600_000;
 
 function getChimpMood(
   activePrediction: { direction: string } | null,
@@ -38,9 +34,6 @@ function getChimpMood(
 }
 
 export default function GamePage() {
-  const user = useAuthStore((s) => s.user);
-  const updateBananaCoins = useAuthStore((s) => s.updateBananaCoins);
-
   const {
     selectedSymbol,
     selectedTimeframe,
@@ -48,148 +41,91 @@ export default function GamePage() {
     currentPrice,
     activePrediction,
     isSubmitting,
+    bananaCoins,
+    lastFreeBananaAt,
     setSymbol,
     setTimeframe,
     setBetAmount,
-    setCurrentPrice,
-    setActivePrediction,
-    setIsSubmitting,
+    refreshPrice,
+    submitPrediction,
+    checkAndResolve,
+    claimFreeBanana,
     reset,
   } = useGameStore();
 
-  const [priceMap, setPriceMap] = useState<Record<string, PriceData>>({});
   const [priceTicks, setPriceTicks] = useState<number[]>([]);
   const [resolvedPrediction, setResolvedPrediction] = useState<Prediction | null>(null);
-  const [isConnected, setIsConnected] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const pricePollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const resultPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [priceMap, setPriceMap] = useState<Record<string, ReturnType<typeof getPrice>>>({});
 
   const countdown = useCountdown(
     activePrediction?.expiresAt ?? null,
     activePrediction?.createdAt ?? null,
   );
 
-  const fetchPrice = useCallback(async (symbol: string) => {
-    try {
-      const data = await api.get<PriceData>(`/prices/${symbol}`);
-      setPriceMap((prev) => ({ ...prev, [symbol]: data }));
-      if (symbol === useGameStore.getState().selectedSymbol.symbol) {
-        setCurrentPrice(data);
-        setPriceTicks((prev) => {
-          const next = [...prev, data.price];
-          return next.length > MAX_CHART_TICKS ? next.slice(-MAX_CHART_TICKS) : next;
-        });
+  // Subscribe to price updates from engine
+  useEffect(() => {
+    const update = () => {
+      refreshPrice();
+      const price = getPrice(selectedSymbol.symbol);
+      setPriceTicks((prev) => {
+        const next = [...prev, price.price];
+        return next.length > MAX_CHART_TICKS ? next.slice(-MAX_CHART_TICKS) : next;
+      });
+      // Update all symbol prices for selector
+      const map: Record<string, ReturnType<typeof getPrice>> = {};
+      for (const s of SYMBOLS) {
+        map[s.symbol] = getPrice(s.symbol);
       }
-      setIsConnected(true);
-      setError(null);
-    } catch {
-      setIsConnected(false);
-      setError("가격 정보를 불러오지 못했습니다");
-    }
-  }, [setCurrentPrice]);
+      setPriceMap(map);
+    };
 
-  const startPricePoll = useCallback((symbol: string) => {
-    if (pricePollRef.current) clearInterval(pricePollRef.current);
-    fetchPrice(symbol);
-    pricePollRef.current = setInterval(() => fetchPrice(symbol), PRICE_POLL_INTERVAL);
-  }, [fetchPrice]);
+    update(); // initial
+    const unsub = onPriceUpdate(update);
+    return unsub;
+  }, [selectedSymbol.symbol, refreshPrice]);
+
+  // Check and resolve active prediction
+  useEffect(() => {
+    if (!activePrediction) return;
+
+    const id = setInterval(() => {
+      const resolved = checkAndResolve();
+      if (resolved) {
+        setResolvedPrediction(resolved);
+      }
+    }, 500);
+
+    return () => clearInterval(id);
+  }, [activePrediction, checkAndResolve]);
 
   const handleSymbolSelect = useCallback((sym: typeof SYMBOLS[0]) => {
     setSymbol(sym);
     setPriceTicks([]);
-    startPricePoll(sym.symbol);
-  }, [setSymbol, startPricePoll]);
+  }, [setSymbol]);
 
-  useEffect(() => {
-    startPricePoll(selectedSymbol.symbol);
-    return () => {
-      if (pricePollRef.current) clearInterval(pricePollRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const handlePredict = useCallback((direction: "UP" | "DOWN") => {
+    if (isSubmitting || activePrediction || bananaCoins < betAmount) return;
 
-  useEffect(() => {
-    const pollAll = async () => {
-      await Promise.allSettled(
-        SYMBOLS.map((s) =>
-          api.get<PriceData>(`/prices/${s.symbol}`).then((data) => {
-            setPriceMap((prev) => ({ ...prev, [s.symbol]: data }));
-          })
-        )
-      );
-    };
-    pollAll();
-    const id = setInterval(pollAll, 10_000);
-    return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    if (!activePrediction) {
-      if (resultPollRef.current) clearInterval(resultPollRef.current);
-      return;
-    }
-
-    const checkResult = async () => {
-      try {
-        const pred = await api.get<Prediction>(`/predictions/${activePrediction.id}`);
-        if (pred.result !== "PENDING") {
-          setActivePrediction(null);
-          setResolvedPrediction(pred);
-          if (resultPollRef.current) clearInterval(resultPollRef.current);
-
-          try {
-            const me = await api.get<{ bananaCoins: number }>("/users/me");
-            updateBananaCoins(me.bananaCoins - (user?.bananaCoins ?? 0));
-          } catch {
-            if (pred.result === "WIN" && pred.reward !== null) {
-              updateBananaCoins(pred.reward);
-            }
-          }
-        }
-      } catch {
-        // Silent — keep polling
-      }
-    };
-
-    checkResult();
-    resultPollRef.current = setInterval(checkResult, RESULT_POLL_INTERVAL);
-    return () => {
-      if (resultPollRef.current) clearInterval(resultPollRef.current);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePrediction, setActivePrediction, updateBananaCoins]);
-
-  const handlePredict = useCallback(async (direction: "UP" | "DOWN") => {
-    if (!user || isSubmitting || activePrediction) return;
-    if (user.bananaCoins < betAmount) return;
-
-    setIsSubmitting(true);
-    try {
-      const body: CreatePredictionRequest = {
-        symbol: selectedSymbol.symbol,
-        direction,
-        timeframe: selectedTimeframe,
-        betAmount,
-      };
-      const pred = await api.post<Prediction>("/predictions", body);
-      setActivePrediction(pred);
-      updateBananaCoins(-betAmount);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "예측 제출에 실패했습니다";
-      setError(msg);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [user, isSubmitting, activePrediction, betAmount, selectedSymbol, selectedTimeframe, setActivePrediction, setIsSubmitting, updateBananaCoins]);
+    useGameStore.setState({ selectedDirection: direction, isSubmitting: true });
+    // Small delay for UI feedback
+    requestAnimationFrame(() => {
+      submitPrediction();
+    });
+  }, [isSubmitting, activePrediction, bananaCoins, betAmount, submitPrediction]);
 
   const handleResultDismiss = useCallback(() => {
     setResolvedPrediction(null);
     reset();
   }, [reset]);
 
-  const canPredict = !activePrediction && !isSubmitting && (user?.bananaCoins ?? 0) >= betAmount;
+  // Free banana cooldown
+  const canClaimFree = useMemo(() => {
+    if (bananaCoins > 0) return false;
+    if (!lastFreeBananaAt) return true;
+    return new Date().getTime() - new Date(lastFreeBananaAt).getTime() >= FREE_BANANA_COOLDOWN_MS;
+  }, [bananaCoins, lastFreeBananaAt]);
+
+  const canPredict = !activePrediction && !isSubmitting && bananaCoins >= betAmount;
   const potentialWin = Math.round(betAmount * BET_MULTIPLIER);
   const chimpMood = getChimpMood(activePrediction, isSubmitting);
 
@@ -208,30 +144,17 @@ export default function GamePage() {
               침팬지픽
             </span>
           </div>
-          <div className="flex items-center gap-3">
-            <span
-              data-testid="connection-indicator"
-              title={isConnected ? "연결됨" : "연결 끊김"}
-              className="flex items-center gap-1"
-            >
-              {isConnected ? (
-                <Wifi size={14} className="text-up" aria-label="연결됨" />
-              ) : (
-                <WifiOff size={14} className="text-down" aria-label="연결 끊김" />
-              )}
-            </span>
-            {user && <BananaCounter balance={user.bananaCoins} data-testid="banana-counter" />}
-          </div>
+          <BananaCounter balance={bananaCoins} data-testid="banana-counter" />
         </div>
 
-        {/* Error banner */}
-        {error && (
-          <div
-            role="alert"
-            className="text-xs text-down bg-down/8 border-2 border-down/20 rounded-2xl px-3 py-2 text-center font-sans font-semibold"
+        {/* Free banana button */}
+        {canClaimFree && (
+          <button
+            onClick={claimFreeBanana}
+            className="w-full py-3 rounded-2xl border-2 border-banana bg-banana/10 text-banana font-bold text-sm font-sans clay-sm btn-clay animate-pulse"
           >
-            {error}
-          </div>
+            무료 바나나 받기 (+20) 🍌
+          </button>
         )}
 
         {/* Symbol selector */}
@@ -262,7 +185,7 @@ export default function GamePage() {
                   <p
                     className={[
                       "text-sm font-semibold mt-0.5 font-sans",
-                      currentPrice.change24h >= 0 ? "text-up" : "text-down",
+                      currentPrice.changePct24h >= 0 ? "text-up" : "text-down",
                     ].join(" ")}
                   >
                     {formatChange(currentPrice.changePct24h)} (24h)
@@ -427,7 +350,7 @@ export default function GamePage() {
           </div>
 
           {/* Insufficient balance warning */}
-          {user && user.bananaCoins < betAmount && (
+          {bananaCoins < betAmount && (
             <p className="text-xs text-down text-center font-sans font-semibold" role="alert">
               바나나코인이 부족해요 🍌
             </p>

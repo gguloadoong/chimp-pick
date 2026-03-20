@@ -1,106 +1,53 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
+import ChimpCharacter from "@/components/character/ChimpCharacter";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loginAsGuest, isLoading } = useAuthStore();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const { ensureGuest, isAuthenticated } = useAuthStore();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    try {
-      await login(email, password);
-      router.push("/");
-    } catch {
-      setError("로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.");
-    }
+  const handleStart = () => {
+    ensureGuest();
+    router.push("/");
   };
 
-  const handleGuestLogin = async () => {
-    setError("");
-    try {
-      await loginAsGuest();
-      router.push("/");
-    } catch {
-      setError("게스트 로그인에 실패했습니다.");
-    }
-  };
+  if (isAuthenticated) {
+    router.push("/");
+    return null;
+  }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-8">
-        {/* 로고 */}
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-banana">🦍 ChimpPick</h1>
-          <p className="mt-2 text-text-secondary">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-bg-primary px-4">
+      <div className="w-full max-w-sm space-y-8 text-center">
+        <div className="animate-float inline-block">
+          <ChimpCharacter mood="idle" size={100} />
+        </div>
+
+        <div>
+          <h1 className="text-4xl font-heading font-bold text-banana">
+            침팬지픽
+          </h1>
+          <p className="mt-2 text-sm text-text-secondary font-sans">
             주식/코인 UP/DOWN 예측 배틀
           </p>
         </div>
 
-        {/* 로그인 폼 */}
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <input
-              type="email"
-              placeholder="이메일"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-text-secondary/20 bg-bg-secondary px-4 py-3 text-text-primary placeholder:text-text-secondary/50 focus:border-banana focus:outline-none"
-              data-testid="login-email"
-            />
-          </div>
-          <div>
-            <input
-              type="password"
-              placeholder="비밀번호"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-text-secondary/20 bg-bg-secondary px-4 py-3 text-text-primary placeholder:text-text-secondary/50 focus:border-banana focus:outline-none"
-              data-testid="login-password"
-            />
-          </div>
-
-          {error && (
-            <p className="text-sm text-down" data-testid="login-error">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={isLoading || !email || !password}
-            className="w-full rounded-xl bg-banana py-3 font-bold text-bg-primary transition-all hover:shadow-[0_0_20px_rgba(255,184,0,0.3)] active:scale-95 disabled:opacity-50"
-            data-testid="login-submit"
-          >
-            {isLoading ? "로그인 중..." : "로그인"}
-          </button>
-        </form>
-
-        {/* 구분선 */}
-        <div className="flex items-center gap-4">
-          <div className="h-px flex-1 bg-text-secondary/20" />
-          <span className="text-sm text-text-secondary">또는</span>
-          <div className="h-px flex-1 bg-text-secondary/20" />
-        </div>
-
-        {/* 게스트 로그인 */}
         <button
-          onClick={handleGuestLogin}
-          disabled={isLoading}
-          className="w-full rounded-xl border border-text-secondary/30 bg-bg-secondary py-3 font-medium text-text-primary transition-all hover:border-banana/50 active:scale-95 disabled:opacity-50"
-          data-testid="guest-login"
+          onClick={handleStart}
+          className={[
+            "w-full rounded-2xl bg-banana py-4 font-heading font-bold text-white text-lg",
+            "border-2 border-banana/80 clay btn-clay",
+            "transition-all active:scale-95",
+          ].join(" ")}
+          data-testid="start-button"
         >
-          🍌 게스트로 체험하기 (3회 무료)
+          바나나 먹으러 가기 🍌
         </button>
 
-        <p className="text-center text-xs text-text-secondary">
-          가입하면 바나나코인 100개를 드려요!
+        <p className="text-xs text-text-secondary font-sans">
+          시작하면 바나나코인 100개를 드려요!
         </p>
       </div>
     </div>

@@ -17,7 +17,7 @@ export default function MiniChart({
     return (
       <div
         data-testid={testId ?? "mini-chart"}
-        className={["w-full bg-white/5 rounded-lg", className].join(" ")}
+        className={["w-full bg-banana/8 rounded-xl border border-card-border", className].join(" ")}
         style={{ height }}
       />
     );
@@ -39,8 +39,9 @@ export default function MiniChart({
   });
 
   const isUp = prices[prices.length - 1] >= prices[0];
-  const lineColor = isUp ? "#00D68F" : "#FF4757";
+  const lineColor = isUp ? "#10B981" : "#F43F5E";
   const gradientId = `chart-grad-${isUp ? "up" : "down"}`;
+  const gradientStartOpacity = isUp ? "0.25" : "0.2";
 
   const polyline = points.map(([x, y]) => `${x},${y}`).join(" ");
 
@@ -53,7 +54,7 @@ export default function MiniChart({
   return (
     <div
       data-testid={testId ?? "mini-chart"}
-      className={["w-full overflow-hidden rounded-lg", className].join(" ")}
+      className={["w-full overflow-hidden rounded-xl", className].join(" ")}
       style={{ height }}
     >
       <svg
@@ -65,7 +66,7 @@ export default function MiniChart({
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={lineColor} stopOpacity="0.3" />
+            <stop offset="0%" stopColor={lineColor} stopOpacity={gradientStartOpacity} />
             <stop offset="100%" stopColor={lineColor} stopOpacity="0.02" />
           </linearGradient>
         </defs>
@@ -81,7 +82,7 @@ export default function MiniChart({
           points={polyline}
           fill="none"
           stroke={lineColor}
-          strokeWidth="1.5"
+          strokeWidth="2"
           strokeLinejoin="round"
           strokeLinecap="round"
         />
@@ -90,9 +91,17 @@ export default function MiniChart({
         <circle
           cx={points[points.length - 1][0]}
           cy={points[points.length - 1][1]}
-          r="3"
+          r="3.5"
           fill={lineColor}
-          opacity="0.9"
+          opacity="1"
+        />
+        {/* Dot glow ring */}
+        <circle
+          cx={points[points.length - 1][0]}
+          cy={points[points.length - 1][1]}
+          r="6"
+          fill={lineColor}
+          opacity="0.2"
         />
       </svg>
     </div>

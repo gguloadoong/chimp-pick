@@ -5,6 +5,7 @@ import type { Prediction } from "@/types";
 import { formatPrice, formatBanana } from "@/lib/format";
 import { BET_MULTIPLIER } from "@/types";
 import Button from "@/components/ui/Button";
+import ChimpCharacter from "@/components/character/ChimpCharacter";
 
 const CONFETTI_ITEMS = ["🍌", "🎉", "⭐", "🎊", "✨", "💫", "🏆", "🎈"];
 
@@ -64,12 +65,12 @@ export default function ResultOverlay({
         }
         @keyframes result-pop {
           0%   { transform: scale(0.5); opacity: 0; }
-          70%  { transform: scale(1.1); }
+          70%  { transform: scale(1.15); }
           100% { transform: scale(1); opacity: 1; }
         }
         @keyframes coin-bounce {
           0%, 100% { transform: translateY(0); }
-          50%       { transform: translateY(-8px); }
+          50%       { transform: translateY(-10px); }
         }
         .confetti-particle {
           animation: confetti-fall var(--dur) var(--delay) ease-in forwards;
@@ -88,7 +89,7 @@ export default function ResultOverlay({
           "fixed inset-0 z-50 flex items-center justify-center",
           "transition-all duration-200",
           visible ? "opacity-100" : "opacity-0",
-          isWin ? "bg-black/80" : "bg-black/85",
+          isWin ? "bg-up/10 backdrop-blur-sm" : "bg-down/10 backdrop-blur-sm",
         ].join(" ")}
         role="dialog"
         aria-modal="true"
@@ -121,65 +122,73 @@ export default function ResultOverlay({
         <div
           className={[
             "relative mx-4 w-full max-w-sm rounded-3xl p-8 text-center",
-            "shadow-2xl border",
+            "border-4 animate-pop-in",
             isWin
-              ? "bg-bg-secondary border-up/30 shadow-[0_0_60px_rgba(0,214,143,0.2)]"
-              : "bg-bg-secondary border-down/30 shadow-[0_0_60px_rgba(255,71,87,0.15)]",
+              ? "bg-white border-up clay-up"
+              : "bg-white border-down clay-down",
           ].join(" ")}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Result icon */}
-          <div className="result-icon text-7xl mb-4 leading-none">
-            {isWin ? "🎉" : "💀"}
+          <div className="result-icon mb-3">
+            <ChimpCharacter
+              mood={isWin ? "win" : "lose"}
+              size={100}
+              className="mx-auto"
+            />
           </div>
 
           {/* Title */}
           <h2
             className={[
-              "text-3xl font-bold mb-1",
+              "text-3xl font-heading font-bold mb-1",
               isWin ? "text-up" : "text-down",
             ].join(" ")}
-            style={
-              isWin
-                ? { textShadow: "0 0 20px rgba(0,214,143,0.5)" }
-                : { textShadow: "0 0 20px rgba(255,71,87,0.5)" }
-            }
           >
-            {isWin ? "승리!" : "패배..."}
+            {isWin ? "떡상 적중!" : "손절..."}
           </h2>
 
-          <p className="text-text-secondary text-sm mb-6">
-            {isWin ? "침팬지의 예감이 적중했다! 🦍" : "다음엔 꼭 복수하자... 😤"}
+          <p className="text-text-secondary text-sm mb-5 font-sans">
+            {isWin
+              ? "침팬지의 예감이 적중했다! 가즈아! 🚀"
+              : "존버하면 언젠간 된다... 다시 도전! 🔥"}
           </p>
 
           {/* Price comparison */}
           {exitPrice !== null && (
-            <div className="bg-white/5 rounded-2xl p-4 mb-4 text-sm">
+            <div
+              className={[
+                "rounded-2xl p-4 mb-4 text-sm border-2",
+                isWin
+                  ? "bg-up/8 border-up/20"
+                  : "bg-down/8 border-down/20",
+              ].join(" ")}
+            >
               <div className="flex justify-between items-center mb-2">
-                <span className="text-text-secondary">진입가</span>
-                <span className="text-text-primary font-mono tabular-nums">
+                <span className="text-text-secondary font-sans">진입가</span>
+                <span className="text-text-primary font-mono tabular-nums font-semibold">
                   {formatPrice(entryPrice)}원
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-text-secondary">청산가</span>
+                <span className="text-text-secondary font-sans">청산가</span>
                 <span
                   className={[
-                    "font-mono tabular-nums font-semibold",
+                    "font-mono tabular-nums font-bold",
                     isWin ? "text-up" : "text-down",
                   ].join(" ")}
                 >
                   {formatPrice(exitPrice)}원
                 </span>
               </div>
-              <div className="mt-3 pt-3 border-t border-white/10 flex justify-between items-center">
-                <span className="text-text-secondary">예측 방향</span>
+              <div className="mt-3 pt-3 border-t border-card-border flex justify-between items-center">
+                <span className="text-text-secondary font-sans">예측 방향</span>
                 <span
                   className={[
-                    "font-semibold text-xs px-2 py-0.5 rounded-full",
+                    "font-semibold text-xs px-3 py-1 rounded-full border-2",
                     prediction.direction === "UP"
-                      ? "bg-up/20 text-up"
-                      : "bg-down/20 text-down",
+                      ? "bg-up/10 text-up border-up/30"
+                      : "bg-down/10 text-down border-down/30",
                   ].join(" ")}
                 >
                   {prediction.direction === "UP" ? "UP 🚀" : "DOWN 💀"}
@@ -191,23 +200,20 @@ export default function ResultOverlay({
           {/* Reward/loss display */}
           <div
             className={[
-              "text-4xl font-bold mb-6 coin-bounce",
+              "text-4xl font-bold mb-6 coin-bounce font-mono",
               isWin ? "text-banana" : "text-down",
             ].join(" ")}
           >
-            {isWin ? `+${formatBanana(reward)} 🍌` : `-${formatBanana(prediction.betAmount)} 🍌`}
+            {isWin
+              ? `+${formatBanana(reward)} 🍌`
+              : `-${formatBanana(prediction.betAmount)} 🍌`}
           </div>
-
-          {/* Chimp emoji for lose */}
-          {!isWin && (
-            <div className="text-5xl mb-4">🦧</div>
-          )}
 
           {/* Action button */}
           <Button
             variant={isWin ? "primary" : "down"}
             size="lg"
-            className="w-full"
+            className="w-full btn-clay"
             data-testid="result-dismiss-btn"
             onClick={handleDismiss}
           >

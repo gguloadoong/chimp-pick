@@ -52,10 +52,16 @@ export default function BananaCounter({
     <div
       data-testid={testId ?? "banana-counter"}
       aria-label={`바나나코인 잔액: ${balance.toLocaleString()}`}
-      className="inline-flex items-center gap-1.5 font-mono text-banana font-semibold"
+      className={[
+        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full",
+        "bg-white border-2 border-card-border clay-sm",
+        "font-mono font-bold text-banana",
+      ].join(" ")}
     >
-      <span aria-hidden="true" role="img">🍌</span>
-      <span className="tabular-nums">{displayValue.toLocaleString()}</span>
+      <span aria-hidden="true" role="img" className="text-base leading-none">
+        🍌
+      </span>
+      <span className="tabular-nums text-sm">{displayValue.toLocaleString()}</span>
     </div>
   );
 }

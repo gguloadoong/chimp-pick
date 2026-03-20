@@ -37,8 +37,10 @@ export default function GameLayout({ children }: GameLayoutProps) {
   if (!isAuthenticated) {
     return (
       <div className="flex flex-col flex-1 items-center justify-center bg-bg-primary">
-        <span className="text-5xl animate-bounce">🦍</span>
-        <p className="mt-4 text-text-secondary text-sm">침팬지 깨우는 중...</p>
+        <span className="text-6xl animate-float">🦍</span>
+        <p className="mt-4 text-text-secondary text-sm font-heading font-semibold">
+          침팬지 깨우는 중...
+        </p>
       </div>
     );
   }

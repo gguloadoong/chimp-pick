@@ -51,22 +51,25 @@ export default function RankingPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col pb-20">
+    <div className="flex min-h-screen flex-col bg-bg-primary pb-20">
       {/* 헤더 */}
-      <div className="sticky top-0 z-10 bg-bg-primary/90 px-4 pb-3 pt-6 backdrop-blur-sm">
-        <h1 className="text-xl font-bold text-text-primary">🏆 랭킹</h1>
+      <div className="sticky top-0 z-10 bg-bg-primary/95 px-4 pb-3 pt-6 backdrop-blur-sm border-b border-card-border">
+        <h1 className="text-xl font-heading font-bold text-text-primary">
+          🏆 랭킹
+        </h1>
 
         {/* 탭 */}
-        <div className="mt-3 flex gap-1 rounded-xl bg-bg-secondary p-1">
+        <div className="mt-3 flex gap-1 rounded-2xl bg-white border-2 border-card-border p-1 clay-sm">
           {PERIOD_TABS.map((tab) => (
             <button
               key={tab.value}
               onClick={() => setPeriod(tab.value)}
-              className={`flex-1 rounded-lg py-2 text-sm font-medium transition-all ${
+              className={[
+                "flex-1 rounded-xl py-2 text-sm font-semibold font-sans transition-all btn-clay",
                 period === tab.value
-                  ? "bg-banana text-bg-primary"
-                  : "text-text-secondary hover:text-text-primary"
-              }`}
+                  ? "bg-banana text-white clay-sm"
+                  : "text-text-secondary hover:text-text-primary",
+              ].join(" ")}
               data-testid={`ranking-tab-${tab.value}`}
             >
               {tab.label}
@@ -76,37 +79,39 @@ export default function RankingPage() {
       </div>
 
       {/* 랭킹 리스트 */}
-      <div className="flex-1 space-y-2 px-4 pt-2">
+      <div className="flex-1 space-y-2 px-4 pt-3">
         {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <span className="text-text-secondary">
-              침팬지가 순위 계산 중... 🍌
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <span className="text-4xl animate-bounce">🍌</span>
+            <span className="text-text-secondary font-sans font-semibold">
+              침팬지가 순위 계산 중...
             </span>
           </div>
         ) : rankings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-text-secondary">
-            <span className="text-4xl">🦍</span>
-            <p className="mt-2">아직 랭킹 데이터가 없어요</p>
-            <p className="text-sm">예측을 시작해보세요!</p>
+          <div className="flex flex-col items-center justify-center py-20 text-text-secondary gap-2">
+            <span className="text-5xl animate-float">🦍</span>
+            <p className="font-sans font-semibold">아직 랭킹 데이터가 없어요</p>
+            <p className="text-sm font-sans">예측을 시작해보세요!</p>
           </div>
         ) : (
           rankings.map((entry) => (
             <div
               key={entry.userId}
-              className={`flex items-center gap-3 rounded-xl p-3 transition-all ${
+              className={[
+                "flex items-center gap-3 rounded-2xl p-3 border-2 transition-all",
                 entry.rank <= 3
-                  ? "bg-banana/10 border border-banana/20"
-                  : "bg-bg-secondary"
-              }`}
+                  ? "bg-banana/8 border-banana/30 clay-sm"
+                  : "bg-white border-card-border",
+              ].join(" ")}
               data-testid={`ranking-entry-${entry.rank}`}
             >
-              <span className="w-10 text-center text-lg font-bold">
+              <span className="w-10 text-center text-lg font-bold font-heading">
                 {getRankEmoji(entry.rank)}
               </span>
               <span className="text-xl">{getAvatarEmoji(entry.avatarLevel)}</span>
               <div className="flex-1">
-                <p className="font-medium text-text-primary">{entry.nickname}</p>
-                <p className="text-xs text-text-secondary">
+                <p className="font-semibold text-text-primary font-sans">{entry.nickname}</p>
+                <p className="text-xs text-text-secondary font-sans">
                   {entry.totalPredictions}전 | 승률 {formatWinRate(entry.winRate)}
                 </p>
               </div>
@@ -127,17 +132,17 @@ export default function RankingPage() {
 
       {/* 내 순위 고정 바 */}
       {myRank && (
-        <div className="fixed bottom-16 left-0 right-0 border-t border-banana/20 bg-bg-primary/95 px-4 py-3 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <span className="w-10 text-center text-sm font-bold text-banana">
+        <div className="fixed bottom-16 left-0 right-0 border-t-2 border-banana/20 bg-white/95 px-4 py-3 backdrop-blur-sm shadow-[0_-4px_16px_rgba(255,184,0,0.15)]">
+          <div className="flex items-center gap-3 max-w-lg mx-auto">
+            <span className="w-10 text-center text-sm font-bold text-banana font-heading">
               #{myRank.rank}
             </span>
             <span className="text-xl">
               {getAvatarEmoji(myRank.avatarLevel)}
             </span>
             <div className="flex-1">
-              <p className="font-medium text-banana">{myRank.nickname} (나)</p>
-              <p className="text-xs text-text-secondary">
+              <p className="font-bold text-banana font-sans">{myRank.nickname} (나)</p>
+              <p className="text-xs text-text-secondary font-sans">
                 승률 {formatWinRate(myRank.winRate)}
               </p>
             </div>

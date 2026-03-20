@@ -7,6 +7,7 @@ import { formatWinRate, formatBanana } from "@/lib/format";
 import type { UserStats } from "@/types";
 import { AVATAR_LEVELS } from "@/types";
 import BottomNav from "@/components/ui/BottomNav";
+import ChimpCharacter from "@/components/character/ChimpCharacter";
 
 export default function ProfilePage() {
   const { user, logout } = useAuthStore();
@@ -36,26 +37,28 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <span className="text-4xl animate-bounce">🦍</span>
+      <div className="flex min-h-screen items-center justify-center bg-bg-primary">
+        <ChimpCharacter mood="idle" size={80} className="animate-float" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen space-y-4 px-4 pb-20 pt-6">
+    <div className="min-h-screen bg-bg-primary space-y-4 px-4 pb-20 pt-6">
       {/* 프로필 카드 */}
-      <div className="rounded-2xl bg-bg-secondary p-6 text-center">
-        <div className="text-5xl">{currentAvatar?.emoji || "🐒"}</div>
-        <p className="mt-1 text-sm text-banana">
+      <div className="rounded-3xl bg-white p-6 text-center border-2 border-card-border clay">
+        <div className="animate-float inline-block">
+          <ChimpCharacter mood="idle" size={80} />
+        </div>
+        <p className="mt-2 text-sm text-banana font-heading font-semibold">
           Lv.{user.avatarLevel} {currentAvatar?.name}
         </p>
-        <h2 className="mt-2 text-xl font-bold text-text-primary">
+        <h2 className="mt-1 text-xl font-heading font-bold text-text-primary">
           {user.nickname}
         </h2>
-        <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-banana/10 px-4 py-1.5">
+        <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-banana/12 border-2 border-banana/30 px-5 py-2 clay-sm">
           <span className="text-lg">🍌</span>
-          <span className="font-mono text-lg font-bold text-banana">
+          <span className="font-mono text-xl font-bold text-banana">
             {formatBanana(user.bananaCoins)}
           </span>
         </div>
@@ -63,11 +66,11 @@ export default function ProfilePage() {
         {/* 다음 진화까지 */}
         {nextAvatar && stats && (
           <div className="mt-4">
-            <div className="flex items-center justify-between text-xs text-text-secondary">
+            <div className="flex items-center justify-between text-xs text-text-secondary font-sans mb-1">
               <span>다음 진화: {nextAvatar.emoji} {nextAvatar.name}</span>
-              <span>{stats.wins}/{nextAvatar.minWins}승</span>
+              <span className="font-semibold">{stats.wins}/{nextAvatar.minWins}승</span>
             </div>
-            <div className="mt-1 h-2 rounded-full bg-bg-primary">
+            <div className="h-3 rounded-full bg-banana/12 border border-card-border overflow-hidden">
               <div
                 className="h-full rounded-full bg-banana transition-all"
                 style={{
@@ -82,20 +85,15 @@ export default function ProfilePage() {
       {/* 전적 */}
       {isLoading ? (
         <div className="flex items-center justify-center py-8">
-          <span className="text-text-secondary">전적 불러오는 중...</span>
+          <span className="text-text-secondary font-sans animate-pulse">
+            전적 불러오는 중... 🍌
+          </span>
         </div>
       ) : stats ? (
         <>
           <div className="grid grid-cols-3 gap-3">
-            <StatCard
-              label="총 예측"
-              value={`${stats.totalPredictions}전`}
-            />
-            <StatCard
-              label="승/패"
-              value={`${stats.wins}/${stats.losses}`}
-              color="default"
-            />
+            <StatCard label="총 예측" value={`${stats.totalPredictions}전`} />
+            <StatCard label="승/패" value={`${stats.wins}/${stats.losses}`} color="default" />
             <StatCard
               label="승률"
               value={formatWinRate(stats.winRate)}
@@ -110,15 +108,11 @@ export default function ProfilePage() {
               color={stats.currentStreak >= 3 ? "up" : "default"}
               emoji={stats.currentStreak >= 3 ? "🔥" : undefined}
             />
-            <StatCard
-              label="최고 연승"
-              value={`${stats.maxStreak}연승`}
-              emoji="👑"
-            />
+            <StatCard label="최고 연승" value={`${stats.maxStreak}연승`} emoji="👑" />
           </div>
 
-          <div className="rounded-2xl bg-bg-secondary p-4">
-            <p className="text-sm font-medium text-text-secondary">총 수익</p>
+          <div className="rounded-3xl bg-white p-4 border-2 border-card-border clay">
+            <p className="text-sm font-semibold text-text-secondary font-sans">총 수익</p>
             <p
               className={`mt-1 font-mono text-2xl font-bold ${
                 stats.profitLoss >= 0 ? "text-up" : "text-down"
@@ -134,7 +128,11 @@ export default function ProfilePage() {
       {/* 로그아웃 */}
       <button
         onClick={logout}
-        className="w-full rounded-xl border border-text-secondary/20 bg-bg-secondary py-3 text-sm text-text-secondary transition-all hover:border-down/50 hover:text-down"
+        className={[
+          "w-full rounded-2xl border-2 border-card-border bg-white py-3",
+          "text-sm text-text-secondary font-sans font-semibold",
+          "transition-all hover:border-down/40 hover:text-down clay-sm btn-clay",
+        ].join(" ")}
         data-testid="logout-button"
       >
         로그아웃
@@ -164,8 +162,8 @@ function StatCard({
         : "text-text-primary";
 
   return (
-    <div className="rounded-xl bg-bg-secondary p-3 text-center">
-      <p className="text-xs text-text-secondary">{label}</p>
+    <div className="rounded-2xl bg-white p-3 text-center border-2 border-card-border clay-sm">
+      <p className="text-xs text-text-secondary font-sans font-medium">{label}</p>
       <p className={`mt-1 font-mono text-lg font-bold ${colorClass}`}>
         {emoji && <span className="mr-1">{emoji}</span>}
         {value}

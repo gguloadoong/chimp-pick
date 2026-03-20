@@ -53,18 +53,18 @@ export default function SymbolSelector({
             data-testid={`symbol-pill-${sym.symbol}`}
             onClick={() => onSelect(sym)}
             className={[
-              "flex-shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl",
-              "border transition-all duration-150 cursor-pointer select-none",
+              "flex-shrink-0 flex flex-col items-center gap-0.5 px-3 py-2 rounded-2xl",
+              "border-2 transition-all duration-150 cursor-pointer select-none btn-clay",
               "min-w-[72px]",
               isActive
-                ? "border-banana bg-banana/10 shadow-[0_0_12px_rgba(255,184,0,0.2)]"
-                : "border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10",
+                ? "border-banana bg-banana/15 clay"
+                : "border-card-border bg-white hover:border-banana/50 hover:bg-banana/5",
             ].join(" ")}
           >
             <span className="text-base leading-none">{emoji}</span>
             <span
               className={[
-                "text-[11px] font-medium leading-none",
+                "text-[11px] font-semibold leading-none font-sans",
                 isActive ? "text-banana" : "text-text-primary",
               ].join(" ")}
             >
@@ -73,7 +73,7 @@ export default function SymbolSelector({
             {price ? (
               <span
                 className={[
-                  "text-[10px] leading-none tabular-nums",
+                  "text-[10px] leading-none tabular-nums font-mono",
                   isUp ? "text-up" : "text-down",
                 ].join(" ")}
               >

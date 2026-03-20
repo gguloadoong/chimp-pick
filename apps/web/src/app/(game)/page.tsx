@@ -21,10 +21,21 @@ import { BananaCounter } from "@/components/ui";
 import SymbolSelector from "@/components/game/SymbolSelector";
 import MiniChart from "@/components/game/MiniChart";
 import ResultOverlay from "@/components/game/ResultOverlay";
+import ChimpCharacter from "@/components/character/ChimpCharacter";
 
 const PRICE_POLL_INTERVAL = 2000;
 const RESULT_POLL_INTERVAL = 1000;
 const MAX_CHART_TICKS = 20;
+
+function getChimpMood(
+  activePrediction: { direction: string } | null,
+  isSubmitting: boolean,
+): "idle" | "thinking" | "up" | "down" {
+  if (isSubmitting) return "thinking";
+  if (activePrediction?.direction === "UP") return "up";
+  if (activePrediction?.direction === "DOWN") return "down";
+  return "idle";
+}
 
 export default function GamePage() {
   const user = useAuthStore((s) => s.user);
@@ -60,7 +71,6 @@ export default function GamePage() {
     activePrediction?.createdAt ?? null,
   );
 
-  // Fetch price for a symbol
   const fetchPrice = useCallback(async (symbol: string) => {
     try {
       const data = await api.get<PriceData>(`/prices/${symbol}`);
@@ -80,21 +90,18 @@ export default function GamePage() {
     }
   }, [setCurrentPrice]);
 
-  // Start price polling
   const startPricePoll = useCallback((symbol: string) => {
     if (pricePollRef.current) clearInterval(pricePollRef.current);
     fetchPrice(symbol);
     pricePollRef.current = setInterval(() => fetchPrice(symbol), PRICE_POLL_INTERVAL);
   }, [fetchPrice]);
 
-  // Symbol change: reset ticks and start polling new symbol
   const handleSymbolSelect = useCallback((sym: typeof SYMBOLS[0]) => {
     setSymbol(sym);
     setPriceTicks([]);
     startPricePoll(sym.symbol);
   }, [setSymbol, startPricePoll]);
 
-  // Initial price poll on mount
   useEffect(() => {
     startPricePoll(selectedSymbol.symbol);
     return () => {
@@ -103,7 +110,6 @@ export default function GamePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Poll all symbol prices for the selector (less frequent)
   useEffect(() => {
     const pollAll = async () => {
       await Promise.allSettled(
@@ -119,7 +125,6 @@ export default function GamePage() {
     return () => clearInterval(id);
   }, []);
 
-  // Poll for prediction result while active
   useEffect(() => {
     if (!activePrediction) {
       if (resultPollRef.current) clearInterval(resultPollRef.current);
@@ -134,12 +139,10 @@ export default function GamePage() {
           setResolvedPrediction(pred);
           if (resultPollRef.current) clearInterval(resultPollRef.current);
 
-          // Sync balance from server (single source of truth)
           try {
             const me = await api.get<{ bananaCoins: number }>("/users/me");
             updateBananaCoins(me.bananaCoins - (user?.bananaCoins ?? 0));
           } catch {
-            // Fallback: compute delta locally
             if (pred.result === "WIN" && pred.reward !== null) {
               updateBananaCoins(pred.reward);
             }
@@ -155,7 +158,7 @@ export default function GamePage() {
     return () => {
       if (resultPollRef.current) clearInterval(resultPollRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- user.bananaCoins changes shouldn't restart polling
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePrediction, setActivePrediction, updateBananaCoins]);
 
   const handlePredict = useCallback(async (direction: "UP" | "DOWN") => {
@@ -188,18 +191,24 @@ export default function GamePage() {
 
   const canPredict = !activePrediction && !isSubmitting && (user?.bananaCoins ?? 0) >= betAmount;
   const potentialWin = Math.round(betAmount * BET_MULTIPLIER);
+  const chimpMood = getChimpMood(activePrediction, isSubmitting);
 
   return (
     <>
       <div className="max-w-lg mx-auto px-4 pt-4 pb-6 flex flex-col gap-4">
         {/* Header */}
         <div className="flex items-center justify-between" data-testid="game-header">
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-text-primary">침팬지픽</span>
-            <span className="text-lg">🦍</span>
+          <div className="flex items-center gap-1">
+            <ChimpCharacter
+              mood={chimpMood}
+              size={44}
+              className={activePrediction ? "animate-bounce" : "animate-float"}
+            />
+            <span className="text-xl font-heading font-bold text-text-primary">
+              침팬지픽
+            </span>
           </div>
           <div className="flex items-center gap-3">
-            {/* Connection indicator */}
             <span
               data-testid="connection-indicator"
               title={isConnected ? "연결됨" : "연결 끊김"}
@@ -219,7 +228,7 @@ export default function GamePage() {
         {error && (
           <div
             role="alert"
-            className="text-xs text-down bg-down/10 border border-down/20 rounded-lg px-3 py-2 text-center"
+            className="text-xs text-down bg-down/8 border-2 border-down/20 rounded-2xl px-3 py-2 text-center font-sans font-semibold"
           >
             {error}
           </div>
@@ -236,12 +245,14 @@ export default function GamePage() {
 
         {/* Price display area */}
         <div
-          className="bg-bg-secondary rounded-2xl p-4 flex flex-col gap-3"
+          className="bg-white rounded-3xl p-4 flex flex-col gap-3 border-2 border-card-border clay"
           data-testid="price-area"
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-text-secondary text-xs mb-1">{selectedSymbol.nameKr}</p>
+              <p className="text-text-secondary text-xs mb-1 font-sans">
+                {selectedSymbol.nameKr}
+              </p>
               {currentPrice ? (
                 <>
                   <p className="text-3xl font-bold font-mono tabular-nums text-text-primary">
@@ -250,7 +261,7 @@ export default function GamePage() {
                   </p>
                   <p
                     className={[
-                      "text-sm font-medium mt-0.5",
+                      "text-sm font-semibold mt-0.5 font-sans",
                       currentPrice.change24h >= 0 ? "text-up" : "text-down",
                     ].join(" ")}
                   >
@@ -259,23 +270,23 @@ export default function GamePage() {
                 </>
               ) : (
                 <div className="flex items-center gap-2 text-text-secondary">
-                  <Loader2 size={16} className="animate-spin" />
-                  <span className="text-sm">가격 로딩 중...</span>
+                  <Loader2 size={16} className="animate-spin text-banana" />
+                  <span className="text-sm font-sans">가격 로딩 중...</span>
                 </div>
               )}
             </div>
 
             {currentPrice && (
-              <div className="text-right text-xs text-text-secondary space-y-1">
+              <div className="text-right text-xs text-text-secondary space-y-1 font-sans">
                 <p>
                   고가{" "}
-                  <span className="text-up font-mono tabular-nums">
+                  <span className="text-up font-mono tabular-nums font-semibold">
                     {formatPrice(currentPrice.high24h)}
                   </span>
                 </p>
                 <p>
                   저가{" "}
-                  <span className="text-down font-mono tabular-nums">
+                  <span className="text-down font-mono tabular-nums font-semibold">
                     {formatPrice(currentPrice.low24h)}
                   </span>
                 </p>
@@ -309,11 +320,11 @@ export default function GamePage() {
                   disabled={!!activePrediction}
                   onClick={() => setTimeframe(tf)}
                   className={[
-                    "flex-1 py-2 rounded-xl text-sm font-medium transition-all duration-150",
-                    "border cursor-pointer select-none",
+                    "flex-1 py-2 rounded-2xl text-sm font-semibold font-sans transition-all duration-150",
+                    "border-2 cursor-pointer select-none btn-clay",
                     isActive
-                      ? "border-banana bg-banana/15 text-banana shadow-[0_0_10px_rgba(255,184,0,0.15)]"
-                      : "border-white/10 bg-white/5 text-text-secondary hover:border-white/30 hover:text-text-primary",
+                      ? "border-banana bg-banana/15 text-banana clay"
+                      : "border-card-border bg-white text-text-secondary hover:border-banana/40 hover:text-text-primary",
                     activePrediction ? "opacity-50 cursor-not-allowed pointer-events-none" : "",
                   ].join(" ")}
                 >
@@ -326,12 +337,12 @@ export default function GamePage() {
 
         {/* Bet controls */}
         <div
-          className="bg-bg-secondary rounded-2xl p-4 flex flex-col gap-3"
+          className="bg-white rounded-3xl p-4 flex flex-col gap-3 border-2 border-card-border clay"
           data-testid="bet-controls"
         >
           <div className="flex items-center justify-between">
-            <span className="text-sm text-text-secondary">베팅액</span>
-            <span className="text-sm text-banana font-semibold">
+            <span className="text-sm text-text-secondary font-sans font-semibold">베팅액</span>
+            <span className="text-sm text-banana font-bold font-sans">
               이기면 +{formatBanana(potentialWin)} 🍌
             </span>
           </div>
@@ -343,9 +354,9 @@ export default function GamePage() {
               onClick={() => setBetAmount(betAmount - 5)}
               disabled={betAmount <= MIN_BET || !!activePrediction}
               className={[
-                "w-10 h-10 rounded-xl border border-white/20 text-text-primary",
-                "flex items-center justify-center text-xl font-bold",
-                "transition-all hover:border-banana hover:text-banana active:scale-95",
+                "w-10 h-10 rounded-2xl border-2 border-card-border bg-white text-text-primary",
+                "flex items-center justify-center text-xl font-bold clay-sm btn-clay",
+                "transition-all hover:border-banana hover:text-banana",
                 betAmount <= MIN_BET || activePrediction
                   ? "opacity-40 cursor-not-allowed"
                   : "cursor-pointer",
@@ -356,12 +367,12 @@ export default function GamePage() {
 
             <div className="flex-1 text-center">
               <span
-                className="text-2xl font-bold font-mono text-banana tabular-nums"
+                className="text-3xl font-bold font-mono text-banana tabular-nums"
                 data-testid="bet-amount-display"
               >
                 {betAmount}
               </span>
-              <span className="text-sm text-text-secondary ml-1">🍌</span>
+              <span className="text-base text-text-secondary ml-1">🍌</span>
             </div>
 
             <button
@@ -369,9 +380,9 @@ export default function GamePage() {
               onClick={() => setBetAmount(betAmount + 5)}
               disabled={betAmount >= MAX_BET || !!activePrediction}
               className={[
-                "w-10 h-10 rounded-xl border border-white/20 text-text-primary",
-                "flex items-center justify-center text-xl font-bold",
-                "transition-all hover:border-banana hover:text-banana active:scale-95",
+                "w-10 h-10 rounded-2xl border-2 border-card-border bg-white text-text-primary",
+                "flex items-center justify-center text-xl font-bold clay-sm btn-clay",
+                "transition-all hover:border-banana hover:text-banana",
                 betAmount >= MAX_BET || activePrediction
                   ? "opacity-40 cursor-not-allowed"
                   : "cursor-pointer",
@@ -403,10 +414,10 @@ export default function GamePage() {
                 onClick={() => setBetAmount(val)}
                 disabled={!!activePrediction}
                 className={[
-                  "flex-1 py-1 rounded-lg text-xs font-medium border transition-all",
+                  "flex-1 py-1.5 rounded-xl text-xs font-bold font-sans border-2 transition-all btn-clay",
                   betAmount === val
-                    ? "border-banana text-banana bg-banana/10"
-                    : "border-white/10 text-text-secondary hover:border-white/30",
+                    ? "border-banana text-banana bg-banana/12 clay-sm"
+                    : "border-card-border text-text-secondary bg-white hover:border-banana/40",
                   activePrediction ? "opacity-40 cursor-not-allowed pointer-events-none" : "cursor-pointer",
                 ].join(" ")}
               >
@@ -417,7 +428,7 @@ export default function GamePage() {
 
           {/* Insufficient balance warning */}
           {user && user.bananaCoins < betAmount && (
-            <p className="text-xs text-down text-center" role="alert">
+            <p className="text-xs text-down text-center font-sans font-semibold" role="alert">
               바나나코인이 부족해요 🍌
             </p>
           )}
@@ -427,10 +438,10 @@ export default function GamePage() {
         {activePrediction && (
           <div
             className={[
-              "rounded-2xl p-4 border",
+              "rounded-3xl p-4 border-2",
               activePrediction.direction === "UP"
-                ? "bg-up/10 border-up/30"
-                : "bg-down/10 border-down/30",
+                ? "bg-white border-up/40 clay-up"
+                : "bg-white border-down/40 clay-down",
             ].join(" ")}
             data-testid="active-prediction-banner"
             role="status"
@@ -438,12 +449,12 @@ export default function GamePage() {
           >
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <span className="text-lg animate-pulse">
+                <span className="text-xl animate-bounce">
                   {activePrediction.direction === "UP" ? "🚀" : "💀"}
                 </span>
                 <span
                   className={[
-                    "font-bold text-sm",
+                    "font-bold text-sm font-sans",
                     activePrediction.direction === "UP" ? "text-up" : "text-down",
                   ].join(" ")}
                 >
@@ -455,22 +466,22 @@ export default function GamePage() {
 
             <div className="grid grid-cols-3 gap-2 text-xs text-center mb-3">
               <div>
-                <p className="text-text-secondary mb-0.5">진입가</p>
-                <p className="font-mono text-text-primary tabular-nums">
+                <p className="text-text-secondary mb-0.5 font-sans">진입가</p>
+                <p className="font-mono text-text-primary tabular-nums font-semibold">
                   {formatPrice(activePrediction.entryPrice)}
                 </p>
               </div>
               <div>
-                <p className="text-text-secondary mb-0.5">베팅</p>
-                <p className="font-mono text-banana tabular-nums">
+                <p className="text-text-secondary mb-0.5 font-sans">베팅</p>
+                <p className="font-mono text-banana tabular-nums font-bold">
                   {activePrediction.betAmount} 🍌
                 </p>
               </div>
               <div>
-                <p className="text-text-secondary mb-0.5">남은 시간</p>
+                <p className="text-text-secondary mb-0.5 font-sans">남은 시간</p>
                 <p
                   className={[
-                    "font-mono tabular-nums font-semibold",
+                    "font-mono tabular-nums font-bold",
                     countdown.timeLeft < 10_000 ? "text-down animate-pulse" : "text-text-primary",
                   ].join(" ")}
                 >
@@ -480,7 +491,7 @@ export default function GamePage() {
             </div>
 
             {/* Progress bar */}
-            <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+            <div className="w-full bg-card-border rounded-full h-2 overflow-hidden">
               <div
                 className={[
                   "h-full rounded-full transition-all duration-100",
@@ -503,10 +514,10 @@ export default function GamePage() {
             disabled={!canPredict || isSubmitting}
             onClick={() => handlePredict("UP")}
             className={[
-              "flex flex-col items-center justify-center gap-1.5 py-5 rounded-2xl",
-              "border-2 border-up bg-up/10 text-up font-bold text-xl",
-              "transition-all duration-150 select-none",
-              "hover:bg-up/20 hover:shadow-[0_0_24px_rgba(0,214,143,0.35)] active:scale-95",
+              "flex flex-col items-center justify-center gap-2 py-6 rounded-3xl",
+              "border-4 border-up bg-white text-up font-bold text-xl font-sans",
+              "transition-all duration-150 select-none clay-up btn-clay",
+              "hover:bg-up/8",
               !canPredict || isSubmitting
                 ? "opacity-50 cursor-not-allowed pointer-events-none"
                 : "cursor-pointer",
@@ -514,11 +525,11 @@ export default function GamePage() {
             aria-label="UP 예측"
           >
             {isSubmitting ? (
-              <Loader2 size={28} className="animate-spin" />
+              <Loader2 size={32} className="animate-spin" />
             ) : (
-              <ArrowUp size={28} strokeWidth={3} aria-hidden="true" />
+              <ArrowUp size={32} strokeWidth={3} aria-hidden="true" />
             )}
-            <span>UP 🚀</span>
+            <span className="text-lg font-heading font-bold tracking-wide">UP 🚀</span>
           </button>
 
           <button
@@ -526,10 +537,10 @@ export default function GamePage() {
             disabled={!canPredict || isSubmitting}
             onClick={() => handlePredict("DOWN")}
             className={[
-              "flex flex-col items-center justify-center gap-1.5 py-5 rounded-2xl",
-              "border-2 border-down bg-down/10 text-down font-bold text-xl",
-              "transition-all duration-150 select-none",
-              "hover:bg-down/20 hover:shadow-[0_0_24px_rgba(255,71,87,0.35)] active:scale-95",
+              "flex flex-col items-center justify-center gap-2 py-6 rounded-3xl",
+              "border-4 border-down bg-white text-down font-bold text-xl font-sans",
+              "transition-all duration-150 select-none clay-down btn-clay",
+              "hover:bg-down/8",
               !canPredict || isSubmitting
                 ? "opacity-50 cursor-not-allowed pointer-events-none"
                 : "cursor-pointer",
@@ -537,16 +548,16 @@ export default function GamePage() {
             aria-label="DOWN 예측"
           >
             {isSubmitting ? (
-              <Loader2 size={28} className="animate-spin" />
+              <Loader2 size={32} className="animate-spin" />
             ) : (
-              <ArrowDown size={28} strokeWidth={3} aria-hidden="true" />
+              <ArrowDown size={32} strokeWidth={3} aria-hidden="true" />
             )}
-            <span>DOWN 💀</span>
+            <span className="text-lg font-heading font-bold tracking-wide">DOWN 💀</span>
           </button>
         </div>
 
         {/* Current symbol info footer */}
-        <p className="text-center text-xs text-text-secondary">
+        <p className="text-center text-xs text-text-secondary font-sans">
           {selectedSymbol.nameKr} ({selectedSymbol.symbol}) ·{" "}
           {TIMEFRAME_LABELS[selectedTimeframe]} 예측 ·{" "}
           배당률 {BET_MULTIPLIER}x

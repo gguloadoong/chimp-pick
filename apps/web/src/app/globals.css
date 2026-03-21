@@ -32,10 +32,32 @@ html {
   color-scheme: light;
 }
 
+html.dark {
+  color-scheme: dark;
+  --color-bg-primary: #1A1410;
+  --color-bg-secondary: #2D2418;
+  --color-text-primary: #FFF8E1;
+  --color-text-secondary: #B8A080;
+  --color-card-border: #4A3828;
+  --color-card-shadow: rgba(255, 184, 0, 0.08);
+  --shadow-clay: inset -2px -2px 6px rgba(0, 0, 0, 0.3), 4px 4px 12px rgba(255, 184, 0, 0.08);
+  --shadow-clay-up: inset -2px -2px 6px rgba(0, 0, 0, 0.3), 4px 4px 16px rgba(16, 185, 129, 0.15);
+  --shadow-clay-down: inset -2px -2px 6px rgba(0, 0, 0, 0.3), 4px 4px 16px rgba(244, 63, 94, 0.15);
+  --shadow-clay-sm: inset -1px -1px 4px rgba(0, 0, 0, 0.2), 2px 2px 8px rgba(255, 184, 0, 0.06);
+}
+
 body {
-  background-color: #FFF8E1;
-  color: #2D2006;
+  background-color: var(--color-bg-primary, #FFF8E1);
+  color: var(--color-text-primary, #2D2006);
   font-family: "Nunito", "Pretendard", sans-serif;
+}
+
+/* Dark mode overrides for white cards */
+html.dark .bg-white {
+  background-color: #2D2418;
+}
+html.dark .bg-bg-primary {
+  background-color: #1A1410;
 }
 
 /* Clay shadow utilities */

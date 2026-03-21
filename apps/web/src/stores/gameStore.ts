@@ -24,6 +24,7 @@ interface GameState {
   dailyMissions: DailyMissionState | null;
   attendance: { lastDate: string; streak: number; totalDays: number };
   selectedTitle: string | null;
+  challenge: { active: boolean; roundsLeft: number; wins: number } | null;
 
   // Actions
   setRound: (round: Round) => void;
@@ -34,6 +35,8 @@ interface GameState {
   claimMissionReward: (missionId: string) => number;
   checkAttendance: () => { isNew: boolean; streak: number; bonus: number };
   setSelectedTitle: (titleId: string | null) => void;
+  startChallenge: () => void;
+  getTodayRounds: () => number;
 }
 
 export const useGameStore = create<GameState>()(
@@ -46,6 +49,7 @@ export const useGameStore = create<GameState>()(
       dailyMissions: null,
       attendance: { lastDate: "", streak: 0, totalDays: 0 },
       selectedTitle: null,
+      challenge: null,
 
       setRound: (round) => {
         const prev = get().currentRound;
@@ -117,10 +121,28 @@ export const useGameStore = create<GameState>()(
           );
         }
 
+        // Update challenge
+        let { challenge } = get();
+        let challengeBonus = 0;
+        if (challenge?.active) {
+          const newWins = isCorrect ? challenge.wins + 1 : challenge.wins;
+          const newLeft = challenge.roundsLeft - 1;
+          if (newLeft <= 0) {
+            // Challenge complete
+            challengeBonus = newWins === 5 ? score * 2 : 0; // 5/5 perfect = 3x total (1x base + 2x bonus)
+            challenge = null;
+          } else if (!isCorrect) {
+            challenge = null; // Failed
+          } else {
+            challenge = { active: true, roundsLeft: newLeft, wins: newWins };
+          }
+        }
+
         set({
           roundHistory: newHistory,
-          totalScore: get().totalScore + score,
+          totalScore: get().totalScore + score + challengeBonus,
           dailyMissions,
+          challenge,
         });
 
         return result;
@@ -157,6 +179,17 @@ export const useGameStore = create<GameState>()(
 
       setSelectedTitle: (titleId) => set({ selectedTitle: titleId }),
 
+      startChallenge: () => {
+        set({ challenge: { active: true, roundsLeft: 5, wins: 0 } });
+      },
+
+      getTodayRounds: () => {
+        const today = new Date().toDateString();
+        return get().roundHistory.filter(
+          (r) => new Date(r.resolvedAt).toDateString() === today,
+        ).length;
+      },
+
       claimMissionReward: (missionId) => {
         const { dailyMissions } = get();
         if (!dailyMissions) return 0;
@@ -179,6 +212,7 @@ export const useGameStore = create<GameState>()(
         dailyMissions: state.dailyMissions,
         attendance: state.attendance,
         selectedTitle: state.selectedTitle,
+        challenge: state.challenge,
       }),
     }
   )

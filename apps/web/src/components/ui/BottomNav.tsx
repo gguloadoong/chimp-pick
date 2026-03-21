@@ -13,7 +13,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "홈", icon: <Home size={22} aria-hidden="true" /> },
-  { href: "/chart", label: "차트", icon: <BarChart2 size={22} aria-hidden="true" /> },
+  { href: "/stats", label: "통계", icon: <BarChart2 size={22} aria-hidden="true" /> },
   { href: "/ranking", label: "랭킹", icon: <Trophy size={22} aria-hidden="true" /> },
   { href: "/profile", label: "프로필", icon: <User size={22} aria-hidden="true" /> },
 ];

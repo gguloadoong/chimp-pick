@@ -5,7 +5,6 @@
 
 import {
   SYMBOLS,
-  ROUND_OPEN_MS,
   ROUND_RESOLVE_DELAY_MS,
   ROUND_BREAK_MS,
   type Round,
@@ -17,6 +16,7 @@ import { getPrice } from "./price-engine";
 let currentRound: Round | null = null;
 let roundTimer: ReturnType<typeof setTimeout> | null = null;
 const listeners: Set<(round: Round) => void> = new Set();
+let configuredOpenMs = 30_000;
 
 function generateId(): string {
   return crypto.randomUUID();
@@ -63,8 +63,8 @@ function startNewRound() {
     result: null,
     phase: "OPEN",
     opensAt: new Date(now).toISOString(),
-    closesAt: new Date(now + ROUND_OPEN_MS).toISOString(),
-    resolvesAt: new Date(now + ROUND_OPEN_MS + ROUND_RESOLVE_DELAY_MS).toISOString(),
+    closesAt: new Date(now + configuredOpenMs).toISOString(),
+    resolvesAt: new Date(now + configuredOpenMs + ROUND_RESOLVE_DELAY_MS).toISOString(),
     upRatio: generateNpcRatio(),
   };
 
@@ -73,7 +73,7 @@ function startNewRound() {
   // Schedule close
   roundTimer = setTimeout(() => {
     closeRound();
-  }, ROUND_OPEN_MS);
+  }, configuredOpenMs);
 }
 
 /** Close predictions and resolve */
@@ -114,8 +114,14 @@ function resolveRound() {
   }, ROUND_BREAK_MS);
 }
 
+/** Set round duration in seconds */
+export function setRoundDuration(seconds: number) {
+  configuredOpenMs = seconds * 1000;
+}
+
 /** Start the round engine loop */
-export function startRoundEngine(): () => void {
+export function startRoundEngine(durationSeconds?: number): () => void {
+  if (durationSeconds) configuredOpenMs = durationSeconds * 1000;
   if (currentRound) {
     return () => {
       if (roundTimer) {

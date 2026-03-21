@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useCallback, useState, useMemo } from "react";
-import { ArrowUp, ArrowDown, Trophy, Clock, Users, Flame, Star } from "lucide-react";
+import { ArrowUp, ArrowDown, Trophy, Clock, Users, Flame, Star, Settings, Volume2, VolumeX } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
-import { getPrice, onPriceUpdate, computeStats } from "@/lib/game-engine";
+import { useSettingsStore, ROUND_DURATION_LABELS, type RoundDuration } from "@/stores/settingsStore";
+import { getPrice, onPriceUpdate, computeStats, setRoundDuration } from "@/lib/game-engine";
+import { playPickSound, playDrumroll, playWinSound, playLoseSound } from "@/lib/sound";
 import { formatPrice, formatChange } from "@/lib/format";
 import { useCountdown } from "@/hooks/useCountdown";
 import { AVATAR_LEVELS } from "@/types";
 import type { RoundResult } from "@/types";
 import MiniChart from "@/components/game/MiniChart";
 import ResultOverlay from "@/components/game/ResultOverlay";
+import Onboarding from "@/components/game/Onboarding";
 import ChimpCharacter from "@/components/character/ChimpCharacter";
 
 const MAX_CHART_TICKS = 20;
@@ -39,10 +42,26 @@ export default function GamePage() {
     claimMissionReward,
   } = useGameStore();
 
+  const {
+    roundDuration,
+    soundEnabled,
+    hasSeenOnboarding,
+    setRoundDuration: setDuration,
+    toggleSound,
+    markOnboardingSeen,
+  } = useSettingsStore();
+
+  const [showSettings, setShowSettings] = useState(false);
+
   // Ensure daily missions exist
   useEffect(() => {
     ensureDailyMissions();
   }, [ensureDailyMissions]);
+
+  // Sync round duration setting with engine
+  useEffect(() => {
+    setRoundDuration(roundDuration);
+  }, [roundDuration]);
 
   const stats = useMemo(() => computeStats(roundHistory), [roundHistory]);
 
@@ -86,24 +105,35 @@ export default function GamePage() {
     return unsub;
   }, [roundId, roundSymbol]);
 
-  // Auto-resolve when round resolves
+  // Play drumroll when round closes
   const roundPhase = currentRound?.phase;
 
   useEffect(() => {
+    if (roundPhase === "CLOSED" && myPick && soundEnabled) {
+      playDrumroll();
+    }
+  }, [roundPhase, myPick, soundEnabled]);
+
+  // Auto-resolve when round resolves
+  useEffect(() => {
     if (roundPhase !== "RESOLVED" || !myPick) return;
 
-    // Use microtask to avoid synchronous setState in effect
     queueMicrotask(() => {
       const result = resolveMyPick();
       if (result) {
         setResolvedResult(result);
+        if (soundEnabled) {
+          if (result.isCorrect) playWinSound();
+          else playLoseSound();
+        }
       }
     });
-  }, [roundPhase, myPick, resolveMyPick]);
+  }, [roundPhase, myPick, resolveMyPick, soundEnabled]);
 
   const handlePick = useCallback((direction: "UP" | "DOWN") => {
     pickDirection(direction);
-  }, [pickDirection]);
+    if (soundEnabled) playPickSound();
+  }, [pickDirection, soundEnabled]);
 
   const handleResultDismiss = useCallback(() => {
     setResolvedResult(null);
@@ -143,14 +173,66 @@ export default function GamePage() {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 bg-banana/15 px-3 py-1.5 rounded-2xl border-2 border-banana/30">
-            <Trophy size={14} className="text-banana" />
-            <span className="font-mono font-bold text-banana tabular-nums text-sm">
-              {totalScore.toLocaleString()}
-            </span>
-            <span className="text-xs text-banana/70">점</span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 bg-banana/15 px-3 py-1.5 rounded-2xl border-2 border-banana/30">
+              <Trophy size={14} className="text-banana" />
+              <span className="font-mono font-bold text-banana tabular-nums text-sm">
+                {totalScore.toLocaleString()}
+              </span>
+              <span className="text-xs text-banana/70">점</span>
+            </div>
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="p-2 rounded-2xl border-2 border-card-border bg-white text-text-secondary hover:text-banana transition-colors"
+              aria-label="설정"
+            >
+              <Settings size={16} />
+            </button>
           </div>
         </div>
+
+        {/* Settings panel */}
+        {showSettings && (
+          <div className="bg-white rounded-3xl p-4 border-2 border-card-border clay">
+            <p className="text-sm font-semibold text-text-primary font-sans mb-3">설정</p>
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs text-text-secondary font-sans mb-1.5">라운드 시간</p>
+                <div className="flex gap-2">
+                  {([30, 60, 300] as RoundDuration[]).map((d) => (
+                    <button
+                      key={d}
+                      onClick={() => setDuration(d)}
+                      className={[
+                        "flex-1 py-2 rounded-2xl text-xs font-bold font-sans border-2 transition-all btn-clay",
+                        roundDuration === d
+                          ? "border-banana text-banana bg-banana/12 clay-sm"
+                          : "border-card-border text-text-secondary bg-white hover:border-banana/40",
+                      ].join(" ")}
+                    >
+                      {ROUND_DURATION_LABELS[d]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-text-secondary font-sans">사운드</span>
+                <button
+                  onClick={toggleSound}
+                  className={[
+                    "flex items-center gap-1 px-3 py-1.5 rounded-2xl text-xs font-bold border-2 transition-all",
+                    soundEnabled
+                      ? "border-up/30 text-up bg-up/8"
+                      : "border-card-border text-text-secondary bg-white",
+                  ].join(" ")}
+                >
+                  {soundEnabled ? <Volume2 size={12} /> : <VolumeX size={12} />}
+                  {soundEnabled ? "ON" : "OFF"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Round Status Card */}
         {currentRound && (
@@ -480,6 +562,11 @@ export default function GamePage() {
           result={resolvedResult}
           onDismiss={handleResultDismiss}
         />
+      )}
+
+      {/* Onboarding */}
+      {!hasSeenOnboarding && (
+        <Onboarding onComplete={markOnboardingSeen} />
       )}
     </>
   );

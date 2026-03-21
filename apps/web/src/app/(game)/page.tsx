@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useCallback, useState } from "react";
-import { ArrowUp, ArrowDown, Trophy, Clock, Users } from "lucide-react";
+import { useEffect, useCallback, useState, useMemo } from "react";
+import { ArrowUp, ArrowDown, Trophy, Clock, Users, Flame, Star } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
-import { getPrice, onPriceUpdate } from "@/lib/game-engine";
+import { getPrice, onPriceUpdate, computeStats } from "@/lib/game-engine";
 import { formatPrice, formatChange } from "@/lib/format";
 import { useCountdown } from "@/hooks/useCountdown";
+import { AVATAR_LEVELS } from "@/types";
 import type { RoundResult } from "@/types";
 import MiniChart from "@/components/game/MiniChart";
 import ResultOverlay from "@/components/game/ResultOverlay";
@@ -31,9 +32,25 @@ export default function GamePage() {
     myPick,
     totalScore,
     roundHistory,
+    dailyMissions,
     pickDirection,
     resolveMyPick,
+    ensureDailyMissions,
+    claimMissionReward,
   } = useGameStore();
+
+  // Ensure daily missions exist
+  useEffect(() => {
+    ensureDailyMissions();
+  }, [ensureDailyMissions]);
+
+  const stats = useMemo(() => computeStats(roundHistory), [roundHistory]);
+
+  const avatarLevel = useMemo(() => {
+    return AVATAR_LEVELS.reduce((best, lvl) => {
+      return stats.wins >= lvl.minWins ? lvl : best;
+    }, AVATAR_LEVELS[0]);
+  }, [stats.wins]);
 
   const [priceTicks, setPriceTicks] = useState<number[]>([]);
   const [resolvedResult, setResolvedResult] = useState<RoundResult | null>(null);
@@ -114,11 +131,17 @@ export default function GamePage() {
             <ChimpCharacter
               mood={chimpMood}
               size={40}
+              level={avatarLevel.level}
               className={myPick ? "animate-bounce" : "animate-float"}
             />
-            <span className="text-lg font-heading font-bold text-text-primary">
-              침팬지픽
-            </span>
+            <div>
+              <span className="text-lg font-heading font-bold text-text-primary">
+                침팬지픽
+              </span>
+              <span className="text-xs text-banana font-sans font-semibold ml-1">
+                {avatarLevel.emoji} Lv.{avatarLevel.level}
+              </span>
+            </div>
           </div>
           <div className="flex items-center gap-1.5 bg-banana/15 px-3 py-1.5 rounded-2xl border-2 border-banana/30">
             <Trophy size={14} className="text-banana" />
@@ -365,6 +388,82 @@ export default function GamePage() {
                   </p>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Streak banner */}
+        {stats.currentStreak >= 2 && (
+          <div className={[
+            "rounded-2xl p-3 border-2 text-center",
+            stats.currentStreak >= 5
+              ? "bg-banana/15 border-banana/40"
+              : "bg-up/8 border-up/20",
+          ].join(" ")}>
+            <div className="flex items-center justify-center gap-1.5">
+              <Flame size={16} className={stats.currentStreak >= 5 ? "text-banana" : "text-up"} />
+              <span className={[
+                "font-heading font-bold text-sm",
+                stats.currentStreak >= 5 ? "text-banana" : "text-up",
+              ].join(" ")}>
+                {stats.currentStreak}연승 중!
+                {stats.currentStreak >= 5 && " 🔥🔥🔥"}
+                {stats.currentStreak >= 3 && stats.currentStreak < 5 && " 🔥"}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Daily Missions */}
+        {dailyMissions && (
+          <div className="bg-white rounded-3xl p-4 border-2 border-card-border clay">
+            <div className="flex items-center gap-1.5 mb-3">
+              <Star size={14} className="text-banana" />
+              <span className="text-sm font-semibold text-text-primary font-sans">오늘의 미션</span>
+            </div>
+            <div className="space-y-2">
+              {dailyMissions.missions.map((mission, idx) => {
+                const progress = dailyMissions.progress[idx];
+                const pct = Math.min(100, Math.round((progress.current / mission.target) * 100));
+                return (
+                  <div key={mission.id} className={[
+                    "p-3 rounded-2xl border",
+                    progress.claimed ? "bg-bg-primary border-card-border/50 opacity-60" :
+                    progress.completed ? "bg-banana/8 border-banana/30" :
+                    "bg-bg-primary border-card-border",
+                  ].join(" ")}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-semibold text-text-primary font-sans">
+                        {mission.title}
+                      </span>
+                      {progress.completed && !progress.claimed ? (
+                        <button
+                          onClick={() => claimMissionReward(mission.id)}
+                          className="text-xs font-bold text-banana bg-banana/15 px-2 py-0.5 rounded-full border border-banana/30 btn-clay"
+                        >
+                          +{mission.reward}점 받기
+                        </button>
+                      ) : progress.claimed ? (
+                        <span className="text-xs text-text-secondary font-sans">완료 ✅</span>
+                      ) : (
+                        <span className="text-xs text-text-secondary font-mono tabular-nums">
+                          {progress.current}/{mission.target}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-text-secondary font-sans mb-1.5">{mission.description}</p>
+                    <div className="w-full bg-card-border rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className={[
+                          "h-full rounded-full transition-all duration-300",
+                          progress.completed ? "bg-banana" : "bg-up",
+                        ].join(" ")}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

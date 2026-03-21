@@ -36,18 +36,35 @@ export default function ResultOverlay({
   onDismiss,
 }: ResultOverlayProps) {
   const [confetti] = useState<ConfettiParticle[]>(() => generateConfetti(20));
-  const [visible, setVisible] = useState(false);
+  const [phase, setPhase] = useState<"drumroll" | "reveal" | "show">("drumroll");
+  const [countScore, setCountScore] = useState(0);
 
   const isWin = result.isCorrect;
 
+  // Drumroll → reveal → show sequence
   useEffect(() => {
-    const t = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(t);
+    const t1 = setTimeout(() => setPhase("reveal"), 1200);
+    const t2 = setTimeout(() => setPhase("show"), 2000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
+  // Score count-up animation
+  useEffect(() => {
+    if (phase !== "show" || !isWin) return;
+    const target = result.score;
+    const step = Math.max(1, Math.ceil(target / 20));
+    const id = setInterval(() => {
+      setCountScore((prev) => {
+        const next = prev + step;
+        if (next >= target) { clearInterval(id); return target; }
+        return next;
+      });
+    }, 30);
+    return () => clearInterval(id);
+  }, [phase, isWin, result.score]);
+
   const handleDismiss = () => {
-    setVisible(false);
-    setTimeout(onDismiss, 200);
+    onDismiss();
   };
 
   return (
@@ -66,6 +83,16 @@ export default function ResultOverlay({
           0%, 100% { transform: translateY(0); }
           50%       { transform: translateY(-10px); }
         }
+        @keyframes drumroll-shake {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(-3deg); }
+          75% { transform: rotate(3deg); }
+        }
+        @keyframes reveal-zoom {
+          0% { transform: scale(0); opacity: 0; }
+          60% { transform: scale(1.3); }
+          100% { transform: scale(1); opacity: 1; }
+        }
         .confetti-particle {
           animation: confetti-fall var(--dur) var(--delay) ease-in forwards;
         }
@@ -75,23 +102,50 @@ export default function ResultOverlay({
         .score-bounce {
           animation: score-bounce 0.8s ease-in-out infinite;
         }
+        .drumroll-shake {
+          animation: drumroll-shake 0.1s ease-in-out infinite;
+        }
+        .reveal-zoom {
+          animation: reveal-zoom 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
       `}</style>
 
       <div
         data-testid="result-overlay"
         className={[
           "fixed inset-0 z-50 flex items-center justify-center",
-          "transition-all duration-200",
-          visible ? "opacity-100" : "opacity-0",
-          isWin ? "bg-up/10 backdrop-blur-sm" : "bg-down/10 backdrop-blur-sm",
+          "transition-all duration-200 opacity-100",
+          phase === "drumroll"
+            ? "bg-black/40 backdrop-blur-sm"
+            : isWin ? "bg-up/10 backdrop-blur-sm" : "bg-down/10 backdrop-blur-sm",
         ].join(" ")}
         role="dialog"
         aria-modal="true"
         aria-label={isWin ? "예측 성공" : "예측 실패"}
-        onClick={handleDismiss}
+        onClick={phase === "show" ? handleDismiss : undefined}
       >
+        {/* Drumroll phase */}
+        {phase === "drumroll" && (
+          <div className="text-center drumroll-shake">
+            <p className="text-6xl mb-4">🥁</p>
+            <p className="text-2xl font-heading font-bold text-white animate-pulse">
+              두구두구...
+            </p>
+          </div>
+        )}
+
+        {/* Reveal phase */}
+        {phase === "reveal" && (
+          <div className="text-center reveal-zoom">
+            <p className="text-7xl mb-4">{isWin ? "🎉" : "😵"}</p>
+            <p className={["text-3xl font-heading font-bold", isWin ? "text-up" : "text-down"].join(" ")}>
+              {isWin ? "적중!" : "빗나감!"}
+            </p>
+          </div>
+        )}
+
         {/* Confetti (WIN only) */}
-        {isWin && (
+        {phase === "show" && isWin && (
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
             {confetti.map((p) => (
               <span
@@ -112,8 +166,8 @@ export default function ResultOverlay({
           </div>
         )}
 
-        {/* Card */}
-        <div
+        {/* Card (show phase only) */}
+        {phase === "show" && <div
           className={[
             "relative mx-4 w-full max-w-sm rounded-3xl p-8 text-center",
             "border-4 animate-pop-in",
@@ -206,7 +260,7 @@ export default function ResultOverlay({
               isWin ? "text-banana" : "text-down",
             ].join(" ")}
           >
-            {isWin ? `+${result.score}점 🏆` : "0점"}
+            {isWin ? `+${countScore}점 🏆` : "0점"}
           </div>
 
           {/* Action button */}
@@ -219,7 +273,7 @@ export default function ResultOverlay({
           >
             {isWin ? "다음 라운드 가즈아! 🚀" : "복수하기 🔥"}
           </Button>
-        </div>
+        </div>}
       </div>
     </>
   );

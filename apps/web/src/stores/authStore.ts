@@ -30,7 +30,6 @@ export const useAuthStore = create<AuthState>()(
             id: "local-user",
             nickname: "침팬지유저",
             avatarLevel: 1,
-            bananaCoins: 100,
             isGuest: true,
             createdAt: new Date().toISOString(),
           },

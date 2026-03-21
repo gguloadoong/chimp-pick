@@ -9,10 +9,11 @@ export {
 export type { PriceData, Candle } from "./price-engine";
 
 export {
-  createPrediction,
-  resolvePrediction,
-  isPredictionExpired,
-  getTimeRemaining,
-} from "./prediction-engine";
+  startRoundEngine,
+  onRoundUpdate,
+  getCurrentRound,
+} from "./round-engine";
 
-export { getRankings, computeStats } from "./mock-rankings";
+export { calculateScore, computeStats } from "./score-engine";
+
+export { getRankings } from "./mock-rankings";

@@ -2,7 +2,8 @@
 
 import { useEffect, type ReactNode } from "react";
 import { useAuthStore } from "@/stores/authStore";
-import { startPriceEngine } from "@/lib/game-engine";
+import { startPriceEngine, startRoundEngine, onRoundUpdate } from "@/lib/game-engine";
+import { useGameStore } from "@/stores/gameStore";
 import { BottomNav } from "@/components/ui";
 import ChimpCharacter from "@/components/character/ChimpCharacter";
 
@@ -13,17 +14,27 @@ interface GameLayoutProps {
 export default function GameLayout({ children }: GameLayoutProps) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const ensureGuest = useAuthStore((s) => s.ensureGuest);
+  const setRound = useGameStore((s) => s.setRound);
 
   // Auto-login as guest
   useEffect(() => {
     ensureGuest();
   }, [ensureGuest]);
 
-  // Start price engine
+  // Start price engine + round engine
   useEffect(() => {
-    const stop = startPriceEngine(2000);
-    return stop;
-  }, []);
+    const stopPrice = startPriceEngine(2000);
+    const stopRound = startRoundEngine();
+    const unsubRound = onRoundUpdate((round) => {
+      setRound(round);
+    });
+
+    return () => {
+      stopPrice();
+      stopRound();
+      unsubRound();
+    };
+  }, [setRound]);
 
   if (!isAuthenticated) {
     return (

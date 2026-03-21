@@ -3,59 +3,59 @@ export interface User {
   id: string;
   nickname: string;
   avatarLevel: number;
-  bananaCoins: number;
   isGuest: boolean;
   createdAt: string;
 }
 
+// ===== Round =====
+export type RoundPhase = "WAITING" | "OPEN" | "CLOSED" | "RESOLVED";
+export type Direction = "UP" | "DOWN";
+
+export interface Round {
+  id: string;
+  symbol: string;
+  symbolName: string;
+  category: SymbolCategory;
+  entryPrice: number;
+  exitPrice: number | null;
+  result: Direction | null;
+  phase: RoundPhase;
+  opensAt: string;
+  closesAt: string;
+  resolvesAt: string;
+  /** NPC simulated ratio: percentage that picked UP (0-100) */
+  upRatio: number;
+}
+
+export interface RoundPick {
+  roundId: string;
+  direction: Direction;
+  pickedAt: string;
+}
+
+export interface RoundResult {
+  roundId: string;
+  symbol: string;
+  symbolName: string;
+  direction: Direction;
+  result: Direction;
+  isCorrect: boolean;
+  score: number;
+  upRatio: number;
+  entryPrice: number;
+  exitPrice: number;
+  resolvedAt: string;
+}
+
+// ===== Score =====
 export interface UserStats {
-  totalPredictions: number;
+  totalRounds: number;
   wins: number;
   losses: number;
   winRate: number;
   currentStreak: number;
   maxStreak: number;
-  profitLoss: number;
-}
-
-// ===== Auth =====
-export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: User;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-// ===== Prediction =====
-export type Direction = "UP" | "DOWN";
-export type Timeframe = "1m" | "5m" | "1h" | "1d";
-export type PredictionResult = "PENDING" | "WIN" | "LOSE";
-
-export interface Prediction {
-  id: string;
-  userId: string;
-  symbol: string;
-  direction: Direction;
-  timeframe: Timeframe;
-  entryPrice: number;
-  exitPrice: number | null;
-  betAmount: number;
-  result: PredictionResult;
-  reward: number | null;
-  createdAt: string;
-  resolvedAt: string | null;
-  expiresAt: string;
-}
-
-export interface CreatePredictionRequest {
-  symbol: string;
-  direction: Direction;
-  timeframe: Timeframe;
-  betAmount: number;
+  totalScore: number;
 }
 
 // ===== Price =====
@@ -70,15 +70,6 @@ export interface PriceData {
   updatedAt: string;
 }
 
-export interface CandleData {
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-  timestamp: string;
-}
-
 // ===== Symbol =====
 export type SymbolCategory = "crypto" | "stock";
 
@@ -87,79 +78,18 @@ export interface SymbolInfo {
   name: string;
   nameKr: string;
   category: SymbolCategory;
-  price?: number;
-  change24h?: number;
 }
 
 // ===== Ranking =====
-export type RankingPeriod = "daily" | "weekly" | "monthly" | "all";
-
 export interface RankingEntry {
   rank: number;
   userId: string;
   nickname: string;
   avatarLevel: number;
+  totalScore: number;
+  wins: number;
+  totalRounds: number;
   winRate: number;
-  totalPredictions: number;
-  profit: number;
-}
-
-// ===== Transaction =====
-export type TransactionType = "BET" | "WIN" | "LOSE" | "BONUS" | "DAILY";
-
-export interface Transaction {
-  id: string;
-  type: TransactionType;
-  amount: number;
-  balanceAfter: number;
-  description: string | null;
-  createdAt: string;
-}
-
-// ===== API Response =====
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  meta: {
-    timestamp: string;
-    requestId: string;
-  };
-}
-
-export interface ApiError {
-  success: false;
-  error: {
-    code: string;
-    message: string;
-    details?: Record<string, unknown>;
-  };
-  meta: {
-    timestamp: string;
-    requestId: string;
-  };
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-// ===== WebSocket Events =====
-export interface PriceUpdateEvent {
-  symbol: string;
-  price: number;
-  change: number;
-  timestamp: string;
-}
-
-export interface PredictionResultEvent {
-  predictionId: string;
-  result: PredictionResult;
-  exitPrice: number;
-  reward: number;
-  balanceAfter: number;
 }
 
 // ===== Constants =====
@@ -184,23 +114,7 @@ export const AVATAR_LEVELS = [
   { level: 5, name: "전설의침팬지", emoji: "✨", minWins: 1000 },
 ];
 
-export const TIMEFRAME_LABELS: Record<Timeframe, string> = {
-  "1m": "1분",
-  "5m": "5분",
-  "1h": "1시간",
-  "1d": "1일",
-};
-
-export const TIMEFRAME_MS: Record<Timeframe, number> = {
-  "1m": 60_000,
-  "5m": 300_000,
-  "1h": 3_600_000,
-  "1d": 86_400_000,
-};
-
-export const BET_MULTIPLIER = 1.8;
-export const MIN_BET = 1;
-export const MAX_BET = 50;
-export const INITIAL_BANANA_COINS = 100;
-export const DAILY_BONUS = 10;
-export const GUEST_MAX_PREDICTIONS = 3;
+/** Demo round duration: 30s open + 5s resolution */
+export const ROUND_OPEN_MS = 30_000;
+export const ROUND_RESOLVE_DELAY_MS = 5_000;
+export const ROUND_BREAK_MS = 8_000;

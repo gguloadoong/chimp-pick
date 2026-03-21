@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Prediction } from "@/types";
-import { formatPrice, formatBanana } from "@/lib/format";
-import { BET_MULTIPLIER } from "@/types";
+import type { RoundResult } from "@/types";
+import { formatPrice } from "@/lib/format";
 import Button from "@/components/ui/Button";
 import ChimpCharacter from "@/components/character/ChimpCharacter";
 
@@ -28,23 +27,18 @@ function generateConfetti(count = 16): ConfettiParticle[] {
 }
 
 interface ResultOverlayProps {
-  prediction: Prediction;
+  result: RoundResult;
   onDismiss: () => void;
-  "data-testid"?: string;
 }
 
 export default function ResultOverlay({
-  prediction,
+  result,
   onDismiss,
-  "data-testid": testId,
 }: ResultOverlayProps) {
   const [confetti] = useState<ConfettiParticle[]>(() => generateConfetti(20));
   const [visible, setVisible] = useState(false);
 
-  const isWin = prediction.result === "WIN";
-  const reward = prediction.reward ?? Math.round(prediction.betAmount * BET_MULTIPLIER);
-  const entryPrice = prediction.entryPrice;
-  const exitPrice = prediction.exitPrice;
+  const isWin = result.isCorrect;
 
   useEffect(() => {
     const t = requestAnimationFrame(() => setVisible(true));
@@ -68,7 +62,7 @@ export default function ResultOverlay({
           70%  { transform: scale(1.15); }
           100% { transform: scale(1); opacity: 1; }
         }
-        @keyframes coin-bounce {
+        @keyframes score-bounce {
           0%, 100% { transform: translateY(0); }
           50%       { transform: translateY(-10px); }
         }
@@ -78,13 +72,13 @@ export default function ResultOverlay({
         .result-icon {
           animation: result-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
-        .coin-bounce {
-          animation: coin-bounce 0.8s ease-in-out infinite;
+        .score-bounce {
+          animation: score-bounce 0.8s ease-in-out infinite;
         }
       `}</style>
 
       <div
-        data-testid={testId ?? "result-overlay"}
+        data-testid="result-overlay"
         className={[
           "fixed inset-0 z-50 flex items-center justify-center",
           "transition-all duration-200",
@@ -93,7 +87,7 @@ export default function ResultOverlay({
         ].join(" ")}
         role="dialog"
         aria-modal="true"
-        aria-label={isWin ? "예측 승리" : "예측 패배"}
+        aria-label={isWin ? "예측 성공" : "예측 실패"}
         onClick={handleDismiss}
       >
         {/* Confetti (WIN only) */}
@@ -145,7 +139,7 @@ export default function ResultOverlay({
               isWin ? "text-up" : "text-down",
             ].join(" ")}
           >
-            {isWin ? "떡상 적중!" : "손절..."}
+            {isWin ? "적중!" : "빗나감..."}
           </h2>
 
           <p className="text-text-secondary text-sm mb-5 font-sans">
@@ -155,58 +149,64 @@ export default function ResultOverlay({
           </p>
 
           {/* Price comparison */}
-          {exitPrice !== null && (
-            <div
-              className={[
-                "rounded-2xl p-4 mb-4 text-sm border-2",
-                isWin
-                  ? "bg-up/8 border-up/20"
-                  : "bg-down/8 border-down/20",
-              ].join(" ")}
-            >
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-text-secondary font-sans">진입가</span>
-                <span className="text-text-primary font-mono tabular-nums font-semibold">
-                  {formatPrice(entryPrice)}원
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-text-secondary font-sans">청산가</span>
-                <span
-                  className={[
-                    "font-mono tabular-nums font-bold",
-                    isWin ? "text-up" : "text-down",
-                  ].join(" ")}
-                >
-                  {formatPrice(exitPrice)}원
-                </span>
-              </div>
-              <div className="mt-3 pt-3 border-t border-card-border flex justify-between items-center">
-                <span className="text-text-secondary font-sans">예측 방향</span>
-                <span
-                  className={[
-                    "font-semibold text-xs px-3 py-1 rounded-full border-2",
-                    prediction.direction === "UP"
-                      ? "bg-up/10 text-up border-up/30"
-                      : "bg-down/10 text-down border-down/30",
-                  ].join(" ")}
-                >
-                  {prediction.direction === "UP" ? "UP 🚀" : "DOWN 💀"}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Reward/loss display */}
           <div
             className={[
-              "text-4xl font-bold mb-6 coin-bounce font-mono",
+              "rounded-2xl p-4 mb-4 text-sm border-2",
+              isWin ? "bg-up/8 border-up/20" : "bg-down/8 border-down/20",
+            ].join(" ")}
+          >
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-text-secondary font-sans">종목</span>
+              <span className="text-text-primary font-sans font-semibold">
+                {result.symbolName}
+              </span>
+            </div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-text-secondary font-sans">진입가</span>
+              <span className="text-text-primary font-mono tabular-nums font-semibold">
+                {formatPrice(result.entryPrice)}원
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-text-secondary font-sans">결과가</span>
+              <span
+                className={[
+                  "font-mono tabular-nums font-bold",
+                  isWin ? "text-up" : "text-down",
+                ].join(" ")}
+              >
+                {formatPrice(result.exitPrice)}원
+              </span>
+            </div>
+            <div className="mt-3 pt-3 border-t border-card-border flex justify-between items-center">
+              <span className="text-text-secondary font-sans">내 예측</span>
+              <span
+                className={[
+                  "font-semibold text-xs px-3 py-1 rounded-full border-2",
+                  result.direction === "UP"
+                    ? "bg-up/10 text-up border-up/30"
+                    : "bg-down/10 text-down border-down/30",
+                ].join(" ")}
+              >
+                {result.direction === "UP" ? "UP 🚀" : "DOWN 💀"}
+              </span>
+            </div>
+            <div className="mt-2 flex justify-between items-center">
+              <span className="text-text-secondary font-sans">참여 비율</span>
+              <span className="text-xs text-text-secondary font-sans">
+                UP {result.upRatio}% / DOWN {100 - result.upRatio}%
+              </span>
+            </div>
+          </div>
+
+          {/* Score display */}
+          <div
+            className={[
+              "text-4xl font-bold mb-6 score-bounce font-mono",
               isWin ? "text-banana" : "text-down",
             ].join(" ")}
           >
-            {isWin
-              ? `+${formatBanana(reward)} 🍌`
-              : `-${formatBanana(prediction.betAmount)} 🍌`}
+            {isWin ? `+${result.score}점 🏆` : "0점"}
           </div>
 
           {/* Action button */}
@@ -217,7 +217,7 @@ export default function ResultOverlay({
             data-testid="result-dismiss-btn"
             onClick={handleDismiss}
           >
-            {isWin ? "다음 예측하기 🚀" : "복수하기 🔥"}
+            {isWin ? "다음 라운드 가즈아! 🚀" : "복수하기 🔥"}
           </Button>
         </div>
       </div>

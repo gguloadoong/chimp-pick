@@ -1,498 +1,385 @@
 "use client";
 
-import { useEffect, useCallback, useState, useMemo } from "react";
-import { ArrowUp, ArrowDown, Loader2 } from "lucide-react";
+import { useEffect, useCallback, useState } from "react";
+import { ArrowUp, ArrowDown, Trophy, Clock, Users } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
-import { onPriceUpdate, getPrice } from "@/lib/game-engine";
-import { formatPrice, formatBanana, formatChange } from "@/lib/format";
+import { getPrice, onPriceUpdate } from "@/lib/game-engine";
+import { formatPrice, formatChange } from "@/lib/format";
 import { useCountdown } from "@/hooks/useCountdown";
-import {
-  SYMBOLS,
-  TIMEFRAME_LABELS,
-  BET_MULTIPLIER,
-  MIN_BET,
-  MAX_BET,
-  type Prediction,
-} from "@/types";
-import { BananaCounter } from "@/components/ui";
-import SymbolSelector from "@/components/game/SymbolSelector";
+import type { RoundResult } from "@/types";
 import MiniChart from "@/components/game/MiniChart";
 import ResultOverlay from "@/components/game/ResultOverlay";
 import ChimpCharacter from "@/components/character/ChimpCharacter";
 
 const MAX_CHART_TICKS = 20;
-const FREE_BANANA_COOLDOWN_MS = 3600_000;
+
+type ChimpMood = "idle" | "thinking" | "up" | "down" | "win" | "lose";
 
 function getChimpMood(
-  activePrediction: { direction: string } | null,
-  isSubmitting: boolean,
-): "idle" | "thinking" | "up" | "down" {
-  if (isSubmitting) return "thinking";
-  if (activePrediction?.direction === "UP") return "up";
-  if (activePrediction?.direction === "DOWN") return "down";
+  pick: { direction: string } | null,
+  phase: string | undefined,
+): ChimpMood {
+  if (phase === "RESOLVED") return "thinking";
+  if (pick?.direction === "UP") return "up";
+  if (pick?.direction === "DOWN") return "down";
   return "idle";
 }
 
 export default function GamePage() {
   const {
-    selectedSymbol,
-    selectedTimeframe,
-    betAmount,
-    currentPrice,
-    activePrediction,
-    isSubmitting,
-    bananaCoins,
-    lastFreeBananaAt,
-    setSymbol,
-    setTimeframe,
-    setBetAmount,
-    refreshPrice,
-    submitPrediction,
-    checkAndResolve,
-    claimFreeBanana,
-    reset,
+    currentRound,
+    myPick,
+    totalScore,
+    roundHistory,
+    pickDirection,
+    resolveMyPick,
   } = useGameStore();
 
   const [priceTicks, setPriceTicks] = useState<number[]>([]);
-  const [resolvedPrediction, setResolvedPrediction] = useState<Prediction | null>(null);
-  const [priceMap, setPriceMap] = useState<Record<string, ReturnType<typeof getPrice>>>({});
+  const [resolvedResult, setResolvedResult] = useState<RoundResult | null>(null);
 
   const countdown = useCountdown(
-    activePrediction?.expiresAt ?? null,
-    activePrediction?.createdAt ?? null,
+    currentRound?.closesAt ?? null,
+    currentRound?.opensAt ?? null,
   );
 
-  // Subscribe to price updates from engine
+  // Track price ticks for current round's symbol
+  const roundId = currentRound?.id;
+  const roundSymbol = currentRound?.symbol;
+
   useEffect(() => {
+    if (!roundSymbol) return;
+
+    let first = true;
+
     const update = () => {
-      refreshPrice();
-      const price = getPrice(selectedSymbol.symbol);
+      const price = getPrice(roundSymbol);
       setPriceTicks((prev) => {
+        if (first) {
+          first = false;
+          return [price.price];
+        }
         const next = [...prev, price.price];
         return next.length > MAX_CHART_TICKS ? next.slice(-MAX_CHART_TICKS) : next;
       });
-      // Update all symbol prices for selector
-      const map: Record<string, ReturnType<typeof getPrice>> = {};
-      for (const s of SYMBOLS) {
-        map[s.symbol] = getPrice(s.symbol);
-      }
-      setPriceMap(map);
     };
 
-    update(); // initial
+    update();
     const unsub = onPriceUpdate(update);
     return unsub;
-  }, [selectedSymbol.symbol, refreshPrice]);
+  }, [roundId, roundSymbol]);
 
-  // Check and resolve active prediction
+  // Auto-resolve when round resolves
+  const roundPhase = currentRound?.phase;
+
   useEffect(() => {
-    if (!activePrediction) return;
+    if (roundPhase !== "RESOLVED" || !myPick) return;
 
-    const id = setInterval(() => {
-      const resolved = checkAndResolve();
-      if (resolved) {
-        setResolvedPrediction(resolved);
+    // Use microtask to avoid synchronous setState in effect
+    queueMicrotask(() => {
+      const result = resolveMyPick();
+      if (result) {
+        setResolvedResult(result);
       }
-    }, 500);
-
-    return () => clearInterval(id);
-  }, [activePrediction, checkAndResolve]);
-
-  const handleSymbolSelect = useCallback((sym: typeof SYMBOLS[0]) => {
-    setSymbol(sym);
-    setPriceTicks([]);
-  }, [setSymbol]);
-
-  const handlePredict = useCallback((direction: "UP" | "DOWN") => {
-    if (isSubmitting || activePrediction || bananaCoins < betAmount) return;
-
-    useGameStore.setState({ selectedDirection: direction, isSubmitting: true });
-    // Small delay for UI feedback
-    requestAnimationFrame(() => {
-      submitPrediction();
     });
-  }, [isSubmitting, activePrediction, bananaCoins, betAmount, submitPrediction]);
+  }, [roundPhase, myPick, resolveMyPick]);
+
+  const handlePick = useCallback((direction: "UP" | "DOWN") => {
+    pickDirection(direction);
+  }, [pickDirection]);
 
   const handleResultDismiss = useCallback(() => {
-    setResolvedPrediction(null);
-    reset();
-  }, [reset]);
+    setResolvedResult(null);
+  }, []);
 
-  // Free banana cooldown
-  const canClaimFree = useMemo(() => {
-    if (bananaCoins > 0) return false;
-    if (!lastFreeBananaAt) return true;
-    return new Date().getTime() - new Date(lastFreeBananaAt).getTime() >= FREE_BANANA_COOLDOWN_MS;
-  }, [bananaCoins, lastFreeBananaAt]);
+  const canPick = currentRound?.phase === "OPEN" && !myPick;
+  const chimpMood = getChimpMood(myPick, currentRound?.phase);
+  const currentPrice = currentRound ? getPrice(currentRound.symbol) : null;
 
-  const canPredict = !activePrediction && !isSubmitting && bananaCoins >= betAmount;
-  const potentialWin = Math.round(betAmount * BET_MULTIPLIER);
-  const chimpMood = getChimpMood(activePrediction, isSubmitting);
+  // UP/DOWN ratio display
+  const upPct = currentRound?.upRatio ?? 50;
+  const downPct = 100 - upPct;
+  const upScore = upPct > 0 && downPct > 0 ? Math.round(100 * (downPct / upPct)) : 100;
+  const downScore = upPct > 0 && downPct > 0 ? Math.round(100 * (upPct / downPct)) : 100;
+
+  // Last 5 results for mini history
+  const recentResults = roundHistory.slice(0, 5);
 
   return (
     <>
-      <div className="max-w-lg mx-auto px-4 pt-4 pb-6 flex flex-col gap-4">
+      <div className="max-w-lg mx-auto px-4 pt-4 pb-6 flex flex-col gap-3">
         {/* Header */}
         <div className="flex items-center justify-between" data-testid="game-header">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <ChimpCharacter
               mood={chimpMood}
-              size={44}
-              className={activePrediction ? "animate-bounce" : "animate-float"}
+              size={40}
+              className={myPick ? "animate-bounce" : "animate-float"}
             />
-            <span className="text-xl font-heading font-bold text-text-primary">
+            <span className="text-lg font-heading font-bold text-text-primary">
               침팬지픽
             </span>
           </div>
-          <BananaCounter balance={bananaCoins} data-testid="banana-counter" />
+          <div className="flex items-center gap-1.5 bg-banana/15 px-3 py-1.5 rounded-2xl border-2 border-banana/30">
+            <Trophy size={14} className="text-banana" />
+            <span className="font-mono font-bold text-banana tabular-nums text-sm">
+              {totalScore.toLocaleString()}
+            </span>
+            <span className="text-xs text-banana/70">점</span>
+          </div>
         </div>
 
-        {/* Free banana button */}
-        {canClaimFree && (
-          <button
-            onClick={claimFreeBanana}
-            className="w-full py-3 rounded-2xl border-2 border-banana bg-banana/10 text-banana font-bold text-sm font-sans clay-sm btn-clay animate-pulse"
-          >
-            무료 바나나 받기 (+20) 🍌
-          </button>
-        )}
-
-        {/* Symbol selector */}
-        <SymbolSelector
-          symbols={SYMBOLS}
-          selected={selectedSymbol}
-          priceMap={priceMap}
-          onSelect={handleSymbolSelect}
-          data-testid="symbol-selector"
-        />
-
-        {/* Price display area */}
-        <div
-          className="bg-white rounded-3xl p-4 flex flex-col gap-3 border-2 border-card-border clay"
-          data-testid="price-area"
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-text-secondary text-xs mb-1 font-sans">
-                {selectedSymbol.nameKr}
-              </p>
-              {currentPrice ? (
-                <>
-                  <p className="text-3xl font-bold font-mono tabular-nums text-text-primary">
-                    {formatPrice(currentPrice.price)}
-                    <span className="text-sm text-text-secondary ml-1">원</span>
-                  </p>
-                  <p
-                    className={[
-                      "text-sm font-semibold mt-0.5 font-sans",
-                      currentPrice.changePct24h >= 0 ? "text-up" : "text-down",
-                    ].join(" ")}
-                  >
-                    {formatChange(currentPrice.changePct24h)} (24h)
-                  </p>
-                </>
-              ) : (
-                <div className="flex items-center gap-2 text-text-secondary">
-                  <Loader2 size={16} className="animate-spin text-banana" />
-                  <span className="text-sm font-sans">가격 로딩 중...</span>
+        {/* Round Status Card */}
+        {currentRound && (
+          <div className="bg-white rounded-3xl p-4 border-2 border-card-border clay" data-testid="round-card">
+            {/* Round phase indicator */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className={[
+                  "w-2 h-2 rounded-full",
+                  currentRound.phase === "OPEN" ? "bg-up animate-pulse" :
+                  currentRound.phase === "CLOSED" ? "bg-banana animate-pulse" :
+                  currentRound.phase === "RESOLVED" ? "bg-down" : "bg-text-secondary",
+                ].join(" ")} />
+                <span className="text-xs font-semibold font-sans text-text-secondary">
+                  {currentRound.phase === "OPEN" && "예측 진행 중"}
+                  {currentRound.phase === "CLOSED" && "결과 계산 중..."}
+                  {currentRound.phase === "RESOLVED" && "결과 발표!"}
+                  {currentRound.phase === "WAITING" && "다음 라운드 준비 중"}
+                </span>
+              </div>
+              {currentRound.phase === "OPEN" && (
+                <div className="flex items-center gap-1 text-text-secondary">
+                  <Clock size={12} />
+                  <span className={[
+                    "font-mono tabular-nums text-sm font-bold",
+                    countdown.timeLeft < 10_000 ? "text-down animate-pulse" : "text-text-primary",
+                  ].join(" ")}>
+                    {countdown.formatted}
+                  </span>
                 </div>
               )}
             </div>
 
-            {currentPrice && (
-              <div className="text-right text-xs text-text-secondary space-y-1 font-sans">
-                <p>
-                  고가{" "}
-                  <span className="text-up font-mono tabular-nums font-semibold">
-                    {formatPrice(currentPrice.high24h)}
+            {/* Symbol + Price */}
+            <div className="flex items-start justify-between mb-2">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-banana/10 text-banana font-semibold font-sans border border-banana/20">
+                    {currentRound.category === "crypto" ? "🪙 코인" : "📈 주식"}
                   </span>
+                  <span className="text-sm font-semibold text-text-primary font-sans">
+                    {currentRound.symbolName}
+                  </span>
+                </div>
+                {currentPrice && (
+                  <>
+                    <p className="text-2xl font-bold font-mono tabular-nums text-text-primary">
+                      {formatPrice(currentPrice.price)}
+                      <span className="text-xs text-text-secondary ml-1">원</span>
+                    </p>
+                    <p className={[
+                      "text-xs font-semibold font-sans",
+                      currentPrice.changePct24h >= 0 ? "text-up" : "text-down",
+                    ].join(" ")}>
+                      {formatChange(currentPrice.changePct24h)}
+                    </p>
+                  </>
+                )}
+              </div>
+              <div className="text-right text-xs text-text-secondary font-sans">
+                <p>진입가</p>
+                <p className="font-mono tabular-nums font-semibold text-text-primary">
+                  {formatPrice(currentRound.entryPrice)}
                 </p>
-                <p>
-                  저가{" "}
-                  <span className="text-down font-mono tabular-nums font-semibold">
-                    {formatPrice(currentPrice.low24h)}
-                  </span>
+              </div>
+            </div>
+
+            {/* Mini chart */}
+            <MiniChart prices={priceTicks} height={64} className="mb-3" />
+
+            {/* Progress bar (time remaining) */}
+            {currentRound.phase === "OPEN" && (
+              <div className="w-full bg-card-border rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-banana transition-all duration-100"
+                  style={{ width: `${Math.max(0, Math.min(100, countdown.percentage))}%` }}
+                />
+              </div>
+            )}
+
+            {/* Resolved result display */}
+            {currentRound.phase === "RESOLVED" && currentRound.result && (
+              <div className={[
+                "mt-2 p-3 rounded-2xl text-center border-2",
+                currentRound.result === "UP"
+                  ? "bg-up/8 border-up/30"
+                  : "bg-down/8 border-down/30",
+              ].join(" ")}>
+                <p className="text-lg font-bold font-heading">
+                  결과: {currentRound.result === "UP" ? "📈 UP" : "📉 DOWN"}
+                </p>
+                <p className="text-xs text-text-secondary font-sans mt-1">
+                  {formatPrice(currentRound.entryPrice)} → {formatPrice(currentRound.exitPrice ?? 0)}
                 </p>
               </div>
             )}
-          </div>
-
-          {/* Mini chart */}
-          <MiniChart
-            prices={priceTicks}
-            height={72}
-            className="mt-1"
-            data-testid="mini-chart"
-          />
-        </div>
-
-        {/* Timeframe selector */}
-        <div
-          className="flex gap-2"
-          role="group"
-          aria-label="예측 시간대 선택"
-          data-testid="timeframe-selector"
-        >
-          {(Object.entries(TIMEFRAME_LABELS) as [keyof typeof TIMEFRAME_LABELS, string][]).map(
-            ([tf, label]) => {
-              const isActive = selectedTimeframe === tf;
-              return (
-                <button
-                  key={tf}
-                  data-testid={`timeframe-${tf}`}
-                  disabled={!!activePrediction}
-                  onClick={() => setTimeframe(tf)}
-                  className={[
-                    "flex-1 py-2 rounded-2xl text-sm font-semibold font-sans transition-all duration-150",
-                    "border-2 cursor-pointer select-none btn-clay",
-                    isActive
-                      ? "border-banana bg-banana/15 text-banana clay"
-                      : "border-card-border bg-white text-text-secondary hover:border-banana/40 hover:text-text-primary",
-                    activePrediction ? "opacity-50 cursor-not-allowed pointer-events-none" : "",
-                  ].join(" ")}
-                >
-                  {label}
-                </button>
-              );
-            }
-          )}
-        </div>
-
-        {/* Bet controls */}
-        <div
-          className="bg-white rounded-3xl p-4 flex flex-col gap-3 border-2 border-card-border clay"
-          data-testid="bet-controls"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-text-secondary font-sans font-semibold">베팅액</span>
-            <span className="text-sm text-banana font-bold font-sans">
-              이기면 +{formatBanana(potentialWin)} 🍌
-            </span>
-          </div>
-
-          {/* Amount display + quick buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              data-testid="bet-decrease"
-              onClick={() => setBetAmount(betAmount - 5)}
-              disabled={betAmount <= MIN_BET || !!activePrediction}
-              className={[
-                "w-10 h-10 rounded-2xl border-2 border-card-border bg-white text-text-primary",
-                "flex items-center justify-center text-xl font-bold clay-sm btn-clay",
-                "transition-all hover:border-banana hover:text-banana",
-                betAmount <= MIN_BET || activePrediction
-                  ? "opacity-40 cursor-not-allowed"
-                  : "cursor-pointer",
-              ].join(" ")}
-            >
-              −
-            </button>
-
-            <div className="flex-1 text-center">
-              <span
-                className="text-3xl font-bold font-mono text-banana tabular-nums"
-                data-testid="bet-amount-display"
-              >
-                {betAmount}
-              </span>
-              <span className="text-base text-text-secondary ml-1">🍌</span>
-            </div>
-
-            <button
-              data-testid="bet-increase"
-              onClick={() => setBetAmount(betAmount + 5)}
-              disabled={betAmount >= MAX_BET || !!activePrediction}
-              className={[
-                "w-10 h-10 rounded-2xl border-2 border-card-border bg-white text-text-primary",
-                "flex items-center justify-center text-xl font-bold clay-sm btn-clay",
-                "transition-all hover:border-banana hover:text-banana",
-                betAmount >= MAX_BET || activePrediction
-                  ? "opacity-40 cursor-not-allowed"
-                  : "cursor-pointer",
-              ].join(" ")}
-            >
-              +
-            </button>
-          </div>
-
-          {/* Slider */}
-          <input
-            type="range"
-            min={MIN_BET}
-            max={MAX_BET}
-            step={1}
-            value={betAmount}
-            disabled={!!activePrediction}
-            onChange={(e) => setBetAmount(Number(e.target.value))}
-            data-testid="bet-slider"
-            className="w-full accent-banana cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="베팅액 슬라이더"
-          />
-
-          {/* Quick bet buttons */}
-          <div className="flex gap-1.5">
-            {[1, 5, 10, 25, 50].map((val) => (
-              <button
-                key={val}
-                onClick={() => setBetAmount(val)}
-                disabled={!!activePrediction}
-                className={[
-                  "flex-1 py-1.5 rounded-xl text-xs font-bold font-sans border-2 transition-all btn-clay",
-                  betAmount === val
-                    ? "border-banana text-banana bg-banana/12 clay-sm"
-                    : "border-card-border text-text-secondary bg-white hover:border-banana/40",
-                  activePrediction ? "opacity-40 cursor-not-allowed pointer-events-none" : "cursor-pointer",
-                ].join(" ")}
-              >
-                {val}
-              </button>
-            ))}
-          </div>
-
-          {/* Insufficient balance warning */}
-          {bananaCoins < betAmount && (
-            <p className="text-xs text-down text-center font-sans font-semibold" role="alert">
-              바나나코인이 부족해요 🍌
-            </p>
-          )}
-        </div>
-
-        {/* Active prediction banner */}
-        {activePrediction && (
-          <div
-            className={[
-              "rounded-3xl p-4 border-2",
-              activePrediction.direction === "UP"
-                ? "bg-white border-up/40 clay-up"
-                : "bg-white border-down/40 clay-down",
-            ].join(" ")}
-            data-testid="active-prediction-banner"
-            role="status"
-            aria-live="polite"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xl animate-bounce">
-                  {activePrediction.direction === "UP" ? "🚀" : "💀"}
-                </span>
-                <span
-                  className={[
-                    "font-bold text-sm font-sans",
-                    activePrediction.direction === "UP" ? "text-up" : "text-down",
-                  ].join(" ")}
-                >
-                  {activePrediction.direction} 예측 진행 중
-                </span>
-              </div>
-              <Loader2 size={16} className="animate-spin text-text-secondary" />
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-xs text-center mb-3">
-              <div>
-                <p className="text-text-secondary mb-0.5 font-sans">진입가</p>
-                <p className="font-mono text-text-primary tabular-nums font-semibold">
-                  {formatPrice(activePrediction.entryPrice)}
-                </p>
-              </div>
-              <div>
-                <p className="text-text-secondary mb-0.5 font-sans">베팅</p>
-                <p className="font-mono text-banana tabular-nums font-bold">
-                  {activePrediction.betAmount} 🍌
-                </p>
-              </div>
-              <div>
-                <p className="text-text-secondary mb-0.5 font-sans">남은 시간</p>
-                <p
-                  className={[
-                    "font-mono tabular-nums font-bold",
-                    countdown.timeLeft < 10_000 ? "text-down animate-pulse" : "text-text-primary",
-                  ].join(" ")}
-                >
-                  {countdown.formatted}
-                </p>
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            <div className="w-full bg-card-border rounded-full h-2 overflow-hidden">
-              <div
-                className={[
-                  "h-full rounded-full transition-all duration-100",
-                  activePrediction.direction === "UP" ? "bg-up" : "bg-down",
-                ].join(" ")}
-                style={{ width: `${Math.max(0, Math.min(100, countdown.percentage))}%` }}
-                role="progressbar"
-                aria-valuenow={Math.round(countdown.percentage)}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              />
-            </div>
           </div>
         )}
 
-        {/* UP / DOWN buttons */}
-        <div className="grid grid-cols-2 gap-3" data-testid="prediction-buttons">
+        {/* Ratio gauge */}
+        {currentRound && (currentRound.phase === "OPEN" || currentRound.phase === "CLOSED") && (
+          <div className="bg-white rounded-3xl p-4 border-2 border-card-border clay" data-testid="ratio-gauge">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-1">
+                <Users size={12} className="text-text-secondary" />
+                <span className="text-xs text-text-secondary font-sans font-semibold">참여 비율</span>
+              </div>
+              <span className="text-xs text-banana font-sans font-semibold">
+                소수파 보너스 적용!
+              </span>
+            </div>
+            {/* Gauge bar */}
+            <div className="flex rounded-2xl overflow-hidden h-10 border-2 border-card-border">
+              <div
+                className="bg-up/20 flex items-center justify-center transition-all duration-500"
+                style={{ width: `${upPct}%` }}
+              >
+                <span className="text-up font-bold text-sm font-sans">
+                  UP {upPct}%
+                </span>
+              </div>
+              <div
+                className="bg-down/20 flex items-center justify-center transition-all duration-500"
+                style={{ width: `${downPct}%` }}
+              >
+                <span className="text-down font-bold text-sm font-sans">
+                  DOWN {downPct}%
+                </span>
+              </div>
+            </div>
+            <p className="text-xs text-text-secondary text-center mt-2 font-sans">
+              적은 쪽을 맞추면 더 높은 점수!
+            </p>
+          </div>
+        )}
+
+        {/* Pick buttons */}
+        <div className="grid grid-cols-2 gap-3" data-testid="pick-buttons">
           <button
             data-testid="btn-up"
-            disabled={!canPredict || isSubmitting}
-            onClick={() => handlePredict("UP")}
+            disabled={!canPick}
+            onClick={() => handlePick("UP")}
             className={[
-              "flex flex-col items-center justify-center gap-2 py-6 rounded-3xl",
-              "border-4 border-up bg-white text-up font-bold text-xl font-sans",
-              "transition-all duration-150 select-none clay-up btn-clay",
-              "hover:bg-up/8",
-              !canPredict || isSubmitting
-                ? "opacity-50 cursor-not-allowed pointer-events-none"
-                : "cursor-pointer",
+              "flex flex-col items-center justify-center gap-2 py-5 rounded-3xl",
+              "border-4 font-bold text-xl font-sans transition-all duration-150 select-none btn-clay",
+              myPick?.direction === "UP"
+                ? "border-up bg-up/15 text-up clay-up scale-105"
+                : "border-up bg-white text-up clay-up hover:bg-up/8",
+              !canPick && !myPick
+                ? "opacity-40 cursor-not-allowed pointer-events-none"
+                : myPick && myPick.direction !== "UP"
+                  ? "opacity-30 pointer-events-none"
+                  : "cursor-pointer",
             ].join(" ")}
             aria-label="UP 예측"
           >
-            {isSubmitting ? (
-              <Loader2 size={32} className="animate-spin" />
-            ) : (
-              <ArrowUp size={32} strokeWidth={3} aria-hidden="true" />
+            <ArrowUp size={28} strokeWidth={3} />
+            <span className="text-base font-heading font-bold tracking-wide">UP 🚀</span>
+            {canPick && (
+              <span className="text-xs font-sans text-up/70">
+                {upPct < 50 ? `🔥 ${upScore}점` : `${upScore}점`}
+              </span>
             )}
-            <span className="text-lg font-heading font-bold tracking-wide">UP 🚀</span>
           </button>
 
           <button
             data-testid="btn-down"
-            disabled={!canPredict || isSubmitting}
-            onClick={() => handlePredict("DOWN")}
+            disabled={!canPick}
+            onClick={() => handlePick("DOWN")}
             className={[
-              "flex flex-col items-center justify-center gap-2 py-6 rounded-3xl",
-              "border-4 border-down bg-white text-down font-bold text-xl font-sans",
-              "transition-all duration-150 select-none clay-down btn-clay",
-              "hover:bg-down/8",
-              !canPredict || isSubmitting
-                ? "opacity-50 cursor-not-allowed pointer-events-none"
-                : "cursor-pointer",
+              "flex flex-col items-center justify-center gap-2 py-5 rounded-3xl",
+              "border-4 font-bold text-xl font-sans transition-all duration-150 select-none btn-clay",
+              myPick?.direction === "DOWN"
+                ? "border-down bg-down/15 text-down clay-down scale-105"
+                : "border-down bg-white text-down clay-down hover:bg-down/8",
+              !canPick && !myPick
+                ? "opacity-40 cursor-not-allowed pointer-events-none"
+                : myPick && myPick.direction !== "DOWN"
+                  ? "opacity-30 pointer-events-none"
+                  : "cursor-pointer",
             ].join(" ")}
             aria-label="DOWN 예측"
           >
-            {isSubmitting ? (
-              <Loader2 size={32} className="animate-spin" />
-            ) : (
-              <ArrowDown size={32} strokeWidth={3} aria-hidden="true" />
+            <ArrowDown size={28} strokeWidth={3} />
+            <span className="text-base font-heading font-bold tracking-wide">DOWN 💀</span>
+            {canPick && (
+              <span className="text-xs font-sans text-down/70">
+                {downPct < 50 ? `🔥 ${downScore}점` : `${downScore}점`}
+              </span>
             )}
-            <span className="text-lg font-heading font-bold tracking-wide">DOWN 💀</span>
           </button>
         </div>
 
-        {/* Current symbol info footer */}
+        {/* My pick banner */}
+        {myPick && currentRound?.phase === "OPEN" && (
+          <div
+            className={[
+              "rounded-2xl p-3 border-2 text-center",
+              myPick.direction === "UP"
+                ? "bg-up/8 border-up/30 text-up"
+                : "bg-down/8 border-down/30 text-down",
+            ].join(" ")}
+            role="status"
+            aria-live="polite"
+          >
+            <p className="font-bold font-sans text-sm">
+              {myPick.direction === "UP" ? "🚀" : "💀"} {myPick.direction} 선택 완료! 결과를 기다리는 중...
+            </p>
+          </div>
+        )}
+
+        {/* Recent results */}
+        {recentResults.length > 0 && (
+          <div className="bg-white rounded-3xl p-4 border-2 border-card-border clay">
+            <p className="text-xs font-semibold text-text-secondary font-sans mb-2">최근 결과</p>
+            <div className="flex gap-2">
+              {recentResults.map((r) => (
+                <div
+                  key={r.roundId}
+                  className={[
+                    "flex-1 py-2 px-1 rounded-xl text-center border",
+                    r.isCorrect
+                      ? "bg-up/8 border-up/20"
+                      : "bg-down/8 border-down/20",
+                  ].join(" ")}
+                >
+                  <p className="text-sm font-bold font-sans">
+                    {r.isCorrect ? "✅" : "❌"}
+                  </p>
+                  <p className={[
+                    "text-xs font-mono font-bold tabular-nums",
+                    r.isCorrect ? "text-up" : "text-down",
+                  ].join(" ")}>
+                    {r.isCorrect ? `+${r.score}` : "0"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Footer info */}
         <p className="text-center text-xs text-text-secondary font-sans">
-          {selectedSymbol.nameKr} ({selectedSymbol.symbol}) ·{" "}
-          {TIMEFRAME_LABELS[selectedTimeframe]} 예측 ·{" "}
-          배당률 {BET_MULTIPLIER}x
+          30초마다 새 라운드 · 소수파 보너스 최대 5배 · 적게 고른 쪽이 이기면 대박!
         </p>
       </div>
 
       {/* Result overlay */}
-      {resolvedPrediction && resolvedPrediction.result !== "PENDING" && (
+      {resolvedResult && (
         <ResultOverlay
-          prediction={resolvedPrediction}
+          result={resolvedResult}
           onDismiss={handleResultDismiss}
-          data-testid="result-overlay"
         />
       )}
     </>

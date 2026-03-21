@@ -29,11 +29,13 @@ function generateConfetti(count = 16): ConfettiParticle[] {
 interface ResultOverlayProps {
   result: RoundResult;
   onDismiss: () => void;
+  onShare?: () => void;
 }
 
 export default function ResultOverlay({
   result,
   onDismiss,
+  onShare,
 }: ResultOverlayProps) {
   const [confetti] = useState<ConfettiParticle[]>(() => generateConfetti(20));
   const [phase, setPhase] = useState<"drumroll" | "reveal" | "show">("drumroll");
@@ -264,15 +266,27 @@ export default function ResultOverlay({
           </div>
 
           {/* Action button */}
-          <Button
-            variant={isWin ? "primary" : "down"}
-            size="lg"
-            className="w-full btn-clay"
-            data-testid="result-dismiss-btn"
-            onClick={handleDismiss}
-          >
-            {isWin ? "다음 라운드 가즈아! 🚀" : "복수하기 🔥"}
-          </Button>
+          <div className="flex gap-2">
+            {onShare && (
+              <Button
+                variant="outline"
+                size="lg"
+                className="flex-1 btn-clay"
+                onClick={() => { handleDismiss(); onShare(); }}
+              >
+                공유 📤
+              </Button>
+            )}
+            <Button
+              variant={isWin ? "primary" : "down"}
+              size="lg"
+              className="flex-1 btn-clay"
+              data-testid="result-dismiss-btn"
+              onClick={handleDismiss}
+            >
+              {isWin ? "다음 라운드! 🚀" : "복수하기 🔥"}
+            </Button>
+          </div>
         </div>}
       </div>
     </>

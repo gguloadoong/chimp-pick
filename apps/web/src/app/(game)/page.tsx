@@ -12,6 +12,7 @@ import { AVATAR_LEVELS } from "@/types";
 import type { RoundResult } from "@/types";
 import MiniChart from "@/components/game/MiniChart";
 import ResultOverlay from "@/components/game/ResultOverlay";
+import ShareCard from "@/components/game/ShareCard";
 import Onboarding from "@/components/game/Onboarding";
 import ChimpCharacter from "@/components/character/ChimpCharacter";
 
@@ -73,6 +74,14 @@ export default function GamePage() {
 
   const [priceTicks, setPriceTicks] = useState<number[]>([]);
   const [resolvedResult, setResolvedResult] = useState<RoundResult | null>(null);
+  const [shareResult, setShareResult] = useState<RoundResult | null>(null);
+
+  const checkAttendance = useGameStore((s) => s.checkAttendance);
+
+  // Check daily attendance on mount
+  useEffect(() => {
+    checkAttendance();
+  }, [checkAttendance]);
 
   const countdown = useCountdown(
     currentRound?.closesAt ?? null,
@@ -560,6 +569,17 @@ export default function GamePage() {
         <ResultOverlay
           result={resolvedResult}
           onDismiss={handleResultDismiss}
+          onShare={() => setShareResult(resolvedResult)}
+        />
+      )}
+
+      {/* Share card */}
+      {shareResult && (
+        <ShareCard
+          result={shareResult}
+          totalScore={totalScore}
+          level={avatarLevel.level}
+          onClose={() => setShareResult(null)}
         />
       )}
 

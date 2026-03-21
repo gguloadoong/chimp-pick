@@ -3,7 +3,7 @@
 import { useEffect, useCallback, useState, useMemo } from "react";
 import { ArrowUp, ArrowDown, Trophy, Clock, Users, Flame, Star, Settings, Volume2, VolumeX } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
-import { useSettingsStore, ROUND_DURATION_LABELS, type RoundDuration } from "@/stores/settingsStore";
+import { useSettingsStore, ROUND_DURATION_LABELS, type RoundDuration, type ThemeMode } from "@/stores/settingsStore";
 import { getPrice, onPriceUpdate, computeStats, setRoundDuration } from "@/lib/game-engine";
 import { playPickSound, playDrumroll, playWinSound, playLoseSound } from "@/lib/sound";
 import { formatPrice, formatChange } from "@/lib/format";
@@ -50,6 +50,8 @@ export default function GamePage() {
     setRoundDuration: setDuration,
     toggleSound,
     markOnboardingSeen,
+    theme,
+    setTheme,
   } = useSettingsStore();
 
   const [showSettings, setShowSettings] = useState(false);
@@ -63,6 +65,11 @@ export default function GamePage() {
   useEffect(() => {
     setRoundDuration(roundDuration);
   }, [roundDuration]);
+
+  // Apply theme on mount
+  useEffect(() => {
+    setTheme(theme);
+  }, []);
 
   const stats = useMemo(() => computeStats(roundHistory), [roundHistory]);
 
@@ -220,6 +227,25 @@ export default function GamePage() {
                       ].join(" ")}
                     >
                       {ROUND_DURATION_LABELS[d]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-text-secondary font-sans mb-1.5">테마</p>
+                <div className="flex gap-2">
+                  {(["light", "dark", "system"] as ThemeMode[]).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setTheme(t)}
+                      className={[
+                        "flex-1 py-2 rounded-2xl text-xs font-bold font-sans border-2 transition-all btn-clay",
+                        theme === t
+                          ? "border-banana text-banana bg-banana/12 clay-sm"
+                          : "border-card-border text-text-secondary bg-white hover:border-banana/40",
+                      ].join(" ")}
+                    >
+                      {t === "light" ? "☀️ 라이트" : t === "dark" ? "🌙 다크" : "🖥️ 시스템"}
                     </button>
                   ))}
                 </div>

@@ -24,8 +24,9 @@ const nunito = Nunito({
 
 export const metadata: Metadata = {
   title: "침팬지픽 — 주식/코인 Up/Down 예측 배틀",
-  description: "바나나코인으로 베팅하는 주식·코인 등락 예측 소셜 배틀 게임",
+  description: "주식·코인·상식 UP/DOWN 예측 배틀! 소수파 보너스로 고득점을 노려보세요.",
   icons: { icon: "/favicon.ico" },
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {

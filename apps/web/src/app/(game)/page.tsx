@@ -99,6 +99,8 @@ export default function GamePage() {
   // UP/DOWN ratio display
   const upPct = currentRound?.upRatio ?? 50;
   const downPct = 100 - upPct;
+  const upScore = upPct > 0 && downPct > 0 ? Math.round(100 * (downPct / upPct)) : 100;
+  const downScore = upPct > 0 && downPct > 0 ? Math.round(100 * (upPct / downPct)) : 100;
 
   // Last 5 results for mini history
   const recentResults = roundHistory.slice(0, 5);
@@ -286,7 +288,7 @@ export default function GamePage() {
             <span className="text-base font-heading font-bold tracking-wide">UP 🚀</span>
             {canPick && (
               <span className="text-xs font-sans text-up/70">
-                {upPct < 50 ? `🔥 ${Math.round(100 * (downPct / upPct))}점` : `${Math.round(100 * (downPct / upPct))}점`}
+                {upPct < 50 ? `🔥 ${upScore}점` : `${upScore}점`}
               </span>
             )}
           </button>
@@ -313,7 +315,7 @@ export default function GamePage() {
             <span className="text-base font-heading font-bold tracking-wide">DOWN 💀</span>
             {canPick && (
               <span className="text-xs font-sans text-down/70">
-                {downPct < 50 ? `🔥 ${Math.round(100 * (upPct / downPct))}점` : `${Math.round(100 * (upPct / downPct))}점`}
+                {downPct < 50 ? `🔥 ${downScore}점` : `${downScore}점`}
               </span>
             )}
           </button>

@@ -53,9 +53,10 @@ export const useGameStore = create<GameState>()(
       },
 
       resolveMyPick: () => {
-        const { currentRound, myPick } = get();
+        const { currentRound, myPick, roundHistory } = get();
         if (!currentRound || !myPick || currentRound.phase !== "RESOLVED") return null;
         if (!currentRound.result || currentRound.exitPrice === null) return null;
+        if (roundHistory.some((r) => r.roundId === currentRound.id)) return null;
 
         const isCorrect = myPick.direction === currentRound.result;
         const score = calculateScore(

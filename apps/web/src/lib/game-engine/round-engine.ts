@@ -108,7 +108,7 @@ function resolveRound() {
   // Schedule next round after break
   roundTimer = setTimeout(() => {
     transitionTo("WAITING");
-    setTimeout(() => {
+    roundTimer = setTimeout(() => {
       startNewRound();
     }, 500);
   }, ROUND_BREAK_MS);
@@ -133,6 +133,7 @@ export function startRoundEngine(): () => void {
       roundTimer = null;
     }
     currentRound = null;
+    listeners.clear();
   };
 }
 

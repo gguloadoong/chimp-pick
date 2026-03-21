@@ -4,7 +4,6 @@
  */
 
 import {
-  SYMBOLS,
   ROUND_RESOLVE_DELAY_MS,
   ROUND_BREAK_MS,
   type Round,
@@ -12,6 +11,7 @@ import {
   type Direction,
 } from "@/types";
 import { getPrice } from "./price-engine";
+import { generateQuestion, resolveQuestion } from "./question-provider";
 
 let currentRound: Round | null = null;
 let roundTimer: ReturnType<typeof setTimeout> | null = null;
@@ -20,12 +20,6 @@ let configuredOpenMs = 30_000;
 
 function generateId(): string {
   return crypto.randomUUID();
-}
-
-/** Pick a random symbol for the next round */
-function pickRandomSymbol() {
-  const idx = Math.floor(Math.random() * SYMBOLS.length);
-  return SYMBOLS[idx];
 }
 
 /** Generate NPC up ratio (40-75% range, slight bias toward 55%) */
@@ -49,16 +43,19 @@ function transitionTo(phase: RoundPhase) {
 
 /** Start a new round */
 function startNewRound() {
-  const symbol = pickRandomSymbol();
-  const price = getPrice(symbol.symbol);
+  const question = generateQuestion();
   const now = Date.now();
+
+  const entryPrice = question.symbol
+    ? getPrice(question.symbol).price
+    : 0;
 
   currentRound = {
     id: generateId(),
-    symbol: symbol.symbol,
-    symbolName: symbol.nameKr,
-    category: symbol.category,
-    entryPrice: price.price,
+    symbol: question.symbol ?? "",
+    symbolName: question.symbolName ?? "",
+    category: question.symbol ? (question.symbol.includes("-") ? "crypto" : "stock") : "crypto",
+    entryPrice,
     exitPrice: null,
     result: null,
     phase: "OPEN",
@@ -66,6 +63,13 @@ function startNewRound() {
     closesAt: new Date(now + configuredOpenMs).toISOString(),
     resolvesAt: new Date(now + configuredOpenMs + ROUND_RESOLVE_DELAY_MS).toISOString(),
     upRatio: generateNpcRatio(),
+    questionCategory: question.category,
+    questionEmoji: question.categoryEmoji,
+    questionLabel: question.categoryLabel,
+    questionTitle: question.title,
+    questionDesc: question.description,
+    optionA: question.optionA,
+    optionB: question.optionB,
   };
 
   notify(currentRound);
@@ -92,9 +96,28 @@ function closeRound() {
 function resolveRound() {
   if (!currentRound || currentRound.phase !== "CLOSED") return;
 
-  const price = getPrice(currentRound.symbol);
-  const exitPrice = price.price;
-  const result: Direction = exitPrice >= currentRound.entryPrice ? "UP" : "DOWN";
+  let exitPrice: number;
+  let result: Direction;
+
+  if (currentRound.questionCategory === "price" && currentRound.symbol) {
+    const price = getPrice(currentRound.symbol);
+    exitPrice = price.price;
+    result = exitPrice >= currentRound.entryPrice ? "UP" : "DOWN";
+  } else {
+    // Fun/trivia: resolve via question provider (random)
+    const qResult = resolveQuestion({
+      id: currentRound.id,
+      category: currentRound.questionCategory,
+      categoryLabel: currentRound.questionLabel,
+      categoryEmoji: currentRound.questionEmoji,
+      title: currentRound.questionTitle,
+      description: currentRound.questionDesc,
+      optionA: currentRound.optionA,
+      optionB: currentRound.optionB,
+    });
+    exitPrice = 0;
+    result = qResult.answer === "A" ? "UP" : "DOWN";
+  }
 
   currentRound = {
     ...currentRound,

@@ -19,6 +19,9 @@ export { calculateScore, computeStats } from "./score-engine";
 
 export { getRankings } from "./mock-rankings";
 
+export { generateQuestion, resolveQuestion } from "./question-provider";
+export type { Question, QuestionResult } from "./question-provider";
+
 export {
   generateDailyMissions,
   needsReset,

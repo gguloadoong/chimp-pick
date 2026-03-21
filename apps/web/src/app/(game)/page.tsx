@@ -266,38 +266,33 @@ export default function GamePage() {
               )}
             </div>
 
-            {/* Symbol + Price */}
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-banana/10 text-banana font-semibold font-sans border border-banana/20">
-                    {currentRound.category === "crypto" ? "🪙 코인" : "📈 주식"}
-                  </span>
-                  <span className="text-sm font-semibold text-text-primary font-sans">
-                    {currentRound.symbolName}
-                  </span>
+            {/* Question display */}
+            <div className="mb-2">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-banana/10 text-banana font-semibold font-sans border border-banana/20">
+                  {currentRound.questionEmoji} {currentRound.questionLabel}
+                </span>
+              </div>
+              <p className="text-lg font-heading font-bold text-text-primary mb-1">
+                {currentRound.questionTitle}
+              </p>
+              <p className="text-xs text-text-secondary font-sans">
+                {currentRound.questionDesc}
+              </p>
+              {currentRound.questionCategory === "price" && currentPrice && (
+                <div className="flex items-end justify-between mt-2">
+                  <p className="text-2xl font-bold font-mono tabular-nums text-text-primary">
+                    {formatPrice(currentPrice.price)}
+                    <span className="text-xs text-text-secondary ml-1">원</span>
+                  </p>
+                  <p className={[
+                    "text-xs font-semibold font-sans",
+                    currentPrice.changePct24h >= 0 ? "text-up" : "text-down",
+                  ].join(" ")}>
+                    {formatChange(currentPrice.changePct24h)}
+                  </p>
                 </div>
-                {currentPrice && (
-                  <>
-                    <p className="text-2xl font-bold font-mono tabular-nums text-text-primary">
-                      {formatPrice(currentPrice.price)}
-                      <span className="text-xs text-text-secondary ml-1">원</span>
-                    </p>
-                    <p className={[
-                      "text-xs font-semibold font-sans",
-                      currentPrice.changePct24h >= 0 ? "text-up" : "text-down",
-                    ].join(" ")}>
-                      {formatChange(currentPrice.changePct24h)}
-                    </p>
-                  </>
-                )}
-              </div>
-              <div className="text-right text-xs text-text-secondary font-sans">
-                <p>진입가</p>
-                <p className="font-mono tabular-nums font-semibold text-text-primary">
-                  {formatPrice(currentRound.entryPrice)}
-                </p>
-              </div>
+              )}
             </div>
 
             {/* Mini chart */}
@@ -390,7 +385,9 @@ export default function GamePage() {
             aria-label="UP 예측"
           >
             <ArrowUp size={28} strokeWidth={3} />
-            <span className="text-base font-heading font-bold tracking-wide">UP 🚀</span>
+            <span className="text-base font-heading font-bold tracking-wide">
+              {currentRound?.optionA ?? "UP 🚀"}
+            </span>
             {canPick && (
               <span className="text-xs font-sans text-up/70">
                 {upPct < 50 ? `🔥 ${upScore}점` : `${upScore}점`}
@@ -417,7 +414,9 @@ export default function GamePage() {
             aria-label="DOWN 예측"
           >
             <ArrowDown size={28} strokeWidth={3} />
-            <span className="text-base font-heading font-bold tracking-wide">DOWN 💀</span>
+            <span className="text-base font-heading font-bold tracking-wide">
+              {currentRound?.optionB ?? "DOWN 💀"}
+            </span>
             {canPick && (
               <span className="text-xs font-sans text-down/70">
                 {downPct < 50 ? `🔥 ${downScore}점` : `${downScore}점`}

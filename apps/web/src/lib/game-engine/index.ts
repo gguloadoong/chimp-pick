@@ -12,6 +12,7 @@ export {
   startRoundEngine,
   onRoundUpdate,
   getCurrentRound,
+  setRoundDuration,
 } from "./round-engine";
 
 export { calculateScore, computeStats } from "./score-engine";

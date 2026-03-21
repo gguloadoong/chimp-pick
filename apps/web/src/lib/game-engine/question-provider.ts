@@ -47,6 +47,18 @@ const FUN_QUESTIONS: Omit<Question, "id" | "category" | "categoryLabel" | "categ
   { title: "내일 서울 날씨는?", description: "기상캐스터 침팬지의 예측!", optionA: "맑음 ☀️", optionB: "흐림/비 🌧️" },
   { title: "이번 주말 뭐 먹을까?", description: "대한민국 주말 메뉴 예측", optionA: "치킨 🍗", optionB: "피자 🍕" },
   { title: "오늘 운동할 사람이 더 많을까?", description: "헬스장 vs 소파 대결", optionA: "운동한다 💪", optionB: "쉰다 🛋️" },
+  { title: "지금 유튜브 보는 사람이 더 많을까?", description: "세계인의 여가 예측", optionA: "유튜브 중 📺", optionB: "다른 거 중 📱" },
+  { title: "오늘 비가 올까?", description: "침팬지 기상청", optionA: "비 온다 🌧️", optionB: "안 온다 ☀️" },
+  { title: "다음 라운드 점수가 100 이상일까?", description: "메타 예측!", optionA: "100 이상", optionB: "100 미만" },
+  { title: "지금 잠자는 사람이 더 많을까?", description: "전 세계 수면 예측", optionA: "자는 중 😴", optionB: "깨어있는 중 ⚡" },
+  { title: "오늘 라면 먹은 사람이 더 많을까?", description: "한국인 식사 예측", optionA: "라면 먹었다 🍜", optionB: "안 먹었다 🍚" },
+  { title: "이번 달 월급이 충분할까?", description: "월말 재정 예측", optionA: "충분하다 💰", optionB: "부족하다 😭" },
+  { title: "지금 이 앱 켜고 있는 사람이 100명 넘을까?", description: "동시접속 예측!", optionA: "넘는다 🔥", optionB: "안 넘는다 😅" },
+  { title: "오늘 좋은 일이 생길까?", description: "운세 예측!", optionA: "좋은 일 온다 ✨", optionB: "평범한 하루 😐" },
+  { title: "고양이 vs 강아지, 뭐가 더 인기?", description: "영원한 논쟁", optionA: "고양이 🐱", optionB: "강아지 🐶" },
+  { title: "아이스크림 vs 붕어빵?", description: "간식 대결", optionA: "아이스크림 🍦", optionB: "붕어빵 🐟" },
+  { title: "다음 주에 주식시장이 오를까?", description: "시장 전망 예측", optionA: "상승 📈", optionB: "하락 📉" },
+  { title: "오늘 만보 걸은 사람이 더 많을까?", description: "건강 예측", optionA: "걸었다 🚶", optionB: "못 걸었다 🛋️" },
 ];
 
 // ── Trivia questions pool ──
@@ -59,6 +71,18 @@ const TRIVIA_QUESTIONS: Omit<Question, "id" | "category" | "categoryLabel" | "ca
   { title: "세계에서 가장 많이 마시는 음료는 물일까?", description: "음료 상식!", optionA: "물이다", optionB: "차(茶)다" },
   { title: "에베레스트는 아직도 높아지고 있을까?", description: "지구과학 상식!", optionA: "높아지는 중", optionB: "그대로" },
   { title: "금보다 비싼 금속이 있을까?", description: "경제 상식!", optionA: "있다", optionB: "없다" },
+  { title: "인간의 뼈는 200개 이상일까?", description: "인체 상식!", optionA: "200개 이상", optionB: "200개 미만" },
+  { title: "바나나는 사실 베리(berry)일까?", description: "식물 상식!", optionA: "맞다, 베리다 🍌", optionB: "아니다" },
+  { title: "해가 뜨는 건 지구가 도는 것일까?", description: "과학 상식!", optionA: "지구가 돈다 🌍", optionB: "해가 돈다 ☀️" },
+  { title: "세계 인구는 80억 넘었을까?", description: "인구 상식!", optionA: "넘었다", optionB: "아직" },
+  { title: "한국 최초의 우주인은 여성일까?", description: "한국 상식!", optionA: "여성이다", optionB: "남성이다" },
+  { title: "지구의 바다가 육지보다 넓을까?", description: "지리 상식!", optionA: "바다가 넓다 🌊", optionB: "육지가 넓다 🏔️" },
+  { title: "1년은 정확히 365일일까?", description: "시간 상식!", optionA: "정확히 365일", optionB: "365일이 아니다" },
+  { title: "토마토는 과일일까 채소일까?", description: "음식 상식!", optionA: "과일이다 🍅", optionB: "채소다 🥬" },
+  { title: "달에도 중력이 있을까?", description: "우주 상식!", optionA: "있다 🌙", optionB: "없다" },
+  { title: "한국에서 가장 긴 강은 한강일까?", description: "한국 지리!", optionA: "한강이다", optionB: "다른 강이다" },
+  { title: "초콜릿의 원료 카카오는 아프리카산이 가장 많을까?", description: "음식 상식!", optionA: "아프리카가 1위", optionB: "남미가 1위" },
+  { title: "상어는 공룡보다 먼저 존재했을까?", description: "생물 상식!", optionA: "상어가 먼저 🦈", optionB: "공룡이 먼저 🦕" },
 ];
 
 function pickRandom<T>(arr: T[]): T {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Trophy, Medal, Award } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -19,10 +19,18 @@ function RankIcon({ rank }: { rank: number }) {
 export default function RankingPage() {
   const roundHistory = useGameStore((s) => s.roundHistory);
   const user = useAuthStore((s) => s.user);
+  const [tab, setTab] = useState<"all" | "today">("all");
+
+  const todayHistory = useMemo(() => {
+    const today = new Date().toDateString();
+    return roundHistory.filter((r) => new Date(r.resolvedAt).toDateString() === today);
+  }, [roundHistory]);
+
+  const activeHistory = tab === "today" ? todayHistory : roundHistory;
 
   const rankings = useMemo(
-    () => getRankings(roundHistory, user?.nickname ?? "나"),
-    [roundHistory, user?.nickname],
+    () => getRankings(activeHistory, user?.nickname ?? "나"),
+    [activeHistory, user?.nickname],
   );
 
   const myRank = rankings.find((r) => r.userId === "local-user");
@@ -35,6 +43,24 @@ export default function RankingPage() {
           <div className="flex items-center gap-2">
             <Trophy size={20} className="text-banana" />
             <h1 className="text-xl font-heading font-bold text-text-primary">리더보드</h1>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-2">
+            {(["all", "today"] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={[
+                  "flex-1 py-2 rounded-2xl text-sm font-bold font-sans border-2 transition-all btn-clay",
+                  tab === t
+                    ? "border-banana text-banana bg-banana/12 clay-sm"
+                    : "border-card-border text-text-secondary bg-white hover:border-banana/40",
+                ].join(" ")}
+              >
+                {t === "all" ? "전체" : "오늘"}
+              </button>
+            ))}
           </div>
 
           {/* My rank card */}

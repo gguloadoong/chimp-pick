@@ -3,7 +3,7 @@
 import { useEffect, useCallback, useState, useMemo } from "react";
 import { ArrowUp, ArrowDown, Trophy, Clock, Users, Flame, Star, Settings, Volume2, VolumeX } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
-import { useSettingsStore, ROUND_DURATION_LABELS, type RoundDuration, type ThemeMode } from "@/stores/settingsStore";
+import { useSettingsStore, ROUND_DURATION_LABELS, ACCENT_COLORS, type RoundDuration, type ThemeMode, type AccentColor } from "@/stores/settingsStore";
 import { getPrice, onPriceUpdate, computeStats, setRoundDuration, getCurrentSeason, getSeasonTimeRemaining } from "@/lib/game-engine";
 import { playPickSound, playDrumroll, playWinSound, playLoseSound } from "@/lib/sound";
 import { useToastStore } from "@/stores/toastStore";
@@ -53,6 +53,8 @@ export default function GamePage() {
     markOnboardingSeen,
     theme,
     setTheme,
+    accentColor,
+    setAccentColor,
   } = useSettingsStore();
 
   const [showSettings, setShowSettings] = useState(false);
@@ -68,9 +70,10 @@ export default function GamePage() {
     setRoundDuration(roundDuration);
   }, [roundDuration]);
 
-  // Apply theme on mount
+  // Apply theme + accent on mount
   useEffect(() => {
     setTheme(theme);
+    setAccentColor(accentColor);
   }, []);
 
   const stats = useMemo(() => computeStats(roundHistory), [roundHistory]);
@@ -250,6 +253,25 @@ export default function GamePage() {
                       ].join(" ")}
                     >
                       {t === "light" ? "☀️ 라이트" : t === "dark" ? "🌙 다크" : "🖥️ 시스템"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-text-secondary font-sans mb-1.5">액센트 컬러</p>
+                <div className="flex gap-2">
+                  {(Object.entries(ACCENT_COLORS) as [AccentColor, typeof ACCENT_COLORS[AccentColor]][]).map(([key, val]) => (
+                    <button
+                      key={key}
+                      onClick={() => setAccentColor(key)}
+                      className={[
+                        "flex-1 py-2 rounded-2xl text-xs font-bold font-sans border-2 transition-all btn-clay",
+                        accentColor === key
+                          ? "border-banana text-banana bg-banana/12 clay-sm"
+                          : "border-card-border text-text-secondary bg-white hover:border-banana/40",
+                      ].join(" ")}
+                    >
+                      {val.emoji}
                     </button>
                   ))}
                 </div>

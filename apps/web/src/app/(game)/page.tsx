@@ -4,7 +4,7 @@ import { useEffect, useCallback, useState, useMemo } from "react";
 import { ArrowUp, ArrowDown, Trophy, Clock, Users, Flame, Star, Settings, Volume2, VolumeX } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
 import { useSettingsStore, ROUND_DURATION_LABELS, type RoundDuration, type ThemeMode } from "@/stores/settingsStore";
-import { getPrice, onPriceUpdate, computeStats, setRoundDuration } from "@/lib/game-engine";
+import { getPrice, onPriceUpdate, computeStats, setRoundDuration, getCurrentSeason, getSeasonTimeRemaining } from "@/lib/game-engine";
 import { playPickSound, playDrumroll, playWinSound, playLoseSound } from "@/lib/sound";
 import { formatPrice, formatChange } from "@/lib/format";
 import { useCountdown } from "@/hooks/useCountdown";
@@ -282,7 +282,7 @@ export default function GamePage() {
                   currentRound.phase === "RESOLVED" ? "bg-down" : "bg-text-secondary",
                 ].join(" ")} />
                 <span className="text-xs font-semibold font-sans text-text-secondary">
-                  {currentRound.phase === "OPEN" && "예측 진행 중"}
+                  {currentRound.phase === "OPEN" && (currentRound.isSpeedRound ? "⚡ 스피드 라운드!" : "예측 진행 중")}
                   {currentRound.phase === "CLOSED" && "결과 계산 중..."}
                   {currentRound.phase === "RESOLVED" && "결과 발표!"}
                   {currentRound.phase === "WAITING" && "다음 라운드 준비 중"}
@@ -584,9 +584,16 @@ export default function GamePage() {
           </div>
         )}
 
+        {/* Season info */}
+        <div className="bg-white rounded-2xl p-3 border border-card-border clay-sm text-center">
+          <p className="text-xs text-text-secondary font-sans">
+            🏆 {getCurrentSeason().label} 시즌 · 남은 시간 {getSeasonTimeRemaining().days}일 {getSeasonTimeRemaining().hours}시간
+          </p>
+        </div>
+
         {/* Footer info */}
         <p className="text-center text-xs text-text-secondary font-sans">
-          30초마다 새 라운드 · 소수파 보너스 최대 5배 · 적게 고른 쪽이 이기면 대박!
+          소수파 보너스 최대 5배 · ⚡ 스피드 라운드 1.5배!
         </p>
       </div>
 

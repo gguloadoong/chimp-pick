@@ -25,6 +25,9 @@ export type { Question, QuestionResult } from "./question-provider";
 export { computeTitleStats, getEarnedTitles, getAllTitles } from "./title-engine";
 export type { Title } from "./title-engine";
 
+export { getCurrentSeason, getSeasonTimeRemaining, getSeasonBadge, getSeasonBonus } from "./season-engine";
+export type { Season, SeasonRecord } from "./season-engine";
+
 export {
   generateDailyMissions,
   needsReset,

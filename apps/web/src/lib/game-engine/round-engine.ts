@@ -42,9 +42,14 @@ function transitionTo(phase: RoundPhase) {
 }
 
 /** Start a new round */
+const SPEED_ROUND_CHANCE = 0.1;
+const SPEED_ROUND_MS = 10_000;
+
 function startNewRound() {
   const question = generateQuestion();
   const now = Date.now();
+  const isSpeed = Math.random() < SPEED_ROUND_CHANCE;
+  const roundMs = isSpeed ? SPEED_ROUND_MS : configuredOpenMs;
 
   const entryPrice = question.symbol
     ? getPrice(question.symbol).price
@@ -60,16 +65,17 @@ function startNewRound() {
     result: null,
     phase: "OPEN",
     opensAt: new Date(now).toISOString(),
-    closesAt: new Date(now + configuredOpenMs).toISOString(),
-    resolvesAt: new Date(now + configuredOpenMs + ROUND_RESOLVE_DELAY_MS).toISOString(),
+    closesAt: new Date(now + roundMs).toISOString(),
+    resolvesAt: new Date(now + roundMs + ROUND_RESOLVE_DELAY_MS).toISOString(),
     upRatio: generateNpcRatio(),
     questionCategory: question.category,
     questionEmoji: question.categoryEmoji,
     questionLabel: question.categoryLabel,
-    questionTitle: question.title,
-    questionDesc: question.description,
+    questionTitle: isSpeed ? `⚡ ${question.title}` : question.title,
+    questionDesc: isSpeed ? "스피드 라운드! 10초 안에 선택하세요!" : question.description,
     optionA: question.optionA,
     optionB: question.optionB,
+    isSpeedRound: isSpeed,
   };
 
   notify(currentRound);
@@ -77,7 +83,7 @@ function startNewRound() {
   // Schedule close
   roundTimer = setTimeout(() => {
     closeRound();
-  }, configuredOpenMs);
+  }, roundMs);
 }
 
 /** Close predictions and resolve */

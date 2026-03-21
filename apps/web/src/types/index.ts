@@ -35,6 +35,8 @@ export interface Round {
   questionDesc: string;
   optionA: string;
   optionB: string;
+  /** Speed round: shorter duration, bonus multiplier */
+  isSpeedRound: boolean;
 }
 
 export interface RoundPick {

@@ -76,11 +76,12 @@ export const useGameStore = create<GameState>()(
         if (roundHistory.some((r) => r.roundId === currentRound.id)) return null;
 
         const isCorrect = myPick.direction === currentRound.result;
-        const score = calculateScore(
+        const baseScore = calculateScore(
           myPick.direction,
           currentRound.result,
           currentRound.upRatio,
         );
+        const score = currentRound.isSpeedRound ? Math.round(baseScore * 1.5) : baseScore;
 
         const result: RoundResult = {
           roundId: currentRound.id,

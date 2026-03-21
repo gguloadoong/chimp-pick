@@ -22,6 +22,8 @@ interface GameState {
   roundHistory: RoundResult[];
   totalScore: number;
   dailyMissions: DailyMissionState | null;
+  attendance: { lastDate: string; streak: number; totalDays: number };
+  selectedTitle: string | null;
 
   // Actions
   setRound: (round: Round) => void;
@@ -30,6 +32,8 @@ interface GameState {
   clearPick: () => void;
   ensureDailyMissions: () => void;
   claimMissionReward: (missionId: string) => number;
+  checkAttendance: () => { isNew: boolean; streak: number; bonus: number };
+  setSelectedTitle: (titleId: string | null) => void;
 }
 
 export const useGameStore = create<GameState>()(
@@ -40,6 +44,8 @@ export const useGameStore = create<GameState>()(
       roundHistory: [],
       totalScore: 0,
       dailyMissions: null,
+      attendance: { lastDate: "", streak: 0, totalDays: 0 },
+      selectedTitle: null,
 
       setRound: (round) => {
         const prev = get().currentRound;
@@ -128,6 +134,28 @@ export const useGameStore = create<GameState>()(
         }
       },
 
+      checkAttendance: () => {
+        const { attendance } = get();
+        const today = new Date().toISOString().slice(0, 10);
+        if (attendance.lastDate === today) {
+          return { isNew: false, streak: attendance.streak, bonus: 0 };
+        }
+
+        const yesterday = new Date(Date.now() - 86400_000).toISOString().slice(0, 10);
+        const isConsecutive = attendance.lastDate === yesterday;
+        const newStreak = isConsecutive ? attendance.streak + 1 : 1;
+        const bonus = newStreak >= 7 ? 200 : newStreak >= 3 ? 100 : 50;
+
+        set({
+          attendance: { lastDate: today, streak: newStreak, totalDays: attendance.totalDays + 1 },
+          totalScore: get().totalScore + bonus,
+        });
+
+        return { isNew: true, streak: newStreak, bonus };
+      },
+
+      setSelectedTitle: (titleId) => set({ selectedTitle: titleId }),
+
       claimMissionReward: (missionId) => {
         const { dailyMissions } = get();
         if (!dailyMissions) return 0;
@@ -148,6 +176,8 @@ export const useGameStore = create<GameState>()(
         roundHistory: state.roundHistory,
         totalScore: state.totalScore,
         dailyMissions: state.dailyMissions,
+        attendance: state.attendance,
+        selectedTitle: state.selectedTitle,
       }),
     }
   )

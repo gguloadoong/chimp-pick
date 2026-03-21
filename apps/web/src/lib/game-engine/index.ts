@@ -22,6 +22,9 @@ export { getRankings } from "./mock-rankings";
 export { generateQuestion, resolveQuestion } from "./question-provider";
 export type { Question, QuestionResult } from "./question-provider";
 
+export { computeTitleStats, getEarnedTitles, getAllTitles } from "./title-engine";
+export type { Title } from "./title-engine";
+
 export {
   generateDailyMissions,
   needsReset,

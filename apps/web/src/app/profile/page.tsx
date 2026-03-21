@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { useGameStore } from "@/stores/gameStore";
 import { computeStats, computeTitleStats, getEarnedTitles, getAllTitles } from "@/lib/game-engine";
@@ -11,6 +11,9 @@ import ChimpCharacter from "@/components/character/ChimpCharacter";
 
 export default function ProfilePage() {
   const user = useAuthStore((s) => s.user);
+  const setNickname = useAuthStore((s) => s.setNickname);
+  const [editingNick, setEditingNick] = useState(false);
+  const [nickInput, setNickInput] = useState("");
   const roundHistory = useGameStore((s) => s.roundHistory);
   const totalScore = useGameStore((s) => s.totalScore);
   const attendance = useGameStore((s) => s.attendance);
@@ -43,9 +46,32 @@ export default function ProfilePage() {
           {/* Profile card */}
           <div className="bg-white rounded-3xl p-6 border-2 border-card-border clay text-center">
             <ChimpCharacter mood="idle" size={80} level={avatarLevel.level} className="mx-auto mb-3" />
-            <h1 className="text-xl font-heading font-bold text-text-primary">
-              {user?.nickname ?? "침팬지"}
-            </h1>
+            {editingNick ? (
+              <div className="flex items-center gap-2 justify-center">
+                <input
+                  value={nickInput}
+                  onChange={(e) => setNickInput(e.target.value)}
+                  maxLength={12}
+                  className="text-center text-lg font-heading font-bold bg-bg-primary border-2 border-banana rounded-xl px-3 py-1 w-36 outline-none"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") { setNickname(nickInput); setEditingNick(false); }
+                    if (e.key === "Escape") setEditingNick(false);
+                  }}
+                />
+                <button
+                  onClick={() => { setNickname(nickInput); setEditingNick(false); }}
+                  className="text-xs text-banana font-bold"
+                >✓</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setNickInput(user?.nickname ?? ""); setEditingNick(true); }}
+                className="text-xl font-heading font-bold text-text-primary hover:text-banana transition-colors"
+              >
+                {user?.nickname ?? "침팬지"} ✏️
+              </button>
+            )}
             <p className="text-sm text-banana font-semibold font-sans mt-1">
               {avatarLevel.emoji} {avatarLevel.name} (Lv.{avatarLevel.level})
             </p>

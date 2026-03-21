@@ -6,6 +6,7 @@ import { useGameStore } from "@/stores/gameStore";
 import { useSettingsStore, ROUND_DURATION_LABELS, type RoundDuration, type ThemeMode } from "@/stores/settingsStore";
 import { getPrice, onPriceUpdate, computeStats, setRoundDuration, getCurrentSeason, getSeasonTimeRemaining } from "@/lib/game-engine";
 import { playPickSound, playDrumroll, playWinSound, playLoseSound } from "@/lib/sound";
+import { useToastStore } from "@/stores/toastStore";
 import { formatPrice, formatChange } from "@/lib/format";
 import { useCountdown } from "@/hooks/useCountdown";
 import { AVATAR_LEVELS } from "@/types";
@@ -55,6 +56,7 @@ export default function GamePage() {
   } = useSettingsStore();
 
   const [showSettings, setShowSettings] = useState(false);
+  const addToast = useToastStore((s) => s.addToast);
 
   // Ensure daily missions exist
   useEffect(() => {
@@ -139,8 +141,10 @@ export default function GamePage() {
       if (result) {
         setResolvedResult(result);
         if (soundEnabled) {
-          if (result.isCorrect) playWinSound();
-          else playLoseSound();
+          if (result.isCorrect) {
+            playWinSound();
+            if (result.score >= 200) addToast(`대박! +${result.score}점 🔥`, "🏆", "success");
+          } else playLoseSound();
         }
       }
     });

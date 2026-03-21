@@ -12,6 +12,7 @@ interface AuthState {
   ensureGuest: () => void;
   logout: () => void;
   setUser: (user: User) => void;
+  setNickname: (nickname: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -46,6 +47,12 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setUser: (user: User) => set({ user }),
+
+      setNickname: (nickname: string) => {
+        const { user } = get();
+        if (!user) return;
+        set({ user: { ...user, nickname: nickname.trim().slice(0, 12) || user.nickname } });
+      },
     }),
     {
       name: "chimp-pick-auth",

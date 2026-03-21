@@ -5,6 +5,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { startPriceEngine, startRoundEngine, onRoundUpdate } from "@/lib/game-engine";
 import { useGameStore } from "@/stores/gameStore";
 import { BottomNav } from "@/components/ui";
+import ToastContainer from "@/components/ui/ToastContainer";
 import ChimpCharacter from "@/components/character/ChimpCharacter";
 
 interface GameLayoutProps {
@@ -51,6 +52,7 @@ export default function GameLayout({ children }: GameLayoutProps) {
     <div className="flex flex-col flex-1 bg-bg-primary">
       <main className="flex-1 pb-20">{children}</main>
       <BottomNav />
+      <ToastContainer />
     </div>
   );
 }

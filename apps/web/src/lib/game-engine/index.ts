@@ -17,3 +17,11 @@ export {
 export { calculateScore, computeStats } from "./score-engine";
 
 export { getRankings } from "./mock-rankings";
+
+export {
+  generateDailyMissions,
+  needsReset,
+  updateMissionProgress,
+  claimMission,
+} from "./mission-engine";
+export type { Mission, MissionProgress, DailyMissionState } from "./mission-engine";

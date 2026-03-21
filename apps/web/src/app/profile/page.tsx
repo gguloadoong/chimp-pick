@@ -28,7 +28,7 @@ export default function ProfilePage() {
         <div className="max-w-lg mx-auto px-4 pt-4 pb-6 flex flex-col gap-4">
           {/* Profile card */}
           <div className="bg-white rounded-3xl p-6 border-2 border-card-border clay text-center">
-            <ChimpCharacter mood="idle" size={80} className="mx-auto mb-3" />
+            <ChimpCharacter mood="idle" size={80} level={avatarLevel.level} className="mx-auto mb-3" />
             <h1 className="text-xl font-heading font-bold text-text-primary">
               {user?.nickname ?? "침팬지"}
             </h1>

@@ -5,12 +5,14 @@ type ChimpMood = "idle" | "thinking" | "up" | "down" | "win" | "lose";
 interface ChimpCharacterProps {
   mood?: ChimpMood;
   size?: number;
+  level?: number;
   className?: string;
 }
 
 export default function ChimpCharacter({
   mood = "idle",
   size = 120,
+  level = 1,
   className = "",
 }: ChimpCharacterProps) {
   return (
@@ -33,6 +35,7 @@ export default function ChimpCharacter({
         {mood === "win" && <Crown />}
         {mood === "up" && <Rocket />}
         {mood === "lose" && <SweatDrops />}
+        <LevelAccessory level={level} />
       </g>
     </svg>
   );
@@ -324,6 +327,81 @@ function SweatDrops() {
       <path d="M32,-25 Q30,-33 34,-33 Q38,-33 36,-25Z" fill="#64B5F6" opacity={0.5}>
         <animateTransform attributeName="transform" type="translate" values="0,0;0,10;0,0" dur="1.8s" repeatCount="indefinite" />
       </path>
+    </g>
+  );
+}
+
+/* ── Level Accessory ── */
+function LevelAccessory({ level }: { level: number }) {
+  if (level <= 1) return null;
+
+  return (
+    <g>
+      {/* Lv.2 침팬지: 빨간 반다나 */}
+      {level === 2 && (
+        <g transform="translate(0,-58)">
+          <path d="M-30,0 Q-25,-8 0,-10 Q25,-8 30,0 Q25,2 0,1 Q-25,2 -30,0Z" fill="#F43F5E" />
+          <path d="M26,-2 Q35,-12 42,-8 Q38,-2 30,0Z" fill="#F43F5E" />
+          <path d="M28,-3 Q34,-10 38,-7" stroke="#DC2626" strokeWidth={1.5} fill="none" />
+        </g>
+      )}
+
+      {/* Lv.3 고릴라: 선글라스 */}
+      {level === 3 && (
+        <g transform="translate(0,-16)">
+          <rect x={-26} y={-8} width={20} height={12} rx={3} fill="#1E293B" opacity={0.9} />
+          <rect x={6} y={-8} width={20} height={12} rx={3} fill="#1E293B" opacity={0.9} />
+          <line x1={-6} y1={-2} x2={6} y2={-2} stroke="#1E293B" strokeWidth={2.5} />
+          <line x1={-26} y1={-2} x2={-38} y2={-6} stroke="#1E293B" strokeWidth={2.5} />
+          <line x1={26} y1={-2} x2={38} y2={-6} stroke="#1E293B" strokeWidth={2.5} />
+          {/* Lens glare */}
+          <rect x={-22} y={-6} width={4} height={3} rx={1} fill="white" opacity={0.3} />
+          <rect x={10} y={-6} width={4} height={3} rx={1} fill="white" opacity={0.3} />
+        </g>
+      )}
+
+      {/* Lv.4 킹콩: 금 목걸이 */}
+      {level === 4 && (
+        <g transform="translate(0,10)">
+          <path d="M-20,12 Q0,22 20,12" stroke="#FFB800" strokeWidth={3} fill="none" />
+          <circle cx={0} cy={22} r={6} fill="#FFB800" stroke="#E6A200" strokeWidth={1.5} />
+          <text x={0} y={25} textAnchor="middle" fontSize={8} fontWeight="bold" fill="#8B6914">$</text>
+        </g>
+      )}
+
+      {/* Lv.5 전설의침팬지: 왕관 + 망토 */}
+      {level >= 5 && (
+        <g>
+          {/* 왕관 (더 화려하게) */}
+          <g transform="translate(0,-64)">
+            <path
+              d="M-22,8 L-26,-10 L-12,-3 L0,-16 L12,-3 L26,-10 L22,8Z"
+              fill="#FFB800"
+              stroke="#E6A200"
+              strokeWidth={1.5}
+            />
+            <circle cx={-12} cy={-1} r={2.5} fill="#F43F5E" />
+            <circle cx={0} cy={-8} r={3} fill="#A78BFA" />
+            <circle cx={12} cy={-1} r={2.5} fill="#10B981" />
+            {/* 보석 빛남 */}
+            <circle cx={0} cy={-8} r={5} fill="#A78BFA" opacity={0.2}>
+              <animate attributeName="r" values="5;7;5" dur="2s" repeatCount="indefinite" />
+            </circle>
+          </g>
+          {/* 망토 */}
+          <path
+            d="M-28,20 Q-35,40 -30,65 Q-15,58 0,62 Q15,58 30,65 Q35,40 28,20"
+            fill="#7C3AED"
+            opacity={0.7}
+          />
+          <path
+            d="M-28,20 Q-35,40 -30,65 Q-15,58 0,62 Q15,58 30,65 Q35,40 28,20"
+            fill="none"
+            stroke="#6D28D9"
+            strokeWidth={1.5}
+          />
+        </g>
+      )}
     </g>
   );
 }

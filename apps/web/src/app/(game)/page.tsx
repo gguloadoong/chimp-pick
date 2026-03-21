@@ -42,6 +42,9 @@ export default function GamePage() {
     resolveMyPick,
     ensureDailyMissions,
     claimMissionReward,
+    challenge,
+    startChallenge,
+    getTodayRounds,
   } = useGameStore();
 
   const {
@@ -196,7 +199,10 @@ export default function GamePage() {
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-text-secondary font-sans bg-bg-primary px-2 py-1 rounded-xl border border-card-border">
+              오늘 {getTodayRounds()}R
+            </span>
             <div className="flex items-center gap-1.5 bg-banana/15 px-3 py-1.5 rounded-2xl border-2 border-banana/30">
               <Trophy size={14} className="text-banana" />
               <span className="font-mono font-bold text-banana tabular-nums text-sm">
@@ -293,6 +299,23 @@ export default function GamePage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Challenge */}
+        {challenge?.active ? (
+          <div className="bg-banana/10 rounded-2xl p-3 border-2 border-banana/30 text-center">
+            <p className="font-heading font-bold text-banana text-sm">
+              🎯 챌린지 진행 중! {challenge.wins}/{5 - challenge.roundsLeft + challenge.wins} 적중 · 남은 {challenge.roundsLeft}라운드
+            </p>
+            <p className="text-xs text-banana/70 font-sans mt-1">5연속 적중 시 점수 3배!</p>
+          </div>
+        ) : (
+          <button
+            onClick={startChallenge}
+            className="w-full py-2.5 rounded-2xl border-2 border-banana/30 bg-banana/5 text-banana text-sm font-bold font-sans transition-all hover:bg-banana/15 btn-clay"
+          >
+            🎯 챌린지 시작 (5라운드 연속 적중 → 3배!)
+          </button>
         )}
 
         {/* Round Status Card */}

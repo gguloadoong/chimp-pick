@@ -11,6 +11,8 @@ export interface User {
 export type RoundPhase = "WAITING" | "OPEN" | "CLOSED" | "RESOLVED";
 export type Direction = "UP" | "DOWN";
 
+export type QuestionCategory = "price" | "fun" | "trivia";
+
 export interface Round {
   id: string;
   symbol: string;
@@ -25,6 +27,14 @@ export interface Round {
   resolvesAt: string;
   /** NPC simulated ratio: percentage that picked UP (0-100) */
   upRatio: number;
+  /** Question metadata for diverse categories */
+  questionCategory: QuestionCategory;
+  questionEmoji: string;
+  questionLabel: string;
+  questionTitle: string;
+  questionDesc: string;
+  optionA: string;
+  optionB: string;
 }
 
 export interface RoundPick {

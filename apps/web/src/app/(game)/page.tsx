@@ -356,26 +356,46 @@ export default function GamePage() {
                 <span className="text-xs px-2 py-0.5 rounded-full bg-banana/10 text-banana font-semibold font-sans border border-banana/20">
                   {currentRound.questionEmoji} {currentRound.questionLabel}
                 </span>
+                {currentRound.questionCategory === "price" && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-text-secondary/10 text-text-secondary font-sans border border-text-secondary/20">
+                    모의 시세
+                  </span>
+                )}
               </div>
               <p className="text-lg font-heading font-bold text-text-primary mb-1">
                 {currentRound.questionTitle}
               </p>
-              <p className="text-xs text-text-secondary font-sans">
-                {currentRound.questionDesc}
-              </p>
-              {currentRound.questionCategory === "price" && currentPrice && (
-                <div className="flex items-end justify-between mt-2">
-                  <p className="text-2xl font-bold font-mono tabular-nums text-text-primary">
-                    {formatPrice(currentPrice.price)}
-                    <span className="text-xs text-text-secondary ml-1">원</span>
-                  </p>
-                  <p className={[
-                    "text-xs font-semibold font-sans",
-                    currentPrice.changePct24h >= 0 ? "text-up" : "text-down",
-                  ].join(" ")}>
-                    {formatChange(currentPrice.changePct24h)}
-                  </p>
+              {currentRound.questionCategory === "price" && currentPrice ? (
+                <div className="mt-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <div>
+                      <p className="text-xs text-text-secondary font-sans">시작가</p>
+                      <p className="text-sm font-mono tabular-nums text-text-secondary font-semibold">
+                        {formatPrice(currentRound.entryPrice)}원
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-text-secondary font-sans">현재가</p>
+                      <p className="text-2xl font-bold font-mono tabular-nums text-text-primary">
+                        {formatPrice(currentPrice.price)}
+                        <span className="text-xs text-text-secondary ml-1">원</span>
+                      </p>
+                    </div>
+                  </div>
+                  {(() => {
+                    const diff = currentPrice.price - currentRound.entryPrice;
+                    const pct = currentRound.entryPrice > 0 ? (diff / currentRound.entryPrice) * 100 : 0;
+                    return (
+                      <p className={["text-xs font-semibold font-sans text-right", pct >= 0 ? "text-up" : "text-down"].join(" ")}>
+                        {pct >= 0 ? "+" : ""}{formatPrice(diff)}원 ({formatChange(pct)})
+                      </p>
+                    );
+                  })()}
                 </div>
+              ) : (
+                <p className="text-xs text-text-secondary font-sans">
+                  {currentRound.questionDesc}
+                </p>
               )}
             </div>
 

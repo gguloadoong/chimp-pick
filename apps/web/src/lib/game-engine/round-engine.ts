@@ -110,7 +110,13 @@ function resolveRound() {
   if (currentRound.questionCategory === "price" && currentRound.symbol) {
     const price = getPrice(currentRound.symbol);
     exitPrice = price.price;
-    result = exitPrice >= currentRound.entryPrice ? "UP" : "DOWN";
+
+    if (exitPrice === currentRound.entryPrice) {
+      // Tie-break: random direction (price didn't move)
+      result = Math.random() < 0.5 ? "UP" : "DOWN";
+    } else {
+      result = exitPrice > currentRound.entryPrice ? "UP" : "DOWN";
+    }
   } else {
     // Fun/trivia: resolve via question provider (random)
     const qResult = resolveQuestion({

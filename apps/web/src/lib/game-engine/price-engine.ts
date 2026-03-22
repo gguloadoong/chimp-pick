@@ -46,6 +46,13 @@ interface Candle {
   volume: number;
 }
 
+/** Round price to appropriate precision based on magnitude */
+function roundPrice(price: number): number {
+  if (price < 1) return Math.round(price * 10000) / 10000; // 0.0150
+  if (price < 100) return Math.round(price * 10) / 10;      // 280.5
+  return Math.round(price);                                   // 185000
+}
+
 const priceStates: Map<string, PriceState> = new Map();
 let tickInterval: ReturnType<typeof setInterval> | null = null;
 const listeners: Set<() => void> = new Set();
@@ -68,7 +75,7 @@ function generateTick(symbol: string): number {
   const state = priceStates.get(symbol);
   if (!state) return 0;
 
-  const changeRatio = (Math.random() - 0.5) * 0.01;
+  const changeRatio = (Math.random() - 0.5) * 0.002; // ±0.1% per tick (realistic)
   state.current = state.current * (1 + changeRatio);
 
   if (state.current > state.high24h) state.high24h = state.current;
@@ -99,12 +106,12 @@ export function getPrice(symbol: string): PriceData {
 
   return {
     symbol,
-    price: state.current,
-    change24h,
+    price: roundPrice(state.current),
+    change24h: roundPrice(change24h),
     changePct24h,
-    high24h: state.high24h,
-    low24h: state.low24h,
-    volume24h: state.volume24h,
+    high24h: roundPrice(state.high24h),
+    low24h: roundPrice(state.low24h),
+    volume24h: Math.round(state.volume24h),
     updatedAt: new Date().toISOString(),
   };
 }

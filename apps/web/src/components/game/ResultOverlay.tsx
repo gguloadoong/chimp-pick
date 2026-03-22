@@ -190,24 +190,32 @@ export default function ResultOverlay({
             />
           </div>
 
-          {/* Title */}
+          {/* Title — emotionally amplified */}
           <h2
             className={[
-              "text-3xl font-heading font-bold mb-1",
+              isWin ? "text-4xl" : "text-3xl",
+              "font-heading font-bold mb-1",
               isWin ? "text-up" : "text-down",
             ].join(" ")}
           >
-            {isWin ? "적중!" : "빗나감..."}
+            {isWin
+              ? result.score >= 200 ? "대박!! 🎉🎉" : result.score >= 100 ? "적중! 🎉" : "맞았다! ✨"
+              : "으악... 😵"}
           </h2>
 
-          <p className="text-text-secondary text-sm mb-5 font-sans">
+          <p className={[
+            "text-sm mb-5 font-sans",
+            isWin ? "text-up font-bold" : "text-text-secondary",
+          ].join(" ")}>
             {isWin
-              ? "침팬지의 예감이 적중했다! 가즈아! 🚀"
+              ? result.score >= 200
+                ? "소수파 역배 성공! 침팬지 천재! 🧠🚀"
+                : "침팬지의 예감이 적중했다! 가즈아! 🚀"
               : result.upRatio > 60
-                ? "💡 다음엔 소수파를 노려보세요! 적은 쪽이 더 높은 점수!"
+                ? "💡 소수파를 노려보세요! 적은 쪽이 더 높은 점수!"
                 : result.upRatio < 40
-                  ? "💡 다수파가 항상 옳진 않아요. 직감을 믿어보세요!"
-                  : "🔥 아깝다! 다음 라운드에서 복수하세요!"}
+                  ? "💡 직감을 믿어보세요! 다수파가 항상 옳진 않아요!"
+                  : "🍌 바나나 껍질에 미끄러졌다... 다시 도전!"}
           </p>
 
           {/* Price comparison */}

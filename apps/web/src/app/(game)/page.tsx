@@ -61,6 +61,7 @@ export default function GamePage() {
   } = useSettingsStore();
 
   const [showSettings, setShowSettings] = useState(false);
+  const [showExtras, setShowExtras] = useState(false);
   const addToast = useToastStore((s) => s.addToast);
 
   // Ensure daily missions exist
@@ -547,6 +548,15 @@ export default function GamePage() {
           </div>
         )}
 
+        {/* Extras toggle */}
+        <button
+          onClick={() => setShowExtras(!showExtras)}
+          className="w-full py-2 rounded-2xl border border-card-border bg-white text-text-secondary text-xs font-sans font-semibold transition-all hover:border-banana/40"
+        >
+          {showExtras ? "접기 ▲" : `미션 · 기록 · 시즌 ▼${stats.currentStreak >= 2 ? ` · 🔥${stats.currentStreak}연승` : ""}`}
+        </button>
+
+        {showExtras && <>
         {/* Recent results */}
         {recentResults.length > 0 && (
           <div className="bg-white rounded-3xl p-4 border-2 border-card-border clay">
@@ -668,6 +678,7 @@ export default function GamePage() {
             </p>
           </div>
         )}
+        </>}
 
         {/* Footer info */}
         <p className="text-center text-xs text-text-secondary font-sans">

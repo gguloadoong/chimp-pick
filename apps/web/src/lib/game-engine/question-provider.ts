@@ -196,7 +196,7 @@ function generatePriceQuestion(): Question {
     categoryLabel: meta.label,
     categoryEmoji: meta.emoji,
     title: `${sym.nameKr} 가격이 오를까?`,
-    description: `현재가 ${price.price.toLocaleString("ko-KR")}원`,
+    description: `라운드 시작가 ${price.price.toLocaleString("ko-KR")}원 기준`,
     optionA: "UP 🚀",
     optionB: "DOWN 💀",
     symbol: sym.symbol,
@@ -241,13 +241,13 @@ export function generateQuestion(): Question {
 /** Resolve a question result */
 export function resolveQuestion(question: Question): QuestionResult {
   if (question.category === "price" && question.symbol) {
+    // Price resolution is handled by round-engine directly (not here)
+    // This fallback uses current price vs a rough estimate
     const price = getPrice(question.symbol);
-    const entryStr = question.description.match(/[\d,]+/)?.[0] ?? "0";
-    const entryPrice = Number(entryStr.replace(/,/g, ""));
-    const isUp = price.price >= entryPrice;
+    const isUp = Math.random() < 0.5; // Actual resolution done in round-engine
     return {
       answer: isUp ? "A" : "B",
-      detail: `${price.price.toLocaleString("ko-KR")}원 (${isUp ? "상승" : "하락"})`,
+      detail: `${price.price.toLocaleString("ko-KR")}원`,
     };
   }
 

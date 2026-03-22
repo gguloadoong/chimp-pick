@@ -11,7 +11,7 @@ export interface User {
 export type RoundPhase = "WAITING" | "OPEN" | "CLOSED" | "RESOLVED";
 export type Direction = "UP" | "DOWN";
 
-export type QuestionCategory = "price" | "fun" | "trivia";
+export type QuestionCategory = "price" | "fun" | "trivia" | "sports" | "trend";
 
 export interface Round {
   id: string;

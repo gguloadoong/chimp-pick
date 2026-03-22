@@ -19,7 +19,7 @@ export { calculateScore, computeStats } from "./score-engine";
 
 export { getRankings } from "./mock-rankings";
 
-export { generateQuestion, resolveQuestion } from "./question-provider";
+export { generateQuestion, resolveQuestion, setLivePriceAvailable } from "./question-provider";
 export type { Question, QuestionResult } from "./question-provider";
 
 export { computeTitleStats, getEarnedTitles, getAllTitles } from "./title-engine";

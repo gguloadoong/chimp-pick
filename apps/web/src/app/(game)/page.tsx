@@ -640,6 +640,15 @@ export default function GamePage() {
           </p>
         </div>
 
+        {/* Tomorrow bonus teaser */}
+        {stats.totalRounds > 0 && (
+          <div className="bg-banana/5 rounded-2xl p-3 border border-banana/20 text-center">
+            <p className="text-xs text-banana font-sans font-semibold">
+              🍌 내일 다시 오면 출석 보너스! ({Math.min(7, (useGameStore.getState().attendance.streak || 0) + 1)}일차 보상 대기중)
+            </p>
+          </div>
+        )}
+
         {/* Footer info */}
         <p className="text-center text-xs text-text-secondary font-sans">
           소수파 보너스 최대 5배 · ⚡ 스피드 라운드 1.5배!

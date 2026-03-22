@@ -13,6 +13,8 @@ interface AuthState {
   logout: () => void;
   setUser: (user: User) => void;
   setNickname: (nickname: string) => void;
+  referralCode: string;
+  getInviteUrl: () => string;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -21,11 +23,13 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       isLoading: false,
+      referralCode: "",
 
       ensureGuest: () => {
-        const { isAuthenticated } = get();
+        const { isAuthenticated, referralCode } = get();
         if (isAuthenticated) return;
 
+        const code = referralCode || Math.random().toString(36).slice(2, 8).toUpperCase();
         set({
           user: {
             id: "local-user",
@@ -36,7 +40,14 @@ export const useAuthStore = create<AuthState>()(
           },
           isAuthenticated: true,
           isLoading: false,
+          referralCode: code,
         });
+      },
+
+      getInviteUrl: () => {
+        const { referralCode } = get();
+        const base = typeof window !== "undefined" ? window.location.origin : "https://chimp-pick.vercel.app";
+        return `${base}/?ref=${referralCode}`;
       },
 
       logout: () => {
@@ -59,6 +70,7 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
+        referralCode: state.referralCode,
       }),
     }
   )

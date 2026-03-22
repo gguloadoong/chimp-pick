@@ -40,6 +40,7 @@ export default function ResultOverlay({
   const [confetti] = useState<ConfettiParticle[]>(() => generateConfetti(20));
   const [phase, setPhase] = useState<"drumroll" | "reveal" | "show">("drumroll");
   const [countScore, setCountScore] = useState(0);
+  const [canDismiss, setCanDismiss] = useState(false);
 
   const isWin = result.isCorrect;
 
@@ -47,7 +48,8 @@ export default function ResultOverlay({
   useEffect(() => {
     const t1 = setTimeout(() => setPhase("reveal"), 1200);
     const t2 = setTimeout(() => setPhase("show"), 2000);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    const t3 = setTimeout(() => setCanDismiss(true), 3500); // 2초 후 닫기 활성화
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
   // Score count-up animation
@@ -124,7 +126,7 @@ export default function ResultOverlay({
         role="dialog"
         aria-modal="true"
         aria-label={isWin ? "예측 성공" : "예측 실패"}
-        onClick={phase === "show" ? handleDismiss : undefined}
+        onClick={canDismiss ? handleDismiss : undefined}
       >
         {/* Drumroll phase */}
         {phase === "drumroll" && (
@@ -201,7 +203,11 @@ export default function ResultOverlay({
           <p className="text-text-secondary text-sm mb-5 font-sans">
             {isWin
               ? "침팬지의 예감이 적중했다! 가즈아! 🚀"
-              : "존버하면 언젠간 된다... 다시 도전! 🔥"}
+              : result.upRatio > 60
+                ? "💡 다음엔 소수파를 노려보세요! 적은 쪽이 더 높은 점수!"
+                : result.upRatio < 40
+                  ? "💡 다수파가 항상 옳진 않아요. 직감을 믿어보세요!"
+                  : "🔥 아깝다! 다음 라운드에서 복수하세요!"}
           </p>
 
           {/* Price comparison */}

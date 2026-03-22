@@ -13,6 +13,7 @@ export {
   onRoundUpdate,
   getCurrentRound,
   setRoundDuration,
+  adjustRatioForPick,
 } from "./round-engine";
 
 export { calculateScore, computeStats } from "./score-engine";

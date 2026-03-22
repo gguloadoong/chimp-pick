@@ -40,7 +40,11 @@ const CATEGORY_META: Record<QuestionCategory, { label: string; emoji: string }> 
   trend: { label: "트렌드", emoji: "📰" },
 };
 
-type QPool = Omit<Question, "id" | "category" | "categoryLabel" | "categoryEmoji">[];
+type QEntry = Omit<Question, "id" | "category" | "categoryLabel" | "categoryEmoji"> & {
+  /** Correct answer for trivia/sports. Undefined = random (fun/opinion). */
+  correctAnswer?: "A" | "B";
+};
+type QPool = QEntry[];
 
 // ── Fun questions (40종) ──
 const FUN_QUESTIONS: QPool = [
@@ -88,46 +92,46 @@ const FUN_QUESTIONS: QPool = [
 
 // ── Trivia questions (40종) ──
 const TRIVIA_QUESTIONS: QPool = [
-  { title: "지구-달 거리는 30만km 이상?", description: "우주 상식!", optionA: "이상이다", optionB: "미만이다" },
-  { title: "한국 면적은 일본보다 클까?", description: "지리 상식!", optionA: "한국이 크다", optionB: "일본이 크다" },
-  { title: "커피 원두는 원래 빨간색?", description: "음식 상식!", optionA: "빨간색", optionB: "초록/갈색" },
-  { title: "비트코인 창시자 나카모토는 실존인물?", description: "크립토 상식!", optionA: "실존인물", optionB: "정체불명" },
-  { title: "침팬지 DNA는 인간과 95% 이상 같을까?", description: "생물 상식!", optionA: "95% 이상", optionB: "95% 미만" },
-  { title: "세계에서 가장 많이 마시는 음료는 물?", description: "음료 상식!", optionA: "물이다", optionB: "차(茶)다" },
-  { title: "에베레스트는 아직도 높아지고 있을까?", description: "지구과학!", optionA: "높아지는 중", optionB: "그대로" },
-  { title: "금보다 비싼 금속이 있을까?", description: "경제 상식!", optionA: "있다", optionB: "없다" },
-  { title: "인간의 뼈는 200개 이상?", description: "인체 상식!", optionA: "200개 이상", optionB: "200개 미만" },
-  { title: "바나나는 사실 베리(berry)?", description: "식물 상식!", optionA: "맞다 🍌", optionB: "아니다" },
-  { title: "세계 인구는 80억 넘었을까?", description: "인구 상식!", optionA: "넘었다", optionB: "아직" },
-  { title: "한국 최초 우주인은 여성?", description: "한국 상식!", optionA: "여성이다", optionB: "남성이다" },
-  { title: "지구의 바다가 육지보다 넓을까?", description: "지리 상식!", optionA: "바다 🌊", optionB: "육지 🏔️" },
-  { title: "1년은 정확히 365일?", description: "시간 상식!", optionA: "정확히 365일", optionB: "아니다" },
-  { title: "토마토는 과일? 채소?", description: "음식 상식!", optionA: "과일 🍅", optionB: "채소 🥬" },
-  { title: "달에도 중력이 있을까?", description: "우주 상식!", optionA: "있다 🌙", optionB: "없다" },
-  { title: "한국 가장 긴 강은 한강?", description: "한국 지리!", optionA: "한강이다", optionB: "다른 강이다" },
-  { title: "카카오 최대 생산지는 아프리카?", description: "음식 상식!", optionA: "아프리카 1위", optionB: "남미 1위" },
-  { title: "상어는 공룡보다 먼저?", description: "생물 상식!", optionA: "상어가 먼저 🦈", optionB: "공룡이 먼저 🦕" },
-  { title: "태양은 별일까?", description: "우주 상식!", optionA: "별이다 ⭐", optionB: "별이 아니다" },
-  { title: "물은 항상 100도에서 끓을까?", description: "과학 상식!", optionA: "항상 100도", optionB: "조건에 따라 다름" },
-  { title: "한국어 자음은 14개?", description: "한국어 상식!", optionA: "14개 맞다", optionB: "다른 수" },
-  { title: "빛보다 빠른 것이 있을까?", description: "물리 상식!", optionA: "없다", optionB: "있다" },
-  { title: "지구 나이는 40억년 이상?", description: "지구과학!", optionA: "40억년 이상", optionB: "40억년 미만" },
-  { title: "인간 뇌는 10%만 사용할까?", description: "뇌과학!", optionA: "맞다 10%", optionB: "아니다 (신화)" },
-  { title: "다이아몬드는 불에 탈까?", description: "화학 상식!", optionA: "탄다 🔥", optionB: "안 탄다" },
-  { title: "펭귄은 새일까?", description: "동물 상식!", optionA: "새다 🐧", optionB: "새가 아니다" },
-  { title: "한국 최고봉은 한라산?", description: "지리 상식!", optionA: "한라산", optionB: "다른 산" },
-  { title: "성인 혈액량은 5L 이상?", description: "인체 상식!", optionA: "5L 이상", optionB: "5L 미만" },
-  { title: "오징어에게 심장은 몇 개?", description: "동물 상식!", optionA: "1개", optionB: "3개" },
-  { title: "세계 가장 긴 강은 나일강?", description: "지리 상식!", optionA: "나일강", optionB: "아마존강" },
-  { title: "모기는 이빨이 있을까?", description: "곤충 상식!", optionA: "있다", optionB: "없다" },
-  { title: "무지개 색은 7가지?", description: "과학 상식!", optionA: "7가지 맞다 🌈", optionB: "더 많다" },
-  { title: "지구에서 가장 깊은 바다는?", description: "해양 상식!", optionA: "마리아나 해구", optionB: "다른 곳" },
-  { title: "커피는 원래 에티오피아산?", description: "역사 상식!", optionA: "에티오피아", optionB: "브라질" },
-  { title: "세계 가장 작은 나라는 바티칸?", description: "지리 상식!", optionA: "바티칸", optionB: "모나코" },
-  { title: "소금은 미네랄일까?", description: "과학 상식!", optionA: "미네랄이다", optionB: "아니다" },
-  { title: "한글 창제년도는 1443년?", description: "한국사!", optionA: "1443년", optionB: "다른 해" },
-  { title: "세계 가장 높은 건물은 아시아에?", description: "건축 상식!", optionA: "아시아 (부르즈 할리파)", optionB: "다른 대륙" },
-  { title: "인간은 평생 약 2만번 숨쉴까?", description: "인체 상식!", optionA: "2만번 정도", optionB: "훨씬 더 많다" },
+  { title: "지구-달 거리는 30만km 이상?", description: "우주 상식!", optionA: "이상이다", optionB: "미만이다", correctAnswer: "A" },
+  { title: "한국 면적은 일본보다 클까?", description: "지리 상식!", optionA: "한국이 크다", optionB: "일본이 크다", correctAnswer: "B" },
+  { title: "커피 원두는 원래 빨간색?", description: "음식 상식!", optionA: "빨간색", optionB: "초록/갈색", correctAnswer: "A" },
+  { title: "비트코인 창시자 나카모토는 실존인물?", description: "크립토 상식!", optionA: "실존인물", optionB: "정체불명", correctAnswer: "B" },
+  { title: "침팬지 DNA는 인간과 95% 이상 같을까?", description: "생물 상식!", optionA: "95% 이상", optionB: "95% 미만", correctAnswer: "A" },
+  { title: "세계에서 가장 많이 마시는 음료는 물?", description: "음료 상식!", optionA: "물이다", optionB: "차(茶)다", correctAnswer: "B" },
+  { title: "에베레스트는 아직도 높아지고 있을까?", description: "지구과학!", optionA: "높아지는 중", optionB: "그대로", correctAnswer: "A" },
+  { title: "금보다 비싼 금속이 있을까?", description: "경제 상식!", optionA: "있다", optionB: "없다", correctAnswer: "A" },
+  { title: "인간의 뼈는 200개 이상?", description: "인체 상식!", optionA: "200개 이상", optionB: "200개 미만", correctAnswer: "A" },
+  { title: "바나나는 사실 베리(berry)?", description: "식물 상식!", optionA: "맞다 🍌", optionB: "아니다", correctAnswer: "A" },
+  { title: "세계 인구는 80억 넘었을까?", description: "인구 상식!", optionA: "넘었다", optionB: "아직", correctAnswer: "A" },
+  { title: "한국 최초 우주인은 여성?", description: "한국 상식!", optionA: "여성이다", optionB: "남성이다", correctAnswer: "A" },
+  { title: "지구의 바다가 육지보다 넓을까?", description: "지리 상식!", optionA: "바다 🌊", optionB: "육지 🏔️", correctAnswer: "A" },
+  { title: "1년은 정확히 365일?", description: "시간 상식!", optionA: "정확히 365일", optionB: "아니다", correctAnswer: "B" },
+  { title: "토마토는 과일? 채소?", description: "음식 상식!", optionA: "과일 🍅", optionB: "채소 🥬", correctAnswer: "A" },
+  { title: "달에도 중력이 있을까?", description: "우주 상식!", optionA: "있다 🌙", optionB: "없다", correctAnswer: "A" },
+  { title: "한국 가장 긴 강은 한강?", description: "한국 지리!", optionA: "한강이다", optionB: "다른 강이다", correctAnswer: "B" },
+  { title: "카카오 최대 생산지는 아프리카?", description: "음식 상식!", optionA: "아프리카 1위", optionB: "남미 1위", correctAnswer: "A" },
+  { title: "상어는 공룡보다 먼저?", description: "생물 상식!", optionA: "상어가 먼저 🦈", optionB: "공룡이 먼저 🦕", correctAnswer: "A" },
+  { title: "태양은 별일까?", description: "우주 상식!", optionA: "별이다 ⭐", optionB: "별이 아니다", correctAnswer: "A" },
+  { title: "물은 항상 100도에서 끓을까?", description: "과학 상식!", optionA: "항상 100도", optionB: "조건에 따라 다름", correctAnswer: "B" },
+  { title: "한국어 자음은 14개?", description: "한국어 상식!", optionA: "14개 맞다", optionB: "다른 수", correctAnswer: "A" },
+  { title: "빛보다 빠른 것이 있을까?", description: "물리 상식!", optionA: "없다", optionB: "있다", correctAnswer: "A" },
+  { title: "지구 나이는 40억년 이상?", description: "지구과학!", optionA: "40억년 이상", optionB: "40억년 미만", correctAnswer: "A" },
+  { title: "인간 뇌는 10%만 사용할까?", description: "뇌과학!", optionA: "맞다 10%", optionB: "아니다 (신화)", correctAnswer: "B" },
+  { title: "다이아몬드는 불에 탈까?", description: "화학 상식!", optionA: "탄다 🔥", optionB: "안 탄다", correctAnswer: "A" },
+  { title: "펭귄은 새일까?", description: "동물 상식!", optionA: "새다 🐧", optionB: "새가 아니다", correctAnswer: "A" },
+  { title: "한국 최고봉은 한라산?", description: "지리 상식!", optionA: "한라산", optionB: "다른 산", correctAnswer: "A" },
+  { title: "성인 혈액량은 5L 이상?", description: "인체 상식!", optionA: "5L 이상", optionB: "5L 미만", correctAnswer: "A" },
+  { title: "오징어에게 심장은 몇 개?", description: "동물 상식!", optionA: "1개", optionB: "3개", correctAnswer: "B" },
+  { title: "세계 가장 긴 강은 나일강?", description: "지리 상식!", optionA: "나일강", optionB: "아마존강", correctAnswer: "A" },
+  { title: "모기는 이빨이 있을까?", description: "곤충 상식!", optionA: "있다", optionB: "없다", correctAnswer: "A" },
+  { title: "무지개 색은 7가지?", description: "과학 상식!", optionA: "7가지 맞다 🌈", optionB: "더 많다", correctAnswer: "A" },
+  { title: "지구에서 가장 깊은 바다는?", description: "해양 상식!", optionA: "마리아나 해구", optionB: "다른 곳", correctAnswer: "A" },
+  { title: "커피는 원래 에티오피아산?", description: "역사 상식!", optionA: "에티오피아", optionB: "브라질", correctAnswer: "A" },
+  { title: "세계 가장 작은 나라는 바티칸?", description: "지리 상식!", optionA: "바티칸", optionB: "모나코", correctAnswer: "A" },
+  { title: "소금은 미네랄일까?", description: "과학 상식!", optionA: "미네랄이다", optionB: "아니다", correctAnswer: "A" },
+  { title: "한글 창제년도는 1443년?", description: "한국사!", optionA: "1443년", optionB: "다른 해", correctAnswer: "A" },
+  { title: "세계 가장 높은 건물은 아시아에?", description: "건축 상식!", optionA: "아시아 (부르즈 할리파)", optionB: "다른 대륙", correctAnswer: "A" },
+  { title: "인간은 평생 약 2만번 숨쉴까?", description: "인체 상식!", optionA: "2만번 정도", optionB: "훨씬 더 많다", correctAnswer: "B" },
 ];
 
 // ── Sports questions (20종) ──
@@ -247,8 +251,12 @@ export function resolveQuestion(question: Question): QuestionResult {
     };
   }
 
-  // Fun/trivia/sports/trend: random resolution
-  const answer = Math.random() < 0.5 ? "A" : "B";
+  // Check if question has a known correct answer (trivia/sports with facts)
+  const stored = [...TRIVIA_QUESTIONS, ...SPORTS_QUESTIONS].find(
+    (q) => q.title === question.title && q.correctAnswer,
+  );
+
+  const answer = stored?.correctAnswer ?? (Math.random() < 0.5 ? "A" : "B");
   return {
     answer,
     detail: answer === "A" ? question.optionA : question.optionB,

@@ -12,6 +12,7 @@ import { useCountdown } from "@/hooks/useCountdown";
 import { AVATAR_LEVELS } from "@/types";
 import type { RoundResult } from "@/types";
 import MiniChart from "@/components/game/MiniChart";
+import CrowdGauge from "@/components/game/CrowdGauge";
 import ResultOverlay from "@/components/game/ResultOverlay";
 import ShareCard from "@/components/game/ShareCard";
 import Onboarding from "@/components/game/Onboarding";
@@ -432,41 +433,9 @@ export default function GamePage() {
           </div>
         )}
 
-        {/* Ratio gauge */}
+        {/* Crowd gauge — monkeys rushing! */}
         {currentRound && (currentRound.phase === "OPEN" || currentRound.phase === "CLOSED") && (
-          <div className="bg-white rounded-3xl p-4 border-2 border-card-border clay" data-testid="ratio-gauge">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1">
-                <Users size={12} className="text-text-secondary" />
-                <span className="text-xs text-text-secondary font-sans font-semibold">참여 비율</span>
-              </div>
-              <span className="text-xs text-banana font-sans font-semibold">
-                소수파 보너스 적용!
-              </span>
-            </div>
-            {/* Gauge bar */}
-            <div className="flex rounded-2xl overflow-hidden h-10 border-2 border-card-border">
-              <div
-                className="bg-up/20 flex items-center justify-center transition-all duration-500"
-                style={{ width: `${upPct}%` }}
-              >
-                <span className="text-up font-bold text-sm font-sans">
-                  UP {upPct}%
-                </span>
-              </div>
-              <div
-                className="bg-down/20 flex items-center justify-center transition-all duration-500"
-                style={{ width: `${downPct}%` }}
-              >
-                <span className="text-down font-bold text-sm font-sans">
-                  DOWN {downPct}%
-                </span>
-              </div>
-            </div>
-            <p className="text-xs text-text-secondary text-center mt-2 font-sans">
-              적은 쪽을 맞추면 더 높은 점수!
-            </p>
-          </div>
+          <CrowdGauge upPct={upPct} picked={myPick?.direction ?? null} />
         )}
 
         {/* Pick buttons */}

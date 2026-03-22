@@ -126,7 +126,15 @@ export const AVATAR_LEVELS = [
   { level: 5, name: "전설의침팬지", emoji: "✨", minWins: 1000 },
 ];
 
-/** Demo round duration: 30s open + 5s resolution */
+/** Round timing */
 export const ROUND_OPEN_MS = 30_000;
-export const ROUND_RESOLVE_DELAY_MS = 5_000;
-export const ROUND_BREAK_MS = 8_000;
+export const ROUND_RESOLVE_DELAY_MS = 3_000;
+export const ROUND_BREAK_MS = 3_000;
+/** Category-specific durations (seconds) */
+export const CATEGORY_DURATION: Record<string, number> = {
+  price: 30,
+  fun: 15,
+  trivia: 20,
+  sports: 15,
+  trend: 20,
+};

@@ -6,6 +6,7 @@
 import {
   ROUND_RESOLVE_DELAY_MS,
   ROUND_BREAK_MS,
+  CATEGORY_DURATION,
   type Round,
   type RoundPhase,
   type Direction,
@@ -42,14 +43,15 @@ function transitionTo(phase: RoundPhase) {
 }
 
 /** Start a new round */
-const SPEED_ROUND_CHANCE = 0.1;
+const SPEED_ROUND_CHANCE = 0.2;
 const SPEED_ROUND_MS = 10_000;
 
 function startNewRound() {
   const question = generateQuestion();
   const now = Date.now();
   const isSpeed = Math.random() < SPEED_ROUND_CHANCE;
-  const roundMs = isSpeed ? SPEED_ROUND_MS : configuredOpenMs;
+  const categoryMs = (CATEGORY_DURATION[question.category] ?? 30) * 1000;
+  const roundMs = isSpeed ? SPEED_ROUND_MS : Math.min(configuredOpenMs, categoryMs);
 
   const entryPrice = question.symbol
     ? getPrice(question.symbol).price
@@ -185,4 +187,15 @@ export function onRoundUpdate(listener: (round: Round) => void): () => void {
 /** Get current round */
 export function getCurrentRound(): Round | null {
   return currentRound;
+}
+
+/** Adjust ratio when user picks (reflects user choice in the gauge) */
+export function adjustRatioForPick(direction: "UP" | "DOWN") {
+  if (!currentRound || currentRound.phase !== "OPEN") return;
+  const shift = 2 + Math.random() * 3; // 2~5% shift
+  const newRatio = direction === "UP"
+    ? Math.min(75, currentRound.upRatio + shift)
+    : Math.max(25, currentRound.upRatio - shift);
+  currentRound = { ...currentRound, upRatio: Math.round(newRatio) };
+  notify(currentRound);
 }

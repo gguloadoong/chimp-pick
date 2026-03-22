@@ -10,6 +10,7 @@ import {
   needsReset,
   updateMissionProgress,
   claimMission,
+  adjustRatioForPick,
 } from "@/lib/game-engine";
 import type { DailyMissionState } from "@/lib/game-engine";
 
@@ -63,6 +64,8 @@ export const useGameStore = create<GameState>()(
       pickDirection: (direction) => {
         const { currentRound, myPick } = get();
         if (!currentRound || currentRound.phase !== "OPEN" || myPick) return;
+
+        adjustRatioForPick(direction);
 
         set({
           myPick: {

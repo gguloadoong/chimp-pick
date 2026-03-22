@@ -12,6 +12,8 @@ import ChimpCharacter from "@/components/character/ChimpCharacter";
 export default function ProfilePage() {
   const user = useAuthStore((s) => s.user);
   const setNickname = useAuthStore((s) => s.setNickname);
+  const getInviteUrl = useAuthStore((s) => s.getInviteUrl);
+  const [copied, setCopied] = useState("");
   const [editingNick, setEditingNick] = useState(false);
   const [nickInput, setNickInput] = useState("");
   const roundHistory = useGameStore((s) => s.roundHistory);
@@ -119,6 +121,37 @@ export default function ProfilePage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+
+          {/* Invite + Share */}
+          <div className="bg-white rounded-3xl p-4 border-2 border-card-border clay">
+            <p className="text-sm font-semibold text-text-primary font-sans mb-3">🔗 친구 초대</p>
+            <div className="flex gap-2">
+              <button
+                onClick={async () => {
+                  try { await navigator.clipboard.writeText(getInviteUrl()); setCopied("invite"); setTimeout(() => setCopied(""), 2000); } catch {}
+                }}
+                className="flex-1 py-2.5 rounded-2xl bg-banana/10 border-2 border-banana/30 text-banana text-sm font-bold font-sans btn-clay"
+              >
+                {copied === "invite" ? "복사됨! ✅" : "초대 링크 복사 📋"}
+              </button>
+              <button
+                onClick={async () => {
+                  const text = [
+                    `🦍 ${user?.nickname ?? "침팬지"}의 침팬지픽 전적!`,
+                    `🏆 ${totalScore.toLocaleString()}점 · ${formatWinRate(stats.winRate)} 승률`,
+                    `${avatarLevel.emoji} ${avatarLevel.name} Lv.${avatarLevel.level}`,
+                    `🔥 최고 ${stats.maxStreak}연승`,
+                    "",
+                    "나도 도전하기 👉 " + getInviteUrl(),
+                  ].join("\n");
+                  try { await navigator.clipboard.writeText(text); setCopied("profile"); setTimeout(() => setCopied(""), 2000); } catch {}
+                }}
+                className="flex-1 py-2.5 rounded-2xl bg-white border-2 border-card-border text-text-primary text-sm font-bold font-sans btn-clay"
+              >
+                {copied === "profile" ? "복사됨! ✅" : "전적 공유 📤"}
+              </button>
             </div>
           </div>
 

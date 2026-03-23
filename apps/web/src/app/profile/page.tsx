@@ -269,10 +269,7 @@ export default function ProfilePage() {
                     <span className="text-lg">{r.isCorrect ? "✅" : "❌"}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-sans font-semibold text-text-primary truncate">
-                        {r.symbolName || "재미 예측"}
-                        <span className="text-xs text-text-secondary ml-2">
-                          {r.direction === "UP" ? "🚀 A" : "💀 B"}
-                        </span>
+                        {r.questionTitle || r.symbolName || "예측"}
                       </p>
                       <p className="text-xs text-text-secondary font-sans">
                         {formatRelativeTime(r.resolvedAt)} · UP {r.upRatio}%

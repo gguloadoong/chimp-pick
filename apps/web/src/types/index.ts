@@ -57,6 +57,11 @@ export interface RoundResult {
   entryPrice: number;
   exitPrice: number;
   resolvedAt: string;
+  /** Question metadata for display */
+  questionCategory: QuestionCategory;
+  questionTitle: string;
+  optionA: string;
+  optionB: string;
 }
 
 // ===== Score =====

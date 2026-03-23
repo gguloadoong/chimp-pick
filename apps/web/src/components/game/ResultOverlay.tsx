@@ -218,38 +218,47 @@ export default function ResultOverlay({
                   : "🍌 바나나 껍질에 미끄러졌다... 다시 도전!"}
           </p>
 
-          {/* Price comparison */}
+          {/* Result details — category-aware */}
           <div
             className={[
               "rounded-2xl p-4 mb-4 text-sm border-2",
               isWin ? "bg-up/8 border-up/20" : "bg-down/8 border-down/20",
             ].join(" ")}
           >
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-text-secondary font-sans">종목</span>
-              <span className="text-text-primary font-sans font-semibold">
-                {result.symbolName}
-              </span>
-            </div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-text-secondary font-sans">진입가</span>
-              <span className="text-text-primary font-mono tabular-nums font-semibold">
-                {formatPrice(result.entryPrice)}원
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-text-secondary font-sans">결과가</span>
-              <span
-                className={[
-                  "font-mono tabular-nums font-bold",
-                  isWin ? "text-up" : "text-down",
-                ].join(" ")}
-              >
-                {formatPrice(result.exitPrice)}원
-              </span>
-            </div>
-            <div className="mt-3 pt-3 border-t border-card-border flex justify-between items-center">
-              <span className="text-text-secondary font-sans">내 예측</span>
+            {/* Question title */}
+            <p className="text-center text-text-primary font-sans font-semibold mb-3">
+              {result.questionTitle || result.symbolName || "예측"}
+            </p>
+
+            {/* Price details — only for price category */}
+            {result.questionCategory === "price" && result.entryPrice > 0 && (
+              <>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-text-secondary font-sans">시작가</span>
+                  <span className="text-text-primary font-mono tabular-nums font-semibold">
+                    {formatPrice(result.entryPrice)}원
+                  </span>
+                </div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-text-secondary font-sans">결과가</span>
+                  <span
+                    className={[
+                      "font-mono tabular-nums font-bold",
+                      isWin ? "text-up" : "text-down",
+                    ].join(" ")}
+                  >
+                    {formatPrice(result.exitPrice)}원
+                  </span>
+                </div>
+              </>
+            )}
+
+            {/* My pick — show actual option labels */}
+            <div className={[
+              "flex justify-between items-center",
+              result.questionCategory === "price" ? "mt-3 pt-3 border-t border-card-border" : "",
+            ].join(" ")}>
+              <span className="text-text-secondary font-sans">내 선택</span>
               <span
                 className={[
                   "font-semibold text-xs px-3 py-1 rounded-full border-2",
@@ -258,13 +267,26 @@ export default function ResultOverlay({
                     : "bg-down/10 text-down border-down/30",
                 ].join(" ")}
               >
-                {result.direction === "UP" ? "UP 🚀" : "DOWN 💀"}
+                {result.direction === "UP"
+                  ? (result.optionA || "UP 🚀")
+                  : (result.optionB || "DOWN 💀")}
               </span>
             </div>
+
+            {/* Correct answer — for non-price */}
+            {result.questionCategory !== "price" && (
+              <div className="mt-2 flex justify-between items-center">
+                <span className="text-text-secondary font-sans">정답</span>
+                <span className="text-xs font-semibold text-text-primary font-sans">
+                  {result.result === "UP" ? (result.optionA || "A") : (result.optionB || "B")}
+                </span>
+              </div>
+            )}
+
             <div className="mt-2 flex justify-between items-center">
               <span className="text-text-secondary font-sans">참여 비율</span>
               <span className="text-xs text-text-secondary font-sans">
-                UP {result.upRatio}% / DOWN {100 - result.upRatio}%
+                {result.upRatio}% / {100 - result.upRatio}%
               </span>
             </div>
           </div>

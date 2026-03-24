@@ -36,8 +36,6 @@
   --color-up:            var(--positive);
   --color-down:          var(--negative);
   --color-accent:        var(--warning);
-  --color-bg-primary:    var(--bg-primary);
-  --color-bg-secondary:  var(--bg-secondary);
   --color-text-primary:  var(--fg-primary);
   --color-text-secondary: var(--fg-secondary);
   --color-card-border:   var(--border-primary);

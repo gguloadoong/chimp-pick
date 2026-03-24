@@ -36,8 +36,29 @@ services:
     restart: unless-stopped
     command: redis-server --appendonly yes
 
+  timescaledb:
+    image: timescale/timescaledb:2.17.2-pg16
+    container_name: chimppick-timescaledb
+    environment:
+      POSTGRES_USER: chimppick
+      POSTGRES_PASSWORD: chimppick
+      POSTGRES_DB: chimppick_ts
+    ports:
+      - '5433:5432'
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U chimppick -d chimppick_ts']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  timescale_data:
     driver: local

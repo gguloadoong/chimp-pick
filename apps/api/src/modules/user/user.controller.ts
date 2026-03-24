@@ -1,35 +1,33 @@
-import { Controller, Get, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
+import type { User } from '@prisma/client';
 import { UserService } from './user.service';
-import { AuthGuard } from '../../guards/auth.guard';
-import type { AuthenticatedRequest } from '../../guards/auth.guard';
-import { generateId } from '../../mock/data';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
-function buildResponse(data: unknown) {
-  return {
-    success: true,
-    data,
-    meta: {
-      timestamp: new Date().toISOString(),
-      requestId: generateId(),
-    },
-  };
+function ok(data: unknown) {
+  return { success: true, data, meta: { timestamp: new Date().toISOString() } };
 }
 
+@ApiTags('users')
+@ApiBearerAuth()
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Get('me')
-  getMe(@Req() req: AuthenticatedRequest) {
-    const user = this.userService.getUser(req.user.id);
-    return buildResponse(user);
+  @ApiOperation({ summary: '내 프로필 조회' })
+  async getMe(@CurrentUser() user: User) {
+    const result = await this.userService.getUser(user.id);
+    return ok(result);
   }
 
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard('jwt'))
   @Get('me/stats')
-  getMyStats(@Req() req: AuthenticatedRequest) {
-    const stats = this.userService.getUserStats(req.user.id);
-    return buildResponse(stats);
+  @ApiOperation({ summary: '내 통계 조회' })
+  async getMyStats(@CurrentUser() user: User) {
+    const stats = await this.userService.getUserStats(user.id);
+    return ok(stats);
   }
 }

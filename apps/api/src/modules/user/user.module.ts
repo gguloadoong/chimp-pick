@@ -4,7 +4,7 @@ import { UserService } from './user.service';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule], // PassportModule needed for AuthGuard('jwt')
   controllers: [UserController],
   providers: [UserService],
   exports: [UserService],

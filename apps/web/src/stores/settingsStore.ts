@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type RoundDuration = 30 | 60 | 300;
+export type RoundDuration = 60 | 300 | 3600;
 export type ThemeMode = "light" | "dark" | "system";
 export type AccentColor = "banana" | "mint" | "purple" | "pink";
 
@@ -29,15 +29,15 @@ interface SettingsState {
 }
 
 export const ROUND_DURATION_LABELS: Record<RoundDuration, string> = {
-  30: "30초",
-  60: "1분",
-  300: "5분",
+  60: "1분 (퀴즈)",
+  300: "5분 (기본)",
+  3600: "1시간 (시세)",
 };
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      roundDuration: 30,
+      roundDuration: 300,
       soundEnabled: true,
       hasSeenOnboarding: false,
       theme: "light" as ThemeMode,

@@ -51,6 +51,10 @@ describe("computeStats", () => {
     entryPrice: 100,
     exitPrice: 101,
     resolvedAt: new Date().toISOString(),
+    questionCategory: "price",
+    questionTitle: "BTC 테스트",
+    optionA: "UP 🚀",
+    optionB: "DOWN 💀",
   });
 
   it("returns zero stats for empty history", () => {

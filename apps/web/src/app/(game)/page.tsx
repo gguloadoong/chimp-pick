@@ -127,24 +127,17 @@ export default function GamePage() {
         const next = [...prev, price.price];
         return next.length > MAX_CHART_TICKS ? next.slice(-MAX_CHART_TICKS) : next;
       });
+      // Also update symbolB in the same subscription to avoid double listeners
+      if (roundSymbolB && isComparison) {
+        setCurrentPriceBData(getPrice(roundSymbolB));
+      }
     };
 
+    if (!isComparison) setCurrentPriceBData(null);
     update();
     const unsub = onPriceUpdate(update);
     return unsub;
-  }, [roundId, roundSymbol]);
-
-  // Track symbolB price for comparison rounds
-  useEffect(() => {
-    if (!roundSymbolB || !isComparison) {
-      setCurrentPriceBData(null);
-      return;
-    }
-    const update = () => setCurrentPriceBData(getPrice(roundSymbolB));
-    update();
-    const unsub = onPriceUpdate(update);
-    return unsub;
-  }, [roundId, roundSymbolB, isComparison]);
+  }, [roundId, roundSymbol, roundSymbolB, isComparison]);
 
   // Play drumroll when round closes
   const roundPhase = currentRound?.phase;
@@ -465,20 +458,22 @@ export default function GamePage() {
             const maxAbs = Math.max(Math.abs(changeA), Math.abs(changeB), 0.01);
             const barA = 50 + (changeA - changeB) / (2 * maxAbs) * 45;
             const barB = 100 - barA;
-            const aWinning = changeA >= changeB;
-            const myPickWinning = (myPick.direction === "UP" && aWinning) || (myPick.direction === "DOWN" && !aWinning);
+            const EPSILON = 0.0001;
+            const isTie = Math.abs(changeA - changeB) < EPSILON;
+            const aWinning = !isTie && changeA > changeB;
+            const myPickWinning = !isTie && ((myPick.direction === "UP" && aWinning) || (myPick.direction === "DOWN" && !aWinning));
             return (
               <div className={[
                 "bg-white rounded-3xl p-4 border-2 clay",
-                myPickWinning ? "border-up/40" : "border-down/40",
+                isTie ? "border-card-border" : myPickWinning ? "border-up/40" : "border-down/40",
               ].join(" ")}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-semibold text-text-secondary font-sans">⚡ 실시간 현황</span>
                   <span className={[
                     "text-xs font-bold font-sans px-2 py-0.5 rounded-full",
-                    myPickWinning ? "bg-up/10 text-up" : "bg-down/10 text-down",
+                    isTie ? "bg-text-secondary/10 text-text-secondary" : myPickWinning ? "bg-up/10 text-up" : "bg-down/10 text-down",
                   ].join(" ")}>
-                    {myPickWinning ? "🎯 현재 맞는 중!" : "😬 현재 틀린 중..."}
+                    {isTie ? "🤝 동률 (랜덤 판정)" : myPickWinning ? "🎯 현재 맞는 중!" : "😬 현재 틀린 중..."}
                   </span>
                 </div>
                 <div className="space-y-2">
@@ -503,7 +498,7 @@ export default function GamePage() {
                   {/* Symbol B bar */}
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono w-16 truncate text-text-primary font-semibold">
-                      {!aWinning && "🏆 "}{currentRound.symbolNameB}
+                      {!isTie && !aWinning && "🏆 "}{currentRound.symbolNameB}
                     </span>
                     <div className="flex-1 bg-card-border rounded-full h-3 overflow-hidden">
                       <div

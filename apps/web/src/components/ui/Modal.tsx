@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  type ReactNode,
-  useEffect,
-  useCallback,
-} from "react";
+import { type ReactNode, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
@@ -24,9 +20,7 @@ export default function Modal({
   "data-testid": testId,
 }: ModalProps) {
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    },
+    (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); },
     [onClose]
   );
 
@@ -50,48 +44,37 @@ export default function Modal({
       data-testid={testId}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
-      {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-[8px]"
         onClick={onClose}
         aria-hidden="true"
       />
-
-      {/* Modal panel */}
       <div
         className={[
           "relative z-10 w-full max-w-md",
-          "bg-bg-secondary rounded-2xl p-6",
-          "shadow-[0_8px_40px_rgba(0,0,0,0.5)]",
-          "animate-[modalIn_0.18s_ease-out]",
+          "bg-[var(--bg-elevated)] rounded-[var(--radius-lg)] p-6",
+          "shadow-[var(--shadow-3)]",
         ].join(" ")}
-        style={{
-          animation: open
-            ? "modalIn 0.18s cubic-bezier(0.16,1,0.3,1) both"
-            : undefined,
-        }}
+        style={{ animation: "modalIn 0.25s cubic-bezier(0.16,1,0.3,1) both" }}
       >
-        {/* Header */}
         <div className="flex items-center justify-between mb-4">
           {title && (
-            <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
+            <h2 className="text-lg font-semibold text-[var(--fg-primary)] font-sans">{title}</h2>
           )}
           <button
             onClick={onClose}
             aria-label="닫기"
-            className="ml-auto p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/10 transition-colors"
+            className="ml-auto p-1.5 rounded-[var(--radius-sm)] text-[var(--fg-secondary)] hover:text-[var(--fg-primary)] hover:bg-[var(--interactive-hover)] transition-colors"
           >
             <X size={18} aria-hidden="true" />
           </button>
         </div>
-
         {children}
       </div>
-
       <style>{`
         @keyframes modalIn {
-          from { opacity: 0; transform: scale(0.92) translateY(8px); }
-          to   { opacity: 1; transform: scale(1)    translateY(0);  }
+          from { opacity: 0; transform: scale(0.95) translateY(8px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
         }
       `}</style>
     </div>,

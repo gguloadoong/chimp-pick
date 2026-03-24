@@ -31,45 +31,35 @@ export default function BottomNav({ "data-testid": testId }: BottomNavProps) {
       aria-label="하단 네비게이션"
       className={[
         "fixed bottom-0 left-0 right-0 z-40",
-        "bg-white border-t-2 border-card-border",
+        "bg-[var(--bg-elevated)] border-t border-[var(--border-primary)]",
         "pb-[env(safe-area-inset-bottom)]",
-        "shadow-[0_-4px_16px_rgba(255,184,0,0.12)]",
+        "shadow-[var(--shadow-2)]",
       ].join(" ")}
     >
       <ul className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href;
           return (
-            <li key={item.href} className="flex-1">
+            <li key={item.href} className="flex-1 relative">
               <Link
                 href={item.href}
                 aria-label={item.label}
                 aria-current={isActive ? "page" : undefined}
                 className={[
-                  "flex flex-col items-center justify-center gap-1 py-2 rounded-2xl transition-all duration-150",
+                  "flex flex-col items-center justify-center gap-1 py-2 rounded-[var(--radius-md)] transition-all duration-150",
                   isActive
-                    ? "text-banana font-bold"
-                    : "text-text-secondary hover:text-text-primary",
+                    ? "text-[var(--brand-primary)] font-bold"
+                    : "text-[var(--fg-secondary)] hover:text-[var(--fg-primary)]",
                 ].join(" ")}
               >
-                <span
-                  className={[
-                    "transition-transform duration-150",
-                    isActive ? "scale-110" : "",
-                  ].join(" ")}
-                >
+                <span className={["transition-transform duration-150", isActive ? "scale-110" : ""].join(" ")}>
                   {item.icon}
                 </span>
-                <span
-                  className={[
-                    "text-[10px] leading-none font-sans",
-                    isActive ? "font-bold" : "font-medium",
-                  ].join(" ")}
-                >
+                <span className={["text-[10px] leading-none font-sans", isActive ? "font-bold" : "font-medium"].join(" ")}>
                   {item.label}
                 </span>
                 {isActive && (
-                  <span className="absolute bottom-1 w-1 h-1 rounded-full bg-banana" />
+                  <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[var(--brand-primary)]" />
                 )}
               </Link>
             </li>

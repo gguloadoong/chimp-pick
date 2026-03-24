@@ -39,9 +39,9 @@ export default function GameLayout({ children }: GameLayoutProps) {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex flex-col flex-1 items-center justify-center bg-bg-primary">
-        <ChimpCharacter mood="idle" size={80} className="animate-float" />
-        <p className="mt-4 text-text-secondary text-sm font-heading font-semibold">
+      <div className="flex flex-col flex-1 items-center justify-center bg-[var(--bg-primary)]">
+        <ChimpCharacter mood="idle" size={80} className="animate-bounce-chimp" />
+        <p className="mt-4 text-[var(--fg-secondary)] text-sm font-heading font-semibold">
           침팬지 깨우는 중...
         </p>
       </div>
@@ -49,7 +49,7 @@ export default function GameLayout({ children }: GameLayoutProps) {
   }
 
   return (
-    <div className="flex flex-col flex-1 bg-bg-primary">
+    <div className="flex flex-col flex-1 bg-[var(--bg-primary)]">
       <main className="flex-1 pb-20">{children}</main>
       <BottomNav />
       <ToastContainer />

@@ -3,8 +3,8 @@
 import { type ButtonHTMLAttributes, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 
-type ButtonVariant = "primary" | "up" | "down" | "ghost" | "outline";
-type ButtonSize = "sm" | "md" | "lg";
+type ButtonVariant = "primary" | "positive" | "negative" | "secondary" | "ghost" | "outline" | "up" | "down";
+type ButtonSize = "sm" | "md" | "lg" | "xl";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -16,19 +16,27 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-banana text-white font-bold border-2 border-banana/70 clay hover:brightness-105 active:scale-95",
-  up: "bg-up text-white font-bold border-2 border-up/70 clay-up hover:brightness-105 active:scale-95",
-  down: "bg-down text-white font-bold border-2 border-down/70 clay-down hover:brightness-105 active:scale-95",
+    "bg-[var(--brand-primary)] text-[var(--brand-on-primary)] hover:brightness-105",
+  positive:
+    "bg-[var(--positive)] text-[var(--fg-inverse)] hover:bg-[var(--positive-hover)]",
+  negative:
+    "bg-[var(--negative)] text-[var(--fg-inverse)] hover:bg-[var(--negative-hover)]",
+  secondary:
+    "bg-[var(--bg-tertiary)] text-[var(--fg-primary)] hover:bg-[var(--border-primary)]",
   ghost:
-    "bg-transparent text-text-primary hover:bg-banana/8 active:scale-95",
+    "bg-transparent text-[var(--fg-primary)] hover:bg-[var(--interactive-hover)]",
   outline:
-    "bg-white border-2 border-card-border text-text-primary hover:border-banana/40 hover:bg-banana/5 clay-sm active:scale-95",
+    "bg-transparent border border-[var(--border-primary)] text-[var(--fg-primary)] hover:border-[var(--border-focus)] hover:bg-[var(--interactive-hover)]",
+  // Legacy aliases
+  up: "bg-[var(--positive)] text-[var(--fg-inverse)] hover:bg-[var(--positive-hover)]",
+  down: "bg-[var(--negative)] text-[var(--fg-inverse)] hover:bg-[var(--negative-hover)]",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "px-3 py-1.5 text-sm rounded-xl",
-  md: "px-5 py-2.5 text-base rounded-2xl",
-  lg: "px-7 py-3.5 text-lg rounded-2xl",
+  sm: "h-8 px-3 text-[13px] rounded-[var(--radius-sm)]",
+  md: "h-10 px-4 text-[14px] rounded-[var(--radius-md)]",
+  lg: "h-12 px-6 text-[14px] rounded-[var(--radius-md)]",
+  xl: "h-14 px-8 text-[16px] rounded-[var(--radius-md)]",
 };
 
 export default function Button({
@@ -50,10 +58,11 @@ export default function Button({
       aria-disabled={isDisabled}
       aria-busy={loading}
       className={[
-        "inline-flex items-center justify-center gap-2 font-sans transition-all duration-150 cursor-pointer select-none btn-clay",
+        "inline-flex items-center justify-center gap-2 font-sans font-semibold",
+        "transition-all duration-150 cursor-pointer select-none btn-press",
         variantClasses[variant],
         sizeClasses[size],
-        isDisabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "",
+        isDisabled ? "opacity-40 cursor-not-allowed pointer-events-none" : "",
         className,
       ]
         .filter(Boolean)
@@ -63,7 +72,7 @@ export default function Button({
       {loading && (
         <Loader2
           className="animate-spin"
-          size={size === "sm" ? 14 : size === "lg" ? 20 : 16}
+          size={size === "sm" ? 14 : size === "xl" ? 20 : 16}
           aria-hidden="true"
         />
       )}

@@ -25,16 +25,16 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-const toastStyles: Record<ToastType, string> = {
-  success: "border-up text-up",
-  error: "border-down text-down",
-  info: "border-banana text-banana",
+const toastStyles: Record<ToastType, { border: string; icon: string }> = {
+  success: { border: "border-l-[var(--positive)]", icon: "text-[var(--positive)]" },
+  error:   { border: "border-l-[var(--negative)]", icon: "text-[var(--negative)]" },
+  info:    { border: "border-l-[var(--brand-primary)]", icon: "text-[var(--brand-primary)]" },
 };
 
 const ToastIcon: Record<ToastType, ReactNode> = {
   success: <CheckCircle size={18} aria-hidden="true" />,
-  error: <XCircle size={18} aria-hidden="true" />,
-  info: <Info size={18} aria-hidden="true" />,
+  error:   <XCircle size={18} aria-hidden="true" />,
+  info:    <Info size={18} aria-hidden="true" />,
 };
 
 function ToastItem({
@@ -53,25 +53,27 @@ function ToastItem({
     };
   }, [toast.id, onDismiss]);
 
+  const styles = toastStyles[toast.type];
+
   return (
     <div
       role="alert"
       aria-live="polite"
       data-testid={`toast-${toast.type}`}
       className={[
-        "flex items-center gap-3 px-4 py-3 rounded-xl",
-        "bg-bg-secondary border",
-        "shadow-[0_4px_24px_rgba(0,0,0,0.4)]",
-        "animate-[slideUp_0.22s_cubic-bezier(0.16,1,0.3,1)_both]",
-        toastStyles[toast.type],
+        "flex items-center gap-3 px-4 py-3 rounded-[var(--radius-md)]",
+        "bg-[var(--bg-elevated)] border border-[var(--border-primary)] border-l-4",
+        "shadow-[var(--shadow-2)]",
+        "animate-slide-up",
+        styles.border,
       ].join(" ")}
     >
-      {ToastIcon[toast.type]}
-      <span className="text-sm text-text-primary flex-1">{toast.message}</span>
+      <span className={styles.icon}>{ToastIcon[toast.type]}</span>
+      <span className="text-sm text-[var(--fg-primary)] flex-1 font-sans">{toast.message}</span>
       <button
         onClick={() => onDismiss(toast.id)}
         aria-label="닫기"
-        className="text-text-secondary hover:text-text-primary transition-colors"
+        className="text-[var(--fg-tertiary)] hover:text-[var(--fg-primary)] transition-colors"
       >
         <X size={14} aria-hidden="true" />
       </button>
@@ -96,18 +98,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div
         aria-label="알림"
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-full max-w-sm px-4"
+        className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-full max-w-sm px-4"
       >
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onDismiss={dismiss} />
         ))}
       </div>
-      <style>{`
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to   { opacity: 1; transform: translateY(0);    }
-        }
-      `}</style>
     </ToastContext.Provider>
   );
 }

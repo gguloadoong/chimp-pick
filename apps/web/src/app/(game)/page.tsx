@@ -127,17 +127,24 @@ export default function GamePage() {
         const next = [...prev, price.price];
         return next.length > MAX_CHART_TICKS ? next.slice(-MAX_CHART_TICKS) : next;
       });
-      // Also update symbolB in the same subscription to avoid double listeners
-      if (roundSymbolB && isComparison) {
-        setCurrentPriceBData(getPrice(roundSymbolB));
-      }
     };
 
-    if (!isComparison) setCurrentPriceBData(null);
     update();
     const unsub = onPriceUpdate(update);
     return unsub;
-  }, [roundId, roundSymbol, roundSymbolB, isComparison]);
+  }, [roundId, roundSymbol]);
+
+  // Track symbolB price separately to avoid `first` flag reset in the chart effect
+  useEffect(() => {
+    if (!roundSymbolB || !isComparison) {
+      setCurrentPriceBData(null);
+      return;
+    }
+    const update = () => setCurrentPriceBData(getPrice(roundSymbolB));
+    update();
+    const unsub = onPriceUpdate(update);
+    return unsub;
+  }, [roundId, roundSymbolB, isComparison]);
 
   // Play drumroll when round closes
   const roundPhase = currentRound?.phase;
@@ -458,7 +465,7 @@ export default function GamePage() {
             const maxAbs = Math.max(Math.abs(changeA), Math.abs(changeB), 0.01);
             const barA = 50 + (changeA - changeB) / (2 * maxAbs) * 45;
             const barB = 100 - barA;
-            const EPSILON = 0.0001;
+            const EPSILON = 0.005; // half-unit at .toFixed(2) display precision
             const isTie = Math.abs(changeA - changeB) < EPSILON;
             const aWinning = !isTie && changeA > changeB;
             const myPickWinning = !isTie && ((myPick.direction === "UP" && aWinning) || (myPick.direction === "DOWN" && !aWinning));

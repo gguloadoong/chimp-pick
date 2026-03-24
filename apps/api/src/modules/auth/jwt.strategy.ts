@@ -30,6 +30,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       where: { id: payload.sub },
     });
     if (!user) throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
-    return user;
+    // Never expose password hash via request.user
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...safe } = user;
+    return safe;
   }
 }

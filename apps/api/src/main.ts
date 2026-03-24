@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
@@ -19,8 +20,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(4000);
-  console.log('🦍 ChimpPick API running on http://localhost:4000');
-  console.log('📖 Swagger docs: http://localhost:4000/api/docs');
+  const port = app.get(ConfigService).get<number>('PORT', 4000);
+  await app.listen(port);
+  console.log(`🦍 ChimpPick API running on http://localhost:${port}`);
+  console.log(`📖 Swagger docs: http://localhost:${port}/api/docs`);
 }
 void bootstrap();

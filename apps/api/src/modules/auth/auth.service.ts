@@ -34,7 +34,7 @@ export class AuthService {
     };
     const accessToken = this.jwt.sign(payload);
     const refreshToken = this.jwt.sign(payload, {
-      secret: this.config.getOrThrow<string>('JWT_SECRET'),
+      secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
       expiresIn: this.config.get('JWT_REFRESH_EXPIRES_IN', '7d'),
     });
     return { accessToken, refreshToken };
@@ -54,9 +54,13 @@ export class AuthService {
 
     const hashed = await bcrypt.hash(password, 12);
     const user = await this.prisma.user.create({
-      data: { email, password: hashed, nickname },
+      data: {
+        email,
+        password: hashed,
+        nickname,
+        stats: { create: {} },
+      },
     });
-    await this.prisma.userStats.create({ data: { userId: user.id } });
 
     const tokens = this.issueTokens(user);
     return { ...tokens, user: sanitize(user) };
@@ -84,9 +88,9 @@ export class AuthService {
         nickname: `게스트침팬지_${suffix}`,
         isGuest: true,
         bananaCoins: 100,
+        stats: { create: {} },
       },
     });
-    await this.prisma.userStats.create({ data: { userId: user.id } });
 
     const tokens = this.issueTokens(user);
     return { ...tokens, user: sanitize(user) };

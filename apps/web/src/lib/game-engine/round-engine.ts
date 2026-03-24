@@ -125,8 +125,12 @@ function resolveRound() {
     if (currentRound.isComparison && currentRound.symbolB && currentRound.entryPriceB != null) {
       // 비교 예측: 두 종목 상승률 비교
       exitPriceB = getPrice(currentRound.symbolB).price;
-      const changeA = (exitPrice - currentRound.entryPrice) / (currentRound.entryPrice || 1);
-      const changeB = (exitPriceB - currentRound.entryPriceB) / (currentRound.entryPriceB || 1);
+      const changeA = currentRound.entryPrice > 0
+        ? (exitPrice - currentRound.entryPrice) / currentRound.entryPrice
+        : (exitPrice > 0 ? Infinity : 0);
+      const changeB = currentRound.entryPriceB > 0
+        ? (exitPriceB - currentRound.entryPriceB) / currentRound.entryPriceB
+        : (exitPriceB > 0 ? Infinity : 0);
       if (changeA === changeB) {
         result = Math.random() < 0.5 ? "UP" : "DOWN";
       } else {

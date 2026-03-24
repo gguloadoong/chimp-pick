@@ -7,7 +7,9 @@ on:
     branches: [main]
 
 jobs:
-  lint-typecheck-test:
+  # ── Frontend ──────────────────────────────────────────────────────────────
+  fe:
+    name: FE lint / typecheck / test / build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,8 +32,73 @@ jobs:
 
       - name: Unit tests
         working-directory: apps/web
-        run: npx vitest run
+        run: npx vitest run --coverage
 
       - name: Build
         working-directory: apps/web
         run: npx next build
+
+  # ── Backend ───────────────────────────────────────────────────────────────
+  be:
+    name: BE lint / typecheck / test / build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        working-directory: apps/api
+        run: npx eslint src/
+
+      - name: TypeScript check
+        working-directory: apps/api
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        working-directory: apps/api
+        run: npx jest --passWithNoTests
+
+      - name: Build
+        working-directory: apps/api
+        run: npx nest build
+
+  # ── E2E (Playwright) ──────────────────────────────────────────────────────
+  e2e:
+    name: E2E tests (Playwright)
+    runs-on: ubuntu-latest
+    needs: [fe, be]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        working-directory: apps/web
+        run: npx playwright test
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7

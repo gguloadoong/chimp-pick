@@ -150,13 +150,13 @@ export const useGameStore = create<GameState>()(
           }
         }
 
-        set({
+        set((state) => ({
           roundHistory: newHistory,
-          totalScore: get().totalScore + score + challengeBonus,
+          totalScore: state.totalScore + score + challengeBonus,
           dailyMissions,
           challenge,
           myPick: null, // clear immediately to prevent duplicate calls (React Strict Mode)
-        });
+        }));
 
         return result;
       },

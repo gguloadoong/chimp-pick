@@ -132,7 +132,7 @@ export default function ProfilePage() {
                 onClick={async () => {
                   try { await navigator.clipboard.writeText(getInviteUrl()); setCopied("invite"); setTimeout(() => setCopied(""), 2000); } catch {}
                 }}
-                className="flex-1 py-2.5 rounded-2xl bg-banana/10 border-2 border-banana/30 text-banana text-sm font-bold font-sans btn-clay"
+                className="flex-1 py-2.5 rounded-2xl bg-banana/10 border-2 border-banana/30 text-banana text-sm font-bold font-sans btn-press"
               >
                 {copied === "invite" ? "복사됨! ✅" : "초대 링크 복사 📋"}
               </button>
@@ -148,7 +148,7 @@ export default function ProfilePage() {
                   ].join("\n");
                   try { await navigator.clipboard.writeText(text); setCopied("profile"); setTimeout(() => setCopied(""), 2000); } catch {}
                 }}
-                className="flex-1 py-2.5 rounded-2xl bg-white border-2 border-card-border text-text-primary text-sm font-bold font-sans btn-clay"
+                className="flex-1 py-2.5 rounded-2xl bg-white border-2 border-card-border text-text-primary text-sm font-bold font-sans btn-press"
               >
                 {copied === "profile" ? "복사됨! ✅" : "전적 공유 📤"}
               </button>

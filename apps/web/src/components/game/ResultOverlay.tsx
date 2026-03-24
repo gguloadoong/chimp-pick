@@ -233,28 +233,42 @@ export default function ResultOverlay({
             {/* Price details — comparison or single */}
             {result.questionCategory === "price" && result.isComparison && result.entryPriceB != null ? (
               <div className="mb-2 space-y-2">
-                {/* Symbol A */}
-                <div className={["rounded-xl p-2 border", result.result === "UP" ? "border-up/40 bg-up/8" : "border-card-border"].join(" ")}>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className={["font-semibold font-sans", result.result === "UP" ? "text-up" : "text-text-secondary"].join(" ")}>
-                      {result.symbolName} {result.result === "UP" ? "🏆" : ""}
-                    </span>
-                    <span className="font-mono tabular-nums text-text-secondary">
-                      {formatPrice(result.entryPrice)} → <span className={result.result === "UP" ? "text-up font-bold" : ""}>{formatPrice(result.exitPrice)}</span>원
-                    </span>
-                  </div>
-                </div>
-                {/* Symbol B */}
-                <div className={["rounded-xl p-2 border", result.result === "DOWN" ? "border-up/40 bg-up/8" : "border-card-border"].join(" ")}>
-                  <div className="flex justify-between items-center text-xs">
-                    <span className={["font-semibold font-sans", result.result === "DOWN" ? "text-up" : "text-text-secondary"].join(" ")}>
-                      {result.symbolNameB} {result.result === "DOWN" ? "🏆" : ""}
-                    </span>
-                    <span className="font-mono tabular-nums text-text-secondary">
-                      {formatPrice(result.entryPriceB)} → <span className={result.result === "DOWN" ? "text-up font-bold" : ""}>{formatPrice(result.exitPriceB ?? 0)}</span>원
-                    </span>
-                  </div>
-                </div>
+                {(() => {
+                  const pctA = result.entryPrice > 0 ? ((result.exitPrice - result.entryPrice) / result.entryPrice) * 100 : 0;
+                  const pctB = result.entryPriceB > 0 ? (((result.exitPriceB ?? 0) - result.entryPriceB) / result.entryPriceB) * 100 : 0;
+                  return (
+                    <>
+                      {/* Symbol A */}
+                      <div className={["rounded-xl p-2 border", result.result === "UP" ? "border-up/40 bg-up/8" : "border-card-border"].join(" ")}>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className={["font-semibold font-sans", result.result === "UP" ? "text-up" : "text-text-secondary"].join(" ")}>
+                            {result.symbolName} {result.result === "UP" ? "🏆" : ""}
+                          </span>
+                          <span className={["font-mono tabular-nums font-bold", result.result === "UP" ? "text-up" : "text-text-secondary"].join(" ")}>
+                            {pctA >= 0 ? "+" : ""}{pctA.toFixed(2)}%
+                          </span>
+                        </div>
+                        <p className="text-xs text-text-secondary font-mono mt-0.5">
+                          {formatPrice(result.entryPrice)} → {formatPrice(result.exitPrice)}원
+                        </p>
+                      </div>
+                      {/* Symbol B */}
+                      <div className={["rounded-xl p-2 border", result.result === "DOWN" ? "border-up/40 bg-up/8" : "border-card-border"].join(" ")}>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className={["font-semibold font-sans", result.result === "DOWN" ? "text-up" : "text-text-secondary"].join(" ")}>
+                            {result.symbolNameB} {result.result === "DOWN" ? "🏆" : ""}
+                          </span>
+                          <span className={["font-mono tabular-nums font-bold", result.result === "DOWN" ? "text-up" : "text-text-secondary"].join(" ")}>
+                            {pctB >= 0 ? "+" : ""}{pctB.toFixed(2)}%
+                          </span>
+                        </div>
+                        <p className="text-xs text-text-secondary font-mono mt-0.5">
+                          {formatPrice(result.entryPriceB)} → {formatPrice(result.exitPriceB ?? 0)}원
+                        </p>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             ) : result.questionCategory === "price" && result.entryPrice > 0 ? (
               <>

@@ -155,6 +155,7 @@ export const useGameStore = create<GameState>()(
           totalScore: get().totalScore + score + challengeBonus,
           dailyMissions,
           challenge,
+          myPick: null, // clear immediately to prevent duplicate calls (React Strict Mode)
         });
 
         return result;

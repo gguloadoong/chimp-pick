@@ -92,6 +92,7 @@ export default function GamePage() {
   const [priceTicks, setPriceTicks] = useState<number[]>([]);
   const [resolvedResult, setResolvedResult] = useState<RoundResult | null>(null);
   const [shareResult, setShareResult] = useState<RoundResult | null>(null);
+  const [currentPriceBData, setCurrentPriceBData] = useState<ReturnType<typeof getPrice> | null>(null);
 
   const checkAttendance = useGameStore((s) => s.checkAttendance);
 
@@ -108,6 +109,8 @@ export default function GamePage() {
   // Track price ticks for current round's symbol
   const roundId = currentRound?.id;
   const roundSymbol = currentRound?.symbol;
+  const roundSymbolB = currentRound?.symbolB;
+  const isComparison = currentRound?.isComparison;
 
   useEffect(() => {
     if (!roundSymbol) return;
@@ -130,6 +133,18 @@ export default function GamePage() {
     const unsub = onPriceUpdate(update);
     return unsub;
   }, [roundId, roundSymbol]);
+
+  // Track symbolB price separately to avoid `first` flag reset in the chart effect
+  useEffect(() => {
+    if (!roundSymbolB || !isComparison) {
+      setCurrentPriceBData(null);
+      return;
+    }
+    const update = () => setCurrentPriceBData(getPrice(roundSymbolB));
+    update();
+    const unsub = onPriceUpdate(update);
+    return unsub;
+  }, [roundId, roundSymbolB, isComparison]);
 
   // Play drumroll when round closes
   const roundPhase = currentRound?.phase;
@@ -230,7 +245,7 @@ export default function GamePage() {
               <div>
                 <p className="text-xs text-text-secondary font-sans mb-1.5">라운드 시간</p>
                 <div className="flex gap-2">
-                  {([30, 60, 300] as RoundDuration[]).map((d) => (
+                  {([60, 300, 3600] as RoundDuration[]).map((d) => (
                     <button
                       key={d}
                       onClick={() => setDuration(d)}
@@ -438,6 +453,83 @@ export default function GamePage() {
           <CrowdGauge upPct={upPct} picked={myPick?.direction ?? null} />
         )}
 
+        {/* Comparison race card — shown after picking during OPEN/CLOSED phases */}
+        {currentRound?.isComparison && myPick && currentPriceBData && currentPrice &&
+          (currentRound.phase === "OPEN" || currentRound.phase === "CLOSED") && (() => {
+            const changeA = currentRound.entryPrice > 0
+              ? ((currentPrice.price - currentRound.entryPrice) / currentRound.entryPrice) * 100
+              : 0;
+            const changeB = currentRound.entryPriceB && currentRound.entryPriceB > 0
+              ? ((currentPriceBData.price - currentRound.entryPriceB) / currentRound.entryPriceB) * 100
+              : 0;
+            const maxAbs = Math.max(Math.abs(changeA), Math.abs(changeB), 0.01);
+            const barA = 50 + (changeA - changeB) / (2 * maxAbs) * 45;
+            const barB = 100 - barA;
+            const EPSILON = 0.005; // half-unit at .toFixed(2) display precision
+            const isTie = Math.abs(changeA - changeB) < EPSILON;
+            const aWinning = !isTie && changeA > changeB;
+            const myPickWinning = !isTie && ((myPick.direction === "UP" && aWinning) || (myPick.direction === "DOWN" && !aWinning));
+            return (
+              <div className={[
+                "bg-white rounded-3xl p-4 border-2 clay",
+                isTie ? "border-card-border" : myPickWinning ? "border-up/40" : "border-down/40",
+              ].join(" ")}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-text-secondary font-sans">⚡ 실시간 현황</span>
+                  <span className={[
+                    "text-xs font-bold font-sans px-2 py-0.5 rounded-full",
+                    isTie ? "bg-text-secondary/10 text-text-secondary" : myPickWinning ? "bg-up/10 text-up" : "bg-down/10 text-down",
+                  ].join(" ")}>
+                    {isTie ? "🤝 동률 (랜덤 판정)" : myPickWinning ? "🎯 현재 맞는 중!" : "😬 현재 틀린 중..."}
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {/* Symbol A bar */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono w-16 truncate text-text-primary font-semibold">
+                      {aWinning && "🏆 "}{currentRound.symbolName}
+                    </span>
+                    <div className="flex-1 bg-card-border rounded-full h-3 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-up transition-all duration-500"
+                        style={{ width: `${Math.max(4, barA)}%` }}
+                      />
+                    </div>
+                    <span className={[
+                      "text-xs font-mono tabular-nums w-14 text-right font-bold",
+                      changeA >= 0 ? "text-up" : "text-down",
+                    ].join(" ")}>
+                      {changeA >= 0 ? "+" : ""}{changeA.toFixed(2)}%
+                    </span>
+                  </div>
+                  {/* Symbol B bar */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono w-16 truncate text-text-primary font-semibold">
+                      {!isTie && !aWinning && "🏆 "}{currentRound.symbolNameB}
+                    </span>
+                    <div className="flex-1 bg-card-border rounded-full h-3 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-banana transition-all duration-500"
+                        style={{ width: `${Math.max(4, barB)}%` }}
+                      />
+                    </div>
+                    <span className={[
+                      "text-xs font-mono tabular-nums w-14 text-right font-bold",
+                      changeB >= 0 ? "text-up" : "text-down",
+                    ].join(" ")}>
+                      {changeB >= 0 ? "+" : ""}{changeB.toFixed(2)}%
+                    </span>
+                  </div>
+                </div>
+                <p className="text-xs text-text-secondary font-sans mt-2 text-center">
+                  내 선택: <span className="font-bold text-text-primary">
+                    {myPick.direction === "UP" ? currentRound.optionA : currentRound.optionB}
+                  </span>이 더 많이 오르면 승리
+                </p>
+              </div>
+            );
+          })()}
+
         {/* Pick buttons */}
         <div className="grid grid-cols-2 gap-3" data-testid="pick-buttons">
           <button
@@ -500,7 +592,7 @@ export default function GamePage() {
         </div>
 
         {/* My pick banner */}
-        {myPick && currentRound?.phase === "OPEN" && (
+        {myPick && (currentRound?.phase === "OPEN" || currentRound?.phase === "CLOSED") && (
           <div
             className={[
               "rounded-2xl p-3 border-2 text-center",
@@ -512,7 +604,9 @@ export default function GamePage() {
             aria-live="polite"
           >
             <p className="font-bold font-sans text-sm">
-              {myPick.direction === "UP" ? "🚀" : "💀"} {myPick.direction} 선택 완료! 결과를 기다리는 중...
+              {currentRound?.phase === "CLOSED"
+                ? `${myPick.direction === "UP" ? "🚀" : "💀"} ${myPick.direction} — 🥁 판정 중...`
+                : `${myPick.direction === "UP" ? "🚀" : "💀"} ${myPick.direction} 선택 완료! 결과를 기다리는 중...`}
             </p>
           </div>
         )}

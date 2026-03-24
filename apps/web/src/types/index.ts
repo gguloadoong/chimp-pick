@@ -37,6 +37,12 @@ export interface Round {
   optionB: string;
   /** Speed round: shorter duration, bonus multiplier */
   isSpeedRound: boolean;
+  /** Comparison round: A vs B (which one rises more?) */
+  isComparison?: boolean;
+  symbolB?: string;
+  symbolNameB?: string;
+  entryPriceB?: number;
+  exitPriceB?: number | null;
 }
 
 export interface RoundPick {
@@ -62,6 +68,12 @@ export interface RoundResult {
   questionTitle: string;
   optionA: string;
   optionB: string;
+  /** Comparison round fields */
+  isComparison?: boolean;
+  symbolB?: string;
+  symbolNameB?: string;
+  entryPriceB?: number;
+  exitPriceB?: number;
 }
 
 // ===== Score =====
@@ -137,7 +149,7 @@ export const ROUND_RESOLVE_DELAY_MS = 3_000;
 export const ROUND_BREAK_MS = 3_000;
 /** Category-specific durations (seconds) */
 export const CATEGORY_DURATION: Record<string, number> = {
-  price: 30,
+  price: 300,  // 5분 최소 — 비교 예측은 분석 시간 필요
   fun: 15,
   trivia: 20,
   sports: 15,

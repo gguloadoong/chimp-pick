@@ -106,6 +106,11 @@ export const useGameStore = create<GameState>()(
           questionTitle: currentRound.questionTitle,
           optionA: currentRound.optionA,
           optionB: currentRound.optionB,
+          isComparison: currentRound.isComparison,
+          symbolB: currentRound.symbolB,
+          symbolNameB: currentRound.symbolNameB,
+          entryPriceB: currentRound.entryPriceB,
+          exitPriceB: currentRound.exitPriceB ?? undefined,
         };
 
         const newHistory = [result, ...roundHistory].slice(0, 200);

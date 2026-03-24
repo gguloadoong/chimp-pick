@@ -25,6 +25,9 @@ export interface Question {
   optionB: string;
   symbol?: string;
   symbolName?: string;
+  /** Comparison round: second symbol */
+  symbolB?: string;
+  symbolNameB?: string;
 }
 
 export interface QuestionResult {
@@ -186,21 +189,34 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function generatePriceQuestion(): Question {
-  const sym = pickRandom(SYMBOLS);
-  const price = getPrice(sym.symbol);
+const CRYPTO_SYMBOLS = SYMBOLS.filter((s) => s.category === "crypto");
+const STOCK_SYMBOLS = SYMBOLS.filter((s) => s.category === "stock");
+
+function generatePriceComparisonQuestion(): Question {
   const meta = CATEGORY_META.price;
+  // Pick same-category pair (crypto vs crypto or stock vs stock)
+  const pool = Math.random() < 0.6 ? CRYPTO_SYMBOLS : STOCK_SYMBOLS;
+  const idxA = Math.floor(Math.random() * pool.length);
+  let idxB = Math.floor(Math.random() * (pool.length - 1));
+  if (idxB >= idxA) idxB++;
+  const symA = pool[idxA];
+  const symB = pool[idxB];
+  const priceA = getPrice(symA.symbol);
+  const priceB = getPrice(symB.symbol);
+
   return {
     id: crypto.randomUUID(),
     category: "price",
     categoryLabel: meta.label,
     categoryEmoji: meta.emoji,
-    title: `${sym.nameKr} 가격이 오를까?`,
-    description: `라운드 시작가 ${price.price.toLocaleString("ko-KR")}원 기준`,
-    optionA: "UP 🚀",
-    optionB: "DOWN 💀",
-    symbol: sym.symbol,
-    symbolName: sym.nameKr,
+    title: `${symA.nameKr} vs ${symB.nameKr}, 누가 더 오를까?`,
+    description: `5분 후 상승률 비교 · ${symA.nameKr} ${priceA.price.toLocaleString("ko-KR")}원 vs ${symB.nameKr} ${priceB.price.toLocaleString("ko-KR")}원`,
+    optionA: `${symA.nameKr} 📈`,
+    optionB: `${symB.nameKr} 📈`,
+    symbol: symA.symbol,
+    symbolName: symA.nameKr,
+    symbolB: symB.symbol,
+    symbolNameB: symB.nameKr,
   };
 }
 
@@ -222,18 +238,18 @@ export function generateQuestion(): Question {
   const roll = Math.random();
 
   if (livePrice) {
-    // 시세 연결됨: price 40% / fun 20% / trivia 15% / sports 15% / trend 10%
-    if (roll < 0.40) return generatePriceQuestion();
-    if (roll < 0.60) return makeQuestion(FUN_QUESTIONS, "fun");
-    if (roll < 0.75) return makeQuestion(TRIVIA_QUESTIONS, "trivia");
+    // 시세 연결됨: price(비교) 50% / fun 15% / trivia 15% / sports 10% / trend 10%
+    if (roll < 0.50) return generatePriceComparisonQuestion();
+    if (roll < 0.65) return makeQuestion(FUN_QUESTIONS, "fun");
+    if (roll < 0.80) return makeQuestion(TRIVIA_QUESTIONS, "trivia");
     if (roll < 0.90) return makeQuestion(SPORTS_QUESTIONS, "sports");
     return makeQuestion(TREND_QUESTIONS, "trend");
   }
 
-  // 시세 미연결: price 30%(mock) / fun 25% / trivia 20% / sports 15% / trend 10%
-  if (roll < 0.30) return generatePriceQuestion();
-  if (roll < 0.55) return makeQuestion(FUN_QUESTIONS, "fun");
-  if (roll < 0.75) return makeQuestion(TRIVIA_QUESTIONS, "trivia");
+  // 시세 미연결: price(비교) 40% / fun 20% / trivia 20% / sports 10% / trend 10%
+  if (roll < 0.40) return generatePriceComparisonQuestion();
+  if (roll < 0.60) return makeQuestion(FUN_QUESTIONS, "fun");
+  if (roll < 0.80) return makeQuestion(TRIVIA_QUESTIONS, "trivia");
   if (roll < 0.90) return makeQuestion(SPORTS_QUESTIONS, "sports");
   return makeQuestion(TREND_QUESTIONS, "trend");
 }

@@ -49,13 +49,19 @@ const SPEED_ROUND_MS = 10_000;
 function startNewRound() {
   const question = generateQuestion();
   const now = Date.now();
-  const isSpeed = Math.random() < SPEED_ROUND_CHANCE;
   const categoryMs = (CATEGORY_DURATION[question.category] ?? 30) * 1000;
-  const roundMs = isSpeed ? SPEED_ROUND_MS : Math.min(configuredOpenMs, categoryMs);
+  // Price category: always uses CATEGORY_DURATION (min 5min), no speed round
+  const isPrice = question.category === "price";
+  const isSpeed = !isPrice && Math.random() < SPEED_ROUND_CHANCE;
+  const roundMs = isSpeed
+    ? SPEED_ROUND_MS
+    : isPrice
+      ? categoryMs  // price는 항상 5분 (configuredOpenMs 무시)
+      : Math.min(configuredOpenMs, categoryMs);
 
-  const entryPrice = question.symbol
-    ? getPrice(question.symbol).price
-    : 0;
+  const entryPrice = question.symbol ? getPrice(question.symbol).price : 0;
+  const entryPriceB = question.symbolB ? getPrice(question.symbolB).price : undefined;
+  const isComparison = !!question.symbolB;
 
   currentRound = {
     id: generateId(),
@@ -78,6 +84,11 @@ function startNewRound() {
     optionA: question.optionA,
     optionB: question.optionB,
     isSpeedRound: isSpeed,
+    isComparison,
+    symbolB: question.symbolB,
+    symbolNameB: question.symbolNameB,
+    entryPriceB,
+    exitPriceB: isComparison ? null : undefined,
   };
 
   notify(currentRound);
@@ -105,17 +116,33 @@ function resolveRound() {
   if (!currentRound || currentRound.phase !== "CLOSED") return;
 
   let exitPrice: number;
+  let exitPriceB: number | undefined;
   let result: Direction;
 
   if (currentRound.questionCategory === "price" && currentRound.symbol) {
-    const price = getPrice(currentRound.symbol);
-    exitPrice = price.price;
+    exitPrice = getPrice(currentRound.symbol).price;
 
-    if (exitPrice === currentRound.entryPrice) {
-      // Tie-break: random direction (price didn't move)
-      result = Math.random() < 0.5 ? "UP" : "DOWN";
+    if (currentRound.isComparison && currentRound.symbolB && currentRound.entryPriceB != null) {
+      // 비교 예측: 두 종목 상승률 비교
+      exitPriceB = getPrice(currentRound.symbolB).price;
+      const changeA = currentRound.entryPrice > 0
+        ? (exitPrice - currentRound.entryPrice) / currentRound.entryPrice
+        : (exitPrice > 0 ? Infinity : 0);
+      const changeB = currentRound.entryPriceB > 0
+        ? (exitPriceB - currentRound.entryPriceB) / currentRound.entryPriceB
+        : (exitPriceB > 0 ? Infinity : 0);
+      if (changeA === changeB) {
+        result = Math.random() < 0.5 ? "UP" : "DOWN";
+      } else {
+        result = changeA > changeB ? "UP" : "DOWN";
+      }
     } else {
-      result = exitPrice > currentRound.entryPrice ? "UP" : "DOWN";
+      // 단일 종목 (fallback)
+      if (exitPrice === currentRound.entryPrice) {
+        result = Math.random() < 0.5 ? "UP" : "DOWN";
+      } else {
+        result = exitPrice > currentRound.entryPrice ? "UP" : "DOWN";
+      }
     }
   } else {
     // Fun/trivia: resolve via question provider (random)
@@ -137,6 +164,7 @@ function resolveRound() {
     ...currentRound,
     phase: "RESOLVED",
     exitPrice,
+    exitPriceB: exitPriceB ?? currentRound.exitPriceB,
     result,
   };
 

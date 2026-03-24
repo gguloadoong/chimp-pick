@@ -230,8 +230,33 @@ export default function ResultOverlay({
               {result.questionTitle || result.symbolName || "예측"}
             </p>
 
-            {/* Price details — only for price category */}
-            {result.questionCategory === "price" && result.entryPrice > 0 && (
+            {/* Price details — comparison or single */}
+            {result.questionCategory === "price" && result.isComparison && result.entryPriceB != null ? (
+              <div className="mb-2 space-y-2">
+                {/* Symbol A */}
+                <div className={["rounded-xl p-2 border", result.result === "UP" ? "border-up/40 bg-up/8" : "border-card-border"].join(" ")}>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className={["font-semibold font-sans", result.result === "UP" ? "text-up" : "text-text-secondary"].join(" ")}>
+                      {result.symbolName} {result.result === "UP" ? "🏆" : ""}
+                    </span>
+                    <span className="font-mono tabular-nums text-text-secondary">
+                      {formatPrice(result.entryPrice)} → <span className={result.result === "UP" ? "text-up font-bold" : ""}>{formatPrice(result.exitPrice)}</span>원
+                    </span>
+                  </div>
+                </div>
+                {/* Symbol B */}
+                <div className={["rounded-xl p-2 border", result.result === "DOWN" ? "border-up/40 bg-up/8" : "border-card-border"].join(" ")}>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className={["font-semibold font-sans", result.result === "DOWN" ? "text-up" : "text-text-secondary"].join(" ")}>
+                      {result.symbolNameB} {result.result === "DOWN" ? "🏆" : ""}
+                    </span>
+                    <span className="font-mono tabular-nums text-text-secondary">
+                      {formatPrice(result.entryPriceB)} → <span className={result.result === "DOWN" ? "text-up font-bold" : ""}>{formatPrice(result.exitPriceB ?? 0)}</span>원
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : result.questionCategory === "price" && result.entryPrice > 0 ? (
               <>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-text-secondary font-sans">시작가</span>
@@ -241,17 +266,12 @@ export default function ResultOverlay({
                 </div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-text-secondary font-sans">결과가</span>
-                  <span
-                    className={[
-                      "font-mono tabular-nums font-bold",
-                      isWin ? "text-up" : "text-down",
-                    ].join(" ")}
-                  >
+                  <span className={["font-mono tabular-nums font-bold", isWin ? "text-up" : "text-down"].join(" ")}>
                     {formatPrice(result.exitPrice)}원
                   </span>
                 </div>
               </>
-            )}
+            ) : null}
 
             {/* My pick — show actual option labels */}
             <div className={[

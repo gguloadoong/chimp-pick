@@ -19,6 +19,10 @@ const makeResult = (overrides?: Partial<RoundResult>): RoundResult => ({
   entryPrice: 100,
   exitPrice: 101,
   resolvedAt: new Date().toISOString(),
+  questionCategory: "price",
+  questionTitle: "BTC 테스트",
+  optionA: "UP 🚀",
+  optionB: "DOWN 💀",
   ...overrides,
 });
 

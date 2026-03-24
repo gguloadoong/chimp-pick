@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 
 type SafeUser = Omit<User, 'password'>;
@@ -28,12 +28,19 @@ export class UserService {
     userId: string,
     data: Partial<Pick<User, 'nickname' | 'avatarLevel' | 'bananaCoins'>>,
   ): Promise<SafeUser> {
-    const user = await this.prisma.user.update({
-      where: { id: userId },
-      data,
-    });
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...safe } = user;
-    return safe;
+    try {
+      const user = await this.prisma.user.update({
+        where: { id: userId },
+        data,
+      });
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password: _, ...safe } = user;
+      return safe;
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2025') {
+        throw new NotFoundException('사용자를 찾을 수 없습니다.');
+      }
+      throw e;
+    }
   }
 }

@@ -3,6 +3,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User } from '@prisma/client';
@@ -53,17 +54,23 @@ export class AuthService {
     }
 
     const hashed = await bcrypt.hash(password, 12);
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        password: hashed,
-        nickname,
-        stats: { create: {} },
-      },
-    });
-
-    const tokens = this.issueTokens(user);
-    return { ...tokens, user: sanitize(user) };
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          email,
+          password: hashed,
+          nickname,
+          stats: { create: {} },
+        },
+      });
+      const tokens = this.issueTokens(user);
+      return { ...tokens, user: sanitize(user) };
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ConflictException('이미 사용 중인 이메일 또는 닉네임입니다.');
+      }
+      throw e;
+    }
   }
 
   async login(email: string, password: string) {
@@ -82,7 +89,8 @@ export class AuthService {
   }
 
   async loginAsGuest() {
-    const suffix = Math.floor(Math.random() * 90000 + 10000).toString();
+    // cuid-fragment suffix ensures uniqueness even under concurrent requests
+    const suffix = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
     const user = await this.prisma.user.create({
       data: {
         nickname: `게스트침팬지_${suffix}`,

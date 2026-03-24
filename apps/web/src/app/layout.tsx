@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Fredoka, Nunito } from "next/font/google";
+import { JetBrains_Mono, Fredoka } from "next/font/google";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -12,13 +12,6 @@ const fredoka = Fredoka({
   variable: "--font-fredoka",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const nunito = Nunito({
-  variable: "--font-nunito",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -45,15 +38,9 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${jetbrainsMono.variable} ${fredoka.variable} ${nunito.variable} h-full`}
+      className={`${jetbrainsMono.variable} ${fredoka.variable} h-full`}
     >
-      <head>
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css"
-        />
-      </head>
-      <body className="min-h-full flex flex-col bg-bg-primary text-text-primary antialiased">
+      <body className="min-h-full flex flex-col bg-[var(--bg-primary)] text-[var(--fg-primary)] antialiased">
         {children}
       </body>
     </html>

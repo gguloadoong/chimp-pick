@@ -64,10 +64,10 @@ export default function ShareCard({ result, totalScore, level, onClose }: ShareC
 
         {/* Action buttons */}
         <div className="flex gap-2">
-          <Button variant="primary" size="md" className="flex-1 btn-clay" onClick={copyText}>
+          <Button variant="primary" size="md" className="flex-1 btn-press" onClick={copyText}>
             📋 텍스트 복사
           </Button>
-          <Button variant="outline" size="md" className="flex-1 btn-clay" onClick={onClose}>
+          <Button variant="outline" size="md" className="flex-1 btn-press" onClick={onClose}>
             닫기
           </Button>
         </div>

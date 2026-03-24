@@ -26,13 +26,13 @@ export default function Input({
 
   const borderClass =
     resolvedVariant === "error"
-      ? "border-down focus:border-down focus:ring-down/30"
-      : "border-white/10 focus:border-text-secondary focus:ring-text-secondary/20";
+      ? "border-[var(--negative)] focus:border-[var(--negative)] focus:shadow-[var(--shadow-glow-negative)]"
+      : "border-transparent hover:border-[var(--border-secondary)] focus:border-[var(--brand-primary)] focus:shadow-[var(--shadow-glow-brand)]";
 
   return (
     <div className="flex flex-col gap-1.5 w-full">
       {label && (
-        <label htmlFor={id} className="text-sm text-text-secondary font-medium">
+        <label htmlFor={id} className="text-[13px] text-[var(--fg-secondary)] font-semibold font-sans">
           {label}
         </label>
       )}
@@ -42,10 +42,10 @@ export default function Input({
         aria-invalid={resolvedVariant === "error"}
         aria-describedby={error ? `${id}-error` : undefined}
         className={[
-          "w-full bg-bg-secondary text-text-primary placeholder:text-text-secondary",
-          "px-4 py-2.5 rounded-xl border outline-none",
+          "w-full h-10 bg-[var(--bg-tertiary)] text-[var(--fg-primary)]",
+          "placeholder:text-[var(--fg-tertiary)] font-sans text-sm",
+          "px-3 rounded-[var(--radius-md)] border outline-none",
           "transition-all duration-150",
-          "focus:ring-2",
           borderClass,
           className,
         ]
@@ -54,7 +54,7 @@ export default function Input({
         {...props}
       />
       {error && (
-        <p id={`${id}-error`} role="alert" className="text-xs text-down">
+        <p id={`${id}-error`} role="alert" className="text-xs text-[var(--negative)] font-sans">
           {error}
         </p>
       )}

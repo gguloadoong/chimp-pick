@@ -42,7 +42,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-bg-primary flex flex-col">
       {/* Hero */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 pt-12 pb-8">
-        <div className="animate-float mb-6">
+        <div className="animate-bounce-chimp mb-6">
           <ChimpCharacter mood="idle" size={120} level={3} />
         </div>
 
@@ -61,7 +61,7 @@ export default function LoginPage() {
           onClick={handleStart}
           className={[
             "w-full max-w-xs rounded-2xl bg-banana py-4 font-heading font-bold text-white text-lg",
-            "border-2 border-banana/80 clay btn-clay",
+            "border-2 border-banana/80 btn-press",
             "transition-all active:scale-95 hover:shadow-lg",
           ].join(" ")}
           data-testid="start-button"

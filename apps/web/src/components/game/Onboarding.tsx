@@ -76,7 +76,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
           <Button
             variant="primary"
             size="md"
-            className="flex-1 btn-clay"
+            className="flex-1 btn-press"
             onClick={() => {
               if (isLast) onComplete();
               else setStep(step + 1);

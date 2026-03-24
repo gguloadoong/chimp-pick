@@ -52,7 +52,7 @@ export default function RankingPage() {
                 key={t}
                 onClick={() => setTab(t)}
                 className={[
-                  "flex-1 py-2 rounded-2xl text-sm font-bold font-sans border-2 transition-all btn-clay",
+                  "flex-1 py-2 rounded-2xl text-sm font-bold font-sans border-2 transition-all btn-press",
                   tab === t
                     ? "border-banana text-banana bg-banana/12 clay-sm"
                     : "border-card-border text-text-secondary bg-white hover:border-banana/40",

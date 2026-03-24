@@ -14,11 +14,13 @@ export default function ToastContainer() {
         <div
           key={toast.id}
           className={[
-            "flex items-center gap-2 px-4 py-3 rounded-2xl border-2 animate-slide-up cursor-pointer",
-            "shadow-lg backdrop-blur-sm",
-            toast.type === "success" ? "bg-up/90 border-up/50 text-white" :
-            toast.type === "warning" ? "bg-banana/90 border-banana/50 text-white" :
-            "bg-white/95 border-card-border text-text-primary",
+            "flex items-center gap-2 px-4 py-3 rounded-[var(--radius-md)] border animate-slide-up cursor-pointer",
+            "shadow-[var(--shadow-2)]",
+            toast.type === "success"
+              ? "bg-[var(--positive)] border-[var(--positive)]/50 text-white"
+              : toast.type === "warning"
+              ? "bg-[var(--brand-primary)] border-[var(--brand-primary)]/50 text-[var(--brand-on-primary)]"
+              : "bg-[var(--bg-elevated)] border-[var(--border-primary)] text-[var(--fg-primary)]",
           ].join(" ")}
           onClick={() => removeToast(toast.id)}
           role="alert"

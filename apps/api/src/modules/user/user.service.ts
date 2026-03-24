@@ -1,32 +1,39 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import {
-  findUser,
-  findUserStats,
-  sanitizeUser,
-  User,
-  UserStats,
-} from '../../mock/data';
+import { User } from '@prisma/client';
+import { PrismaService } from '../../prisma/prisma.service';
+
+type SafeUser = Omit<User, 'password'>;
 
 @Injectable()
 export class UserService {
-  getUser(userId: string): Omit<User, 'password'> {
-    const user = findUser(userId);
+  constructor(private readonly prisma: PrismaService) {}
+
+  async getUser(userId: string): Promise<SafeUser> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('사용자를 찾을 수 없습니다.');
-    return sanitizeUser(user);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...safe } = user;
+    return safe;
   }
 
-  getUserStats(userId: string): UserStats {
-    findUser(userId); // existence check
-    return findUserStats(userId);
+  async getUserStats(userId: string) {
+    const stats = await this.prisma.userStats.findUnique({
+      where: { userId },
+    });
+    if (!stats) throw new NotFoundException('통계 정보를 찾을 수 없습니다.');
+    return stats;
   }
 
-  updateUser(
+  async updateUser(
     userId: string,
     data: Partial<Pick<User, 'nickname' | 'avatarLevel' | 'bananaCoins'>>,
-  ): User {
-    const user = findUser(userId);
-    if (!user) throw new NotFoundException('사용자를 찾을 수 없습니다.');
-    Object.assign(user, data);
-    return user;
+  ): Promise<SafeUser> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data,
+    });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...safe } = user;
+    return safe;
   }
 }

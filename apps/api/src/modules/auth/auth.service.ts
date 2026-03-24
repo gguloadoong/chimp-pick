@@ -1,76 +1,100 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
 import {
-  users,
-  findUser,
-  findUserByEmail,
-  generateId,
-  sanitizeUser,
-  User,
-} from '../../mock/data';
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { User } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+import { PrismaService } from '../../prisma/prisma.service';
+import { JwtPayload } from './jwt.strategy';
+
+type SafeUser = Omit<User, 'password'>;
+
+function sanitize(user: User): SafeUser {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password: _, ...safe } = user;
+  return safe;
+}
 
 @Injectable()
 export class AuthService {
-  login(
-    email: string,
-    password: string,
-  ): {
-    accessToken: string;
-    refreshToken: string;
-    user: Omit<User, 'password'>;
-  } {
-    const user = findUserByEmail(email);
-    if (!user || user.password !== password) {
-      throw new UnauthorizedException(
-        '이메일 또는 비밀번호가 올바르지 않습니다.',
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwt: JwtService,
+    private readonly config: ConfigService,
+  ) {}
+
+  private issueTokens(user: User) {
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      isGuest: user.isGuest,
+    };
+    const accessToken = this.jwt.sign(payload);
+    const refreshToken = this.jwt.sign(payload, {
+      secret: this.config.getOrThrow<string>('JWT_SECRET'),
+      expiresIn: this.config.get('JWT_REFRESH_EXPIRES_IN', '7d'),
+    });
+    return { accessToken, refreshToken };
+  }
+
+  async register(email: string, password: string, nickname: string) {
+    const existing = await this.prisma.user.findFirst({
+      where: { OR: [{ email }, { nickname }] },
+    });
+    if (existing) {
+      throw new ConflictException(
+        existing.email === email
+          ? '이미 사용 중인 이메일입니다.'
+          : '이미 사용 중인 닉네임입니다.',
       );
     }
 
-    return {
-      accessToken: `mock-jwt-${user.id}`,
-      refreshToken: `mock-refresh-${user.id}`,
-      user: sanitizeUser(user),
-    };
+    const hashed = await bcrypt.hash(password, 12);
+    const user = await this.prisma.user.create({
+      data: { email, password: hashed, nickname },
+    });
+    await this.prisma.userStats.create({ data: { userId: user.id } });
+
+    const tokens = this.issueTokens(user);
+    return { ...tokens, user: sanitize(user) };
   }
 
-  loginAsGuest(): {
-    accessToken: string;
-    refreshToken: string;
-    user: Omit<User, 'password'>;
-  } {
-    const suffix = Math.floor(Math.random() * 9000 + 1000).toString();
-    const guestUser: User = {
-      id: `guest-${generateId()}`,
-      email: null,
-      nickname: `게스트침팬지_${suffix}`,
-      password: null,
-      avatarLevel: 1,
-      bananaCoins: 100,
-      isGuest: true,
-      createdAt: new Date().toISOString(),
-      lastDailyBonus: null,
-    };
-
-    users.push(guestUser);
-
-    return {
-      accessToken: `mock-jwt-${guestUser.id}`,
-      refreshToken: `mock-refresh-${guestUser.id}`,
-      user: sanitizeUser(guestUser),
-    };
-  }
-
-  validateToken(token: string): User | null {
-    const match = token.match(/^mock-jwt-(.+)$/);
-    if (!match) return null;
-    const userId = match[1];
-    return findUser(userId) ?? null;
-  }
-
-  getProfile(userId: string): User {
-    const user = findUser(userId);
-    if (!user) {
-      throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
+  async login(email: string, password: string) {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user || !user.password) {
+      throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
     }
-    return user;
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      throw new UnauthorizedException('이메일 또는 비밀번호가 올바르지 않습니다.');
+    }
+
+    const tokens = this.issueTokens(user);
+    return { ...tokens, user: sanitize(user) };
+  }
+
+  async loginAsGuest() {
+    const suffix = Math.floor(Math.random() * 90000 + 10000).toString();
+    const user = await this.prisma.user.create({
+      data: {
+        nickname: `게스트침팬지_${suffix}`,
+        isGuest: true,
+        bananaCoins: 100,
+      },
+    });
+    await this.prisma.userStats.create({ data: { userId: user.id } });
+
+    const tokens = this.issueTokens(user);
+    return { ...tokens, user: sanitize(user) };
+  }
+
+  async getProfile(userId: string): Promise<SafeUser> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('사용자를 찾을 수 없습니다.');
+    return sanitize(user);
   }
 }

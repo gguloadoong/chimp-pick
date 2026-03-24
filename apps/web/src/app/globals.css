@@ -140,15 +140,16 @@ html.dark {
   --brand-secondary:  rgba(255, 184, 0, 0.12);
   --brand-on-primary: var(--primitive-gray-900);
 
-  --positive:       #34D399;
+  /* dark mode: 밝기 보정된 semantic 값 (primitive에 없는 밝기 단계) */
+  --positive:       #34D399;   /* emerald-400: primitive-green-500보다 밝게 */
   --positive-bg:    rgba(16, 185, 129, 0.12);
-  --positive-hover: #10B981;
-  --negative:       #FB7185;
+  --positive-hover: var(--primitive-green-500);
+  --negative:       #FB7185;   /* rose-400: primitive-red-500보다 밝게 */
   --negative-bg:    rgba(244, 63, 94, 0.12);
-  --negative-hover: #F43F5E;
-  --warning:        #FB923C;
+  --negative-hover: var(--primitive-red-500);
+  --warning:        #FB923C;   /* orange-400: primitive-orange-500보다 밝게 */
   --warning-bg:     rgba(249, 115, 22, 0.12);
-  --info:           #60A5FA;
+  --info:           #60A5FA;   /* blue-400: primitive-blue-500보다 밝게 */
   --info-bg:        rgba(59, 130, 246, 0.12);
 
   --border-primary:   var(--primitive-gray-700);

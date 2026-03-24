@@ -38,8 +38,10 @@ async function request<T>(
   init: RequestInit = {},
 ): Promise<T> {
   const token = getToken();
+  const method = (init.method ?? "GET").toUpperCase();
+  const hasBody = method !== "GET" && method !== "HEAD";
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(hasBody ? { "Content-Type": "application/json" } : {}),
     ...(init.headers as Record<string, string>),
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;

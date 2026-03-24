@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "gen:types": "openapi-typescript http://localhost:4000/api/docs-json -o src/types/api.d.ts"
+    "gen:types": "openapi-typescript ${OPENAPI_URL:-http://localhost:4000}/api/docs-json -o src/types/api.d.ts"
   },
   "dependencies": {
     "lucide-react": "^0.577.0",

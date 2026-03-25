@@ -9,6 +9,7 @@ import { GameModule } from './modules/game/game.module';
 import { PriceModule } from './modules/price/price.module';
 import { RankingModule } from './modules/ranking/ranking.module';
 import { RewardModule } from './modules/reward/reward.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { RewardModule } from './modules/reward/reward.module';
     PriceModule,
     RankingModule,
     RewardModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

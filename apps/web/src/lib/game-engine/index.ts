@@ -5,6 +5,7 @@ export {
   startPriceEngine,
   onPriceUpdate,
   getSymbolName,
+  injectLivePrice,
 } from "./price-engine";
 export type { PriceData, Candle } from "./price-engine";
 

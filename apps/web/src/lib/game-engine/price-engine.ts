@@ -54,6 +54,8 @@ function roundPrice(price: number): number {
 }
 
 const priceStates: Map<string, PriceState> = new Map();
+// 실시간 WS 데이터가 있는 심볼 — mock tick 생성 제외
+const liveSymbols: Set<string> = new Set();
 let tickInterval: ReturnType<typeof setInterval> | null = null;
 const listeners: Set<() => void> = new Set();
 
@@ -172,7 +174,8 @@ export function startPriceEngine(intervalMs = 2000): () => void {
   if (!tickInterval) {
     tickInterval = setInterval(() => {
       for (const symbol of priceStates.keys()) {
-        generateTick(symbol);
+        // 실시간 WS 데이터가 있는 심볼은 mock tick 생략
+        if (!liveSymbols.has(symbol)) generateTick(symbol);
       }
       for (const listener of listeners) {
         listener();
@@ -191,6 +194,53 @@ export function startPriceEngine(intervalMs = 2000): () => void {
 export function onPriceUpdate(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
+}
+
+// WS 심볼("BTC") → 엔진 심볼("BTC-KRW") 매핑
+const WS_TO_ENGINE: Record<string, string> = {
+  BTC: "BTC-KRW",
+  ETH: "ETH-KRW",
+  XRP: "XRP-KRW",
+  DOGE: "DOGE-KRW",
+  SOL: "SOL-KRW",
+};
+
+/**
+ * WebSocket price:tick 이벤트 수신 시 호출.
+ * 엔진의 priceState를 실제 업비트 데이터로 덮어쓴다.
+ */
+export function injectLivePrice(
+  wsSymbol: string,
+  price: number,
+  change: number,
+  _changePercent: number, // changePct24h는 getPrice()에서 재계산
+): void {
+  initPrices();
+  // 매핑 테이블에 없는 심볼은 "BTC-KRW" 형식으로 자동 변환
+  const engineSymbol =
+    WS_TO_ENGINE[wsSymbol] ??
+    (wsSymbol.includes("-") ? wsSymbol : `${wsSymbol}-KRW`);
+
+  liveSymbols.add(engineSymbol); // mock tick 제외 등록
+
+  let state = priceStates.get(engineSymbol);
+  if (!state) {
+    state = {
+      current: price,
+      open24h: price - change,
+      high24h: price,
+      low24h: price,
+      volume24h: 0,
+    };
+    priceStates.set(engineSymbol, state);
+  } else {
+    state.current = price;
+    state.open24h = price - change;
+    // 현재 세션 내 최고/최저가 (실제 24h 데이터가 없으므로 세션 기준)
+    if (price > state.high24h) state.high24h = price;
+    if (price < state.low24h) state.low24h = price;
+  }
+  for (const listener of listeners) listener();
 }
 
 export function getSymbolName(symbol: string): string {

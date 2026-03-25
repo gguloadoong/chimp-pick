@@ -9,6 +9,7 @@ import { playPickSound, playDrumroll, playWinSound, playLoseSound } from "@/lib/
 import { useToastStore } from "@/stores/toastStore";
 import { formatPrice, formatChange } from "@/lib/format";
 import { useCountdown } from "@/hooks/useCountdown";
+import { useRealtimePrices } from "@/hooks/useRealtimePrices";
 import { usePrediction } from "@/hooks/usePrediction";
 import { AVATAR_LEVELS } from "@/types";
 import type { RoundResult } from "@/types";
@@ -82,6 +83,9 @@ export default function GamePage() {
   const [resolvedResult, setResolvedResult] = useState<RoundResult | null>(null);
   const [shareResult, setShareResult] = useState<RoundResult | null>(null);
   const [currentPriceBData, setCurrentPriceBData] = useState<ReturnType<typeof getPrice> | null>(null);
+
+  // 실시간 업비트 시세 — price:tick 이벤트를 게임 엔진 priceState에 주입
+  useRealtimePrices();
 
   const checkAttendance = useGameStore((s) => s.checkAttendance);
   useEffect(() => { checkAttendance(); }, [checkAttendance]);

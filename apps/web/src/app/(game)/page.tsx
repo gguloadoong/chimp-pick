@@ -125,6 +125,7 @@ export default function GamePage() {
   }, [stats.wins]);
 
   const [priceTicks, setPriceTicks] = useState<number[]>([]);
+  const [priceBTicks, setPriceBTicks] = useState<number[]>([]);
   const [resolvedResult, setResolvedResult] = useState<RoundResult | null>(null);
   const [shareResult, setShareResult] = useState<RoundResult | null>(null);
   const [currentPriceBData, setCurrentPriceBData] = useState<ReturnType<typeof getPrice> | null>(null);
@@ -163,10 +164,19 @@ export default function GamePage() {
 
   useEffect(() => {
     if (!roundSymbolB || !isComparison) {
-      queueMicrotask(() => setCurrentPriceBData(null));
+      queueMicrotask(() => { setCurrentPriceBData(null); setPriceBTicks([]); });
       return;
     }
-    const update = () => setCurrentPriceBData(getPrice(roundSymbolB));
+    let first = true;
+    const update = () => {
+      const price = getPrice(roundSymbolB);
+      setCurrentPriceBData(price);
+      setPriceBTicks((prev) => {
+        if (first) { first = false; return [price.price]; }
+        const next = [...prev, price.price];
+        return next.length > MAX_CHART_TICKS ? next.slice(-MAX_CHART_TICKS) : next;
+      });
+    };
     update();
     const unsub = onPriceUpdate(update);
     return unsub;
@@ -233,6 +243,19 @@ export default function GamePage() {
   const catTheme = currentRound
     ? (CATEGORY_THEME[currentRound.questionCategory] ?? CATEGORY_THEME.trivia)
     : CATEGORY_THEME.trivia;
+
+  // 소수파 보너스 계산 (선택 후만 의미 있음)
+  const minorityBonus = myPick
+    ? (() => {
+        const myRatio = myPick.direction === "UP" ? upPct : downPct;
+        const minorityRatio = Math.min(upPct, downPct);
+        const isMinority = myRatio === minorityRatio;
+        const bonus = minorityRatio > 0
+          ? Math.min(2.0, 1.0 + (1.0 - (minorityRatio * 2) / 100))
+          : 1.0;
+        return { isMinority, bonus };
+      })()
+    : null;
 
   return (
     <>
@@ -341,7 +364,7 @@ export default function GamePage() {
                               </p>
                             );
                           })()}
-                          <div className="h-8 mt-1" />
+                          <MiniChart prices={priceBTicks} height={32} className="mt-1 opacity-70" />
                         </div>
                       </div>
                     ) : (
@@ -426,28 +449,20 @@ export default function GamePage() {
               {myPick && (currentRound.phase === "OPEN" || currentRound.phase === "CLOSED") && (
                 <div className="mb-4">
                   <CrowdGauge upPct={upPct} picked={myPick.direction} />
-                  {/* 역배 배수 표시 */}
-                  {(() => {
-                    const myRatio = myPick.direction === "UP" ? upPct : downPct;
-                    const minorityRatio = Math.min(upPct, downPct);
-                    const isMinority = myRatio === minorityRatio;
-                    const bonus = minorityRatio > 0
-                      ? Math.min(2.0, 1.0 + (1.0 - (minorityRatio * 2) / 100))
-                      : 1.0;
-                    if (bonus <= 1.05) return null;
-                    return (
-                      <div className="mt-2 text-center">
-                        <span className={[
-                          "inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold font-sans",
-                          isMinority
-                            ? "bg-[var(--brand-secondary)] text-[var(--brand-primary)]"
-                            : "bg-[var(--bg-tertiary)] text-[var(--fg-secondary)]",
-                        ].join(" ")}>
-                          {isMinority ? `⚡ 소수파! 역배 x${bonus.toFixed(1)} 적용 중` : `다수파 — 소수파 역배 x${bonus.toFixed(1)}`}
-                        </span>
-                      </div>
-                    );
-                  })()}
+                  {minorityBonus && minorityBonus.bonus > 1.05 && (
+                    <div className="mt-2 text-center">
+                      <span className={[
+                        "inline-flex items-center gap-1 px-3 py-1 text-xs font-bold font-sans pixel-badge",
+                        minorityBonus.isMinority
+                          ? "bg-[var(--brand-secondary)] text-[var(--brand-primary)]"
+                          : "bg-[var(--bg-tertiary)] text-[var(--fg-secondary)]",
+                      ].join(" ")}>
+                        {minorityBonus.isMinority
+                          ? `⚡ 소수파! 역배 x${minorityBonus.bonus.toFixed(1)} 적용 중`
+                          : `다수파 — 소수파 역배 x${minorityBonus.bonus.toFixed(1)}`}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 

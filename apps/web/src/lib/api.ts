@@ -177,7 +177,7 @@ export const predictionApi = {
   history: (page = 1, limit = 20) =>
     request<{ items: Prediction[]; total: number; page: number }>(`/predictions/history?page=${page}&limit=${limit}`),
 
-  get: (id: string) => request<Prediction>(`/predictions/${id}`),
+  get: (id: string) => request<Prediction | null>(`/predictions/${id}`),
 };
 
 // ─── Rankings ──────────────────────────────────────────────────────────────

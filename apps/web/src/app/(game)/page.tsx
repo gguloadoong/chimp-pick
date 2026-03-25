@@ -78,7 +78,7 @@ function CircularTimer({
       <div className="absolute inset-0 flex items-center justify-center">
         <span
           className={[
-            "pixel-font text-xl tabular-nums",
+            "pixel-font text-[16px] tabular-nums",
             danger
               ? "text-[var(--negative)] animate-urgent"
               : urgent
@@ -227,6 +227,14 @@ export default function GamePage() {
 
   const canPick = currentRound?.phase === "OPEN" && !myPick;
   const currentPrice = currentRound ? getPrice(currentRound.symbol) : null;
+
+  // 마지막 5초 햅틱 피드백
+  useEffect(() => {
+    if (countdown.timeLeft > 5_000 || countdown.timeLeft <= 0 || myPick || currentRound?.phase !== "OPEN") return;
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(80);
+    }
+  }, [Math.ceil(countdown.timeLeft / 1000), myPick, currentRound?.phase]);
 
   const upPct = currentRound?.upRatio ?? 50;
   const downPct = 100 - upPct;
@@ -644,10 +652,11 @@ export default function GamePage() {
                 onClick={() => handlePick("UP")}
                 className={[
                   "flex flex-col items-center justify-center gap-1.5 py-[18px] pixel-btn-up",
-                  "bg-[var(--positive)] text-white font-semibold text-base font-sans transition-all duration-150 select-none btn-press",
-                  myPick?.direction === "UP" ? "ring-2 ring-white/40 scale-[1.02]" : "",
+                  "bg-[var(--positive)] text-white font-semibold text-base font-sans transition-all duration-150 select-none",
+                  myPick?.direction === "UP" ? "ring-2 ring-white/40 scale-[1.02] pixel-btn-chosen" : "",
+                  myPick && myPick.direction !== "UP" ? "pixel-btn-unchosen" : "",
                   !canPick && !myPick ? "opacity-40 cursor-not-allowed pointer-events-none"
-                    : myPick && myPick.direction !== "UP" ? "opacity-30 pointer-events-none"
+                    : myPick && myPick.direction !== "UP" ? "pointer-events-none"
                     : "cursor-pointer",
                 ].join(" ")}
                 aria-label="UP 예측"
@@ -669,10 +678,11 @@ export default function GamePage() {
                 onClick={() => handlePick("DOWN")}
                 className={[
                   "flex flex-col items-center justify-center gap-1.5 py-[18px] pixel-btn-down",
-                  "bg-[var(--negative)] text-white font-semibold text-base font-sans transition-all duration-150 select-none btn-press",
-                  myPick?.direction === "DOWN" ? "ring-2 ring-white/40 scale-[1.02]" : "",
+                  "bg-[var(--negative)] text-white font-semibold text-base font-sans transition-all duration-150 select-none",
+                  myPick?.direction === "DOWN" ? "ring-2 ring-white/40 scale-[1.02] pixel-btn-chosen" : "",
+                  myPick && myPick.direction !== "DOWN" ? "pixel-btn-unchosen" : "",
                   !canPick && !myPick ? "opacity-40 cursor-not-allowed pointer-events-none"
-                    : myPick && myPick.direction !== "DOWN" ? "opacity-30 pointer-events-none"
+                    : myPick && myPick.direction !== "DOWN" ? "pointer-events-none"
                     : "cursor-pointer",
                 ].join(" ")}
                 aria-label="DOWN 예측"

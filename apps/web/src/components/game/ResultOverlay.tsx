@@ -319,11 +319,23 @@ export default function ResultOverlay({
                 </div>
               )}
 
-              <div className="mt-2 flex justify-between items-center">
-                <span className="text-[var(--fg-secondary)] font-sans">참여 비율</span>
-                <span className="text-xs text-[var(--fg-secondary)] font-sans">
-                  {result.upRatio}% / {100 - result.upRatio}%
-                </span>
+              <div className="mt-3 pt-3 border-t border-[var(--border-primary)]">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-xs text-[var(--fg-secondary)] font-sans">참여 비율</span>
+                  <span className="text-xs text-[var(--fg-secondary)] font-sans tabular-nums">
+                    UP {result.upRatio}% · DOWN {100 - result.upRatio}%
+                  </span>
+                </div>
+                <div className="h-2 w-full overflow-hidden flex" style={{ borderRadius: 0 }}>
+                  <div
+                    className="h-full bg-[var(--positive)] transition-all duration-500"
+                    style={{ width: `${result.upRatio}%` }}
+                  />
+                  <div
+                    className="h-full bg-[var(--negative)] transition-all duration-500"
+                    style={{ width: `${100 - result.upRatio}%` }}
+                  />
+                </div>
               </div>
             </div>
 

@@ -1,5 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
+
+@font-face {
+  font-family: "Galmuri11";
+  src: url("https://cdn.jsdelivr.net/gh/quiple/galmuri/dist/Galmuri11.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
 @import "tailwindcss";
 
 @theme {
@@ -384,8 +391,8 @@ input[type="range"].tds-slider:disabled::-webkit-slider-thumb {
   transition: transform 80ms ease, box-shadow 80ms ease;
 }
 .pixel-btn-up:active:not(:disabled) {
-  transform: translateY(4px) !important;
-  box-shadow: 0 2px 0 0 #028a4f !important;
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 0 #028a4f;
 }
 .pixel-btn-up.scale-\[1\.02\] {
   box-shadow: 0 6px 0 0 #028a4f, 0 0 0 3px rgba(5, 192, 114, 0.4);
@@ -398,8 +405,8 @@ input[type="range"].tds-slider:disabled::-webkit-slider-thumb {
   transition: transform 80ms ease, box-shadow 80ms ease;
 }
 .pixel-btn-down:active:not(:disabled) {
-  transform: translateY(4px) !important;
-  box-shadow: 0 2px 0 0 #a82e38 !important;
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 0 #a82e38;
 }
 .pixel-btn-down.scale-\[1\.02\] {
   box-shadow: 0 6px 0 0 #a82e38, 0 0 0 3px rgba(240, 68, 82, 0.4);
@@ -438,7 +445,7 @@ input[type="range"].tds-slider:disabled::-webkit-slider-thumb {
 
 /* 픽셀 폰트 유틸 */
 .pixel-font {
-  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  font-family: "Galmuri11", var(--font-pixel), "Press Start 2P", monospace;
   image-rendering: pixelated;
 }
 
@@ -466,4 +473,16 @@ input[type="range"].tds-slider:disabled::-webkit-slider-thumb {
 }
 .pixel-btn-cta:active:not(:disabled) {
   animation: none;
+}
+
+/* Kahoot 스타일 — 픽 후 미선택 버튼 */
+.pixel-btn-unchosen {
+  opacity: 0.2;
+  filter: saturate(0);
+  transform: scale(0.93) translateY(2px);
+  transition: all 200ms ease;
+}
+.pixel-btn-chosen {
+  transform: scale(1.04);
+  transition: all 200ms ease;
 }

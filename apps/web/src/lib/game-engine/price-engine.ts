@@ -193,6 +193,47 @@ export function onPriceUpdate(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
+// WS 심볼("BTC") → 엔진 심볼("BTC-KRW") 매핑
+const WS_TO_ENGINE: Record<string, string> = {
+  BTC: "BTC-KRW",
+  ETH: "ETH-KRW",
+  XRP: "XRP-KRW",
+  DOGE: "DOGE-KRW",
+  SOL: "SOL-KRW",
+};
+
+/**
+ * WebSocket price:tick 이벤트 수신 시 호출.
+ * 엔진의 priceState를 실제 업비트 데이터로 덮어쓴다.
+ */
+export function injectLivePrice(
+  wsSymbol: string,
+  price: number,
+  change: number,
+  changePercent: number,
+): void {
+  initPrices();
+  const engineSymbol = WS_TO_ENGINE[wsSymbol] ?? wsSymbol;
+  let state = priceStates.get(engineSymbol);
+  if (!state) {
+    // 신규 심볼 (e.g. SOL-KRW)
+    state = {
+      current: price,
+      open24h: price - change,
+      high24h: price,
+      low24h: price,
+      volume24h: 0,
+    };
+    priceStates.set(engineSymbol, state);
+  } else {
+    state.current = price;
+    state.open24h = price - change;
+    if (price > state.high24h) state.high24h = price;
+    if (price < state.low24h) state.low24h = price;
+  }
+  for (const listener of listeners) listener();
+}
+
 export function getSymbolName(symbol: string): string {
   return SYMBOLS.find((s) => s.symbol === symbol)?.nameKr ?? symbol;
 }

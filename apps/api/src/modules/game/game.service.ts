@@ -210,16 +210,20 @@ export class GameService implements OnModuleInit {
     }
 
     try {
-      // KST 기준 당일 완료 예측 건수 확인 — 서버 TZ 무관하게 동작
-      const kstDateStr = new Intl.DateTimeFormat('ko-KR', {
+      // KST 기준 당일 완료 예측 건수 확인 — formatToParts로 locale 포맷 변경에 무관하게 안전하게 추출
+      const kstParts = new Intl.DateTimeFormat('ko-KR', {
         timeZone: 'Asia/Seoul',
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
-      })
-        .format(new Date())
-        .replace(/\. /g, '-')
-        .replace('.', '');
+      }).formatToParts(new Date());
+      const kstYear = kstParts.find((p) => p.type === 'year')?.value;
+      const kstMonth = kstParts.find((p) => p.type === 'month')?.value;
+      const kstDay = kstParts.find((p) => p.type === 'day')?.value;
+      if (!kstYear || !kstMonth || !kstDay) {
+        throw new Error('KST 날짜 파싱 실패');
+      }
+      const kstDateStr = `${kstYear}-${kstMonth}-${kstDay}`;
       const todayStartKst = new Date(`${kstDateStr}T00:00:00+09:00`);
       const tomorrowStartKst = new Date(todayStartKst.getTime() + 24 * 60 * 60 * 1000);
 

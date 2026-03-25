@@ -35,7 +35,7 @@ export default function LoginPage() {
   const handleStart = async () => {
     setIsLoading(true);
     await ensureGuest();
-    router.push("/");
+    // 리다이렉트는 isAuthenticated useEffect가 담당
   };
 
   if (isAuthenticated) return null;

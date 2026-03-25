@@ -27,7 +27,7 @@ export const useAuthStore = create<AuthState>()(
       referralCode: "",
 
       ensureGuest: async () => {
-        const { isAuthenticated } = get();
+        const { isAuthenticated, referralCode } = get();
         if (isAuthenticated) return;
 
         set({ isLoading: true });
@@ -36,20 +36,19 @@ export const useAuthStore = create<AuthState>()(
           if (typeof window !== "undefined") {
             localStorage.setItem("accessToken", tokens.accessToken);
           }
+          const code = referralCode || Math.random().toString(36).slice(2, 8).toUpperCase();
           set({
-            user: {
-              id: tokens.user.id,
-              nickname: tokens.user.nickname,
-              avatarLevel: tokens.user.avatarLevel,
-              isGuest: tokens.user.isGuest,
-              createdAt: new Date().toISOString(),
-            },
+            user: { ...tokens.user, createdAt: new Date().toISOString() },
             isAuthenticated: true,
             isLoading: false,
+            referralCode: code,
           });
         } catch {
-          // API 실패 시 로컬 게스트로 폴백
-          const code = Math.random().toString(36).slice(2, 8).toUpperCase();
+          // API 실패 시 로컬 게스트로 폴백 — stale 토큰 제거
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("accessToken");
+          }
+          const code = referralCode || Math.random().toString(36).slice(2, 8).toUpperCase();
           set({
             user: {
               id: `local-${code}`,

@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -13,7 +12,9 @@ model User {
   nickname     String   @unique
   password     String?
   avatarLevel  Int      @default(1)
-  bananaCoins  Int      @default(100)
+  bananaCoins  Int      @default(100) // 하위 호환 유지, 다음 스프린트에서 제거
+  freeCoins    Int      @default(100) // 무료 획득 코인 (예측 참여 전용)
+  paidCoins    Int      @default(0)   // IAP 구매 코인 (코스메틱 전용)
   isGuest      Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -21,6 +22,7 @@ model User {
   predictions  Prediction[]
   stats        UserStats?
   transactions Transaction[]
+  iapReceipts  IapReceipt[]
 }
 
 model UserStats {
@@ -60,19 +62,57 @@ model Prediction {
 }
 
 model Transaction {
-  id           String   @id @default(cuid())
-  userId       String
-  type         String   // BET, WIN, LOSE, BONUS, DAILY
-  amount       Int
-  balanceAfter Int
-  predictionId String?
-  prediction   Prediction? @relation(fields: [predictionId], references: [id], onDelete: Restrict)
-  description  String?
-  createdAt    DateTime @default(now())
+  id               String   @id @default(cuid())
+  userId           String
+  type             String   // PURCHASE, DAILY_BONUS, AD_REWARD, PREDICTION_SPEND, PREDICTION_REWARD, COSMETIC_SPEND, REFERRAL_BONUS
+  coinType         String   @default("FREE") // FREE | PAID
+  amount           Int
+  balanceAfter     Int
+  predictionId     String?
+  iapTransactionId String?  // IapReceipt 연결 (IAP 구매 시)
+  description      String?
+  createdAt        DateTime @default(now())
+
+  prediction Prediction? @relation(fields: [predictionId], references: [id], onDelete: Restrict)
+  user       User        @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([type])
+}
+
+model IapReceipt {
+  id                    String    @id @default(cuid())
+  userId                String
+  platform              String    // APPLE | GOOGLE
+  productId             String    // com.chimppick.coins.pack1 등
+  transactionId         String    @unique
+  originalTransactionId String?
+  purchaseToken         String?
+  environment           String    // PRODUCTION | SANDBOX
+  status                String    // PENDING | VERIFIED | REJECTED | REFUNDED
+  coinAmount            Int
+  priceKrw              Int
+  receiptData           String    @db.Text
+  verifiedAt            DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   user User @relation(fields: [userId], references: [id])
 
   @@index([userId, createdAt])
+  @@index([platform, productId])
+  @@index([status])
+}
+
+model IapProduct {
+  id         String   @id @default(cuid())
+  productId  String   @unique // com.chimppick.coins.pack1
+  platform   String           // APPLE | GOOGLE | ALL
+  name       String           // "바나나 50개"
+  coinAmount Int
+  priceKrw   Int
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
 }
 
 model PriceCandle {

@@ -37,9 +37,12 @@
 - [x] IAP-베팅 분리 아키텍처 설계 (최풀매수) — `.project/iap-architecture.md`, DEC-013
 - [x] galmuri CDN @latest → npm 로컬 패키지 (이떡상) — PR #82
 
+**완료 (추가)**
+- [x] IAP PaymentsModule 구현 (최풀매수) — PR #83, freeCoins/paidCoins/IapReceipt/IapProduct
+- [x] 배틀패스 수익 모델 초안 (한물타기) — `.project/battlepass-model.md` (30티어, 4주 시즌)
+
 **진행 중**
-- [ ] IAP PaymentsModule 코드 구현 (최풀매수)
-- [ ] 배틀패스 수익 모델 초안 (한물타기)
+- [ ] IAP 서명 검증 구현 Sprint 2 — Apple JWS, Google Pub/Sub
 - [ ] GRAC 사전 질의 (김가즈아, 기한: 2026-03-30) — CEO 직접 진행
 - [ ] Apple Developer 법인 계정 확인 (김가즈아, 기한: 2026-04-05) — CEO 직접 진행
 

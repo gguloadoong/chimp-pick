@@ -40,7 +40,7 @@ export const useSettingsStore = create<SettingsState>()(
       roundDuration: 300,
       soundEnabled: true,
       hasSeenOnboarding: false,
-      theme: "light" as ThemeMode,
+      theme: "dark" as ThemeMode,
       accentColor: "banana" as AccentColor,
 
       setRoundDuration: (duration) => set({ roundDuration: duration }),
@@ -49,14 +49,14 @@ export const useSettingsStore = create<SettingsState>()(
       setTheme: (theme) => {
         set({ theme });
         const root = document.documentElement;
-        if (theme === "dark") {
-          root.classList.add("dark");
-        } else if (theme === "light") {
-          root.classList.remove("dark");
-        } else {
+        root.classList.remove("dark", "light");
+        if (theme === "light") {
+          root.classList.add("light");
+        } else if (theme === "system") {
           const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          root.classList.toggle("dark", prefersDark);
+          if (!prefersDark) root.classList.add("light");
         }
+        // dark (기본) = 클래스 없음 또는 "dark" 클래스 (layout.tsx에 이미 있음)
       },
 
       setAccentColor: (color) => {

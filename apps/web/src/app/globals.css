@@ -51,13 +51,13 @@
   --radius-lg:   16px;
   --radius-full: 9999px;
 
-  /* === Shadows (flat elevation) === */
-  --shadow-1: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-2: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
-  --shadow-3: 0 8px 24px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
-  --shadow-glow-positive: 0 0 0 3px rgba(16,185,129,0.15);
-  --shadow-glow-negative: 0 0 0 3px rgba(244,63,94,0.15);
-  --shadow-glow-brand:    0 0 0 3px rgba(255,184,0,0.2);
+  /* === Shadows — TDS: 배경색 계층으로 elevation 표현, shadow 없음 === */
+  --shadow-1: none;
+  --shadow-2: none;
+  --shadow-3: none;
+  --shadow-glow-positive: none;
+  --shadow-glow-negative: none;
+  --shadow-glow-brand:    none;
 }
 
 /* === Primitive Color Definitions === */
@@ -84,14 +84,62 @@
   --primitive-gray-850: #1A1D21;
   --primitive-gray-900: #141517;
 
-  --primitive-green-500: #10B981;
-  --primitive-green-600: #059669;
-  --primitive-red-500:   #F43F5E;
-  --primitive-red-600:   #E11D48;
-  --primitive-blue-500:  #3B82F6;
-  --primitive-orange-500: #F97316;
+  --primitive-green-500: #05C072;
+  --primitive-green-600: #03A862;
+  --primitive-red-500:   #F04452;
+  --primitive-red-600:   #D63B48;
+  --primitive-blue-500:  #3182F6;
+  --primitive-orange-500: #F5A623;
 
-  /* === Semantic Tokens (Light) === */
+  /* TDS Dark primitives */
+  --primitive-dark-100: #191919;
+  --primitive-dark-200: #252525;
+  --primitive-dark-300: #2E2E2E;
+  --primitive-dark-400: #3A3A3A;
+
+  /* === Semantic Tokens (Dark — TDS default) === */
+  --bg-primary:    var(--primitive-dark-100);
+  --bg-secondary:  var(--primitive-dark-200);
+  --bg-tertiary:   var(--primitive-dark-300);
+  --bg-elevated:   var(--primitive-dark-300);
+
+  --fg-primary:    var(--primitive-gray-0);
+  --fg-secondary:  #8B8B8B;
+  --fg-tertiary:   #4E4E4E;
+  --fg-inverse:    var(--primitive-dark-100);
+
+  --brand-primary:    var(--primitive-banana-500);
+  --brand-secondary:  rgba(255, 184, 0, 0.10);
+  --brand-on-primary: var(--primitive-dark-100);
+
+  --positive:       var(--primitive-green-500);
+  --positive-bg:    rgba(5, 192, 114, 0.10);
+  --positive-hover: var(--primitive-green-600);
+  --negative:       var(--primitive-red-500);
+  --negative-bg:    rgba(240, 68, 82, 0.10);
+  --negative-hover: var(--primitive-red-600);
+  --warning:        var(--primitive-orange-500);
+  --warning-bg:     rgba(245, 166, 35, 0.10);
+  --info:           var(--primitive-blue-500);
+  --info-bg:        rgba(49, 130, 246, 0.10);
+
+  --border-primary:   rgba(255, 255, 255, 0.08);
+  --border-secondary: rgba(255, 255, 255, 0.04);
+  --border-focus:     var(--primitive-blue-500);
+
+  --interactive-hover:  rgba(255, 255, 255, 0.06);
+  --interactive-active: rgba(255, 255, 255, 0.10);
+}
+
+/* html.dark = :root (다크가 기본) — 명시적 클래스 지원용 no-op */
+html.dark {
+  color-scheme: dark;
+}
+
+/* 라이트 모드 지원 (설정에서 선택 시) */
+html.light {
+  color-scheme: light;
+
   --bg-primary:    var(--primitive-gray-50);
   --bg-secondary:  var(--primitive-gray-0);
   --bg-tertiary:   var(--primitive-gray-100);
@@ -107,15 +155,15 @@
   --brand-on-primary: var(--primitive-gray-800);
 
   --positive:       var(--primitive-green-500);
-  --positive-bg:    #ECFDF5;
+  --positive-bg:    rgba(5, 192, 114, 0.08);
   --positive-hover: var(--primitive-green-600);
   --negative:       var(--primitive-red-500);
-  --negative-bg:    #FFF1F2;
+  --negative-bg:    rgba(240, 68, 82, 0.08);
   --negative-hover: var(--primitive-red-600);
   --warning:        var(--primitive-orange-500);
-  --warning-bg:     #FFF7ED;
+  --warning-bg:     rgba(245, 166, 35, 0.08);
   --info:           var(--primitive-blue-500);
-  --info-bg:        #EFF6FF;
+  --info-bg:        rgba(49, 130, 246, 0.08);
 
   --border-primary:   var(--primitive-gray-200);
   --border-secondary: var(--primitive-gray-100);
@@ -125,53 +173,8 @@
   --interactive-active: rgba(0, 0, 0, 0.08);
 }
 
-html.dark {
-  --bg-primary:    var(--primitive-gray-900);
-  --bg-secondary:  var(--primitive-gray-850);
-  --bg-tertiary:   var(--primitive-gray-800);
-  --bg-elevated:   var(--primitive-gray-800);
-
-  --fg-primary:    var(--primitive-gray-100);
-  --fg-secondary:  var(--primitive-gray-400);
-  --fg-tertiary:   var(--primitive-gray-600);
-  --fg-inverse:    var(--primitive-gray-800);
-
-  --brand-primary:    var(--primitive-banana-400);
-  --brand-secondary:  rgba(255, 184, 0, 0.12);
-  --brand-on-primary: var(--primitive-gray-900);
-
-  /* dark mode: 밝기 보정된 semantic 값 (primitive에 없는 밝기 단계) */
-  --positive:       #34D399;   /* emerald-400: primitive-green-500보다 밝게 */
-  --positive-bg:    rgba(16, 185, 129, 0.12);
-  --positive-hover: var(--primitive-green-500);
-  --negative:       #FB7185;   /* rose-400: primitive-red-500보다 밝게 */
-  --negative-bg:    rgba(244, 63, 94, 0.12);
-  --negative-hover: var(--primitive-red-500);
-  --warning:        #FB923C;   /* orange-400: primitive-orange-500보다 밝게 */
-  --warning-bg:     rgba(249, 115, 22, 0.12);
-  --info:           #60A5FA;   /* blue-400: primitive-blue-500보다 밝게 */
-  --info-bg:        rgba(59, 130, 246, 0.12);
-
-  --border-primary:   var(--primitive-gray-700);
-  --border-secondary: var(--primitive-gray-800);
-
-  --interactive-hover:  rgba(255, 255, 255, 0.06);
-  --interactive-active: rgba(255, 255, 255, 0.10);
-
-  /* dark: shadow 강화 */
-  --shadow-1: 0 1px 3px rgba(0,0,0,0.3);
-  --shadow-2: 0 4px 12px rgba(0,0,0,0.4);
-  --shadow-3: 0 8px 24px rgba(0,0,0,0.5);
-  --shadow-glow-positive: 0 0 0 3px rgba(52,211,153,0.2);
-  --shadow-glow-negative: 0 0 0 3px rgba(251,113,133,0.2);
-  --shadow-glow-brand:    0 0 0 3px rgba(255,202,40,0.2);
-}
-
 /* === Base Styles === */
 html {
-  color-scheme: light;
-}
-html.dark {
   color-scheme: dark;
 }
 
@@ -285,4 +288,69 @@ body {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* === TDS Slider (BetSlider) === */
+input[type="range"].tds-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"].tds-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    var(--brand-primary) var(--track-fill, 0%),
+    var(--bg-tertiary) var(--track-fill, 0%)
+  );
+}
+input[type="range"].tds-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--bg-tertiary);
+}
+input[type="range"].tds-slider::-moz-range-progress {
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--brand-primary);
+}
+input[type="range"].tds-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--primitive-gray-0);
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  margin-top: -9px;
+  transition: transform 120ms ease;
+}
+input[type="range"].tds-slider::-webkit-slider-thumb:active {
+  transform: scale(1.2);
+}
+input[type="range"].tds-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--primitive-gray-0);
+  border: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+input[type="range"].tds-slider::-moz-range-thumb:active {
+  transform: scale(1.2);
+}
+input[type="range"].tds-slider:disabled {
+  cursor: not-allowed;
+}
+input[type="range"].tds-slider:disabled::-webkit-slider-thumb {
+  cursor: not-allowed;
 }

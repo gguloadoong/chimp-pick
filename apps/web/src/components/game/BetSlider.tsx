@@ -46,10 +46,8 @@ export default function BetSlider({
         onChange={(e) => onChange(Number(e.target.value))}
         aria-label="베팅 금액"
         data-testid="bet-slider"
-        className="w-full h-1.5 rounded-full appearance-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
-        style={{
-          background: `linear-gradient(to right, var(--brand-primary) ${pct}%, var(--bg-tertiary) ${pct}%)`,
-        }}
+        className="tds-slider w-full"
+        style={{ "--track-fill": `${pct}%` } as React.CSSProperties}
       />
 
       <div className="flex justify-between text-xs text-[var(--fg-secondary)] font-mono">

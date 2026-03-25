@@ -99,6 +99,7 @@ export default function CandleChart({
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
+      candlesRef.current = []; // stale 콜백 방어 — candles.length === 0 가드가 차단
     };
   }, [symbol, timeframe, height]);
 

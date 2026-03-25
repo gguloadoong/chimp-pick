@@ -354,3 +354,116 @@ input[type="range"].tds-slider:disabled {
 input[type="range"].tds-slider:disabled::-webkit-slider-thumb {
   cursor: not-allowed;
 }
+
+/* === Pixel Art Theme (Level C) === */
+
+/* 도트 그리드 배경 */
+.dot-grid {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* 픽셀 카드 — sharp corner + depth shadow */
+.pixel-card {
+  border-radius: 0 !important;
+  border: 2px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 0.7);
+}
+
+/* 픽셀 뱃지 */
+.pixel-badge {
+  border-radius: 0 !important;
+  border: 2px solid currentColor;
+  letter-spacing: 0.04em;
+}
+
+/* 픽셀 UP 버튼 */
+.pixel-btn-up {
+  border-radius: 0 !important;
+  box-shadow: 0 6px 0 0 #028a4f;
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.pixel-btn-up:active:not(:disabled) {
+  transform: translateY(4px) !important;
+  box-shadow: 0 2px 0 0 #028a4f !important;
+}
+.pixel-btn-up.scale-\[1\.02\] {
+  box-shadow: 0 6px 0 0 #028a4f, 0 0 0 3px rgba(5, 192, 114, 0.4);
+}
+
+/* 픽셀 DOWN 버튼 */
+.pixel-btn-down {
+  border-radius: 0 !important;
+  box-shadow: 0 6px 0 0 #a82e38;
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.pixel-btn-down:active:not(:disabled) {
+  transform: translateY(4px) !important;
+  box-shadow: 0 2px 0 0 #a82e38 !important;
+}
+.pixel-btn-down.scale-\[1\.02\] {
+  box-shadow: 0 6px 0 0 #a82e38, 0 0 0 3px rgba(240, 68, 82, 0.4);
+}
+
+/* 픽셀 CTA 버튼 (랜딩) */
+.pixel-btn-cta {
+  border-radius: 0 !important;
+  box-shadow: 0 6px 0 0 #c48800;
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+.pixel-btn-cta:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 0 #c48800;
+}
+
+/* 스캔라인 오버레이 */
+.scanlines {
+  position: relative;
+  overflow: hidden;
+}
+.scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.07) 3px,
+    rgba(0, 0, 0, 0.07) 4px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* 픽셀 폰트 유틸 */
+.pixel-font {
+  font-family: var(--font-pixel), "Press Start 2P", monospace;
+  image-rendering: pixelated;
+}
+
+/* 픽셀 결과 플래시 */
+@keyframes pixel-flash-green {
+  0%   { background-color: rgba(5, 192, 114, 0); }
+  20%  { background-color: rgba(5, 192, 114, 0.35); }
+  100% { background-color: rgba(5, 192, 114, 0); }
+}
+@keyframes pixel-flash-red {
+  0%   { background-color: rgba(240, 68, 82, 0); }
+  20%  { background-color: rgba(240, 68, 82, 0.35); }
+  100% { background-color: rgba(240, 68, 82, 0); }
+}
+.pixel-flash-green { animation: pixel-flash-green 0.6s ease-out; }
+.pixel-flash-red   { animation: pixel-flash-red 0.6s ease-out; }
+
+/* 픽셀 펄스 (CTA 버튼) */
+@keyframes pixel-pulse {
+  0%, 100% { box-shadow: 0 6px 0 0 #c48800, 0 0 0 0 rgba(255, 184, 0, 0.5); }
+  50%       { box-shadow: 0 6px 0 0 #c48800, 0 0 0 10px rgba(255, 184, 0, 0); }
+}
+.pixel-btn-cta:not(:disabled) {
+  animation: pixel-pulse 2s ease-in-out infinite;
+}
+.pixel-btn-cta:active:not(:disabled) {
+  animation: none;
+}

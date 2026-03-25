@@ -8,6 +8,22 @@ import ChimpCharacter from "@/components/character/ChimpCharacter";
 
 const CONFETTI_ITEMS = ["🍌", "🎉", "⭐", "🎊", "✨", "💫", "🏆", "🎈"];
 
+const WIN_LOSE_COPY = {
+  win: [
+    "침팬지의 예감이 적중했다! 가즈아! 🚀",
+    "바나나 수확 완료! 🍌",
+    "침팬지 직감은 과학이다! 🧪",
+    "월급보다 정확한 예측! 💰",
+  ],
+  lose: ["바나나 미끄러졌다 🍌", "침팬지도 가끔 틀린다... 😅", "다음 판에 복수하자 🔥", "바나나 증발... 다시 가즈아! 😤"],
+  loseSub: [
+    "틀려도 괜찮아, 원래 확률은 50%야",
+    "소수파를 노려보면 점수가 더 높아요!",
+    "직감을 믿어보세요! 다수파가 항상 옳진 않아요!",
+    "다음 라운드 파이팅! 🦍",
+  ],
+};
+
 interface ConfettiParticle {
   id: number;
   emoji: string;
@@ -41,6 +57,7 @@ export default function ResultOverlay({
   const [phase, setPhase] = useState<"drumroll" | "reveal" | "show">("drumroll");
   const [countScore, setCountScore] = useState(0);
   const [canDismiss, setCanDismiss] = useState(false);
+  const [copyIdx] = useState(() => Math.floor(Math.random() * 4));
 
   const isWin = result.isCorrect;
 
@@ -194,8 +211,8 @@ export default function ResultOverlay({
               ].join(" ")}
             >
               {isWin
-                ? result.score >= 200 ? "대박!! 🎉🎉" : result.score >= 100 ? "적중! 🎉" : "맞았다! ✨"
-                : "으악... 😵"}
+                ? result.score >= 200 ? "역배 적중! 🔥🔥" : result.score >= 100 ? "가즈아! 적중! 🎉" : "맞았다! ✨"
+                : WIN_LOSE_COPY.lose[copyIdx % WIN_LOSE_COPY.lose.length]}
             </h2>
 
             <p className={[
@@ -204,13 +221,9 @@ export default function ResultOverlay({
             ].join(" ")}>
               {isWin
                 ? result.score >= 200
-                  ? "소수파 역배 성공! 침팬지 천재! 🧠🚀"
-                  : "침팬지의 예감이 적중했다! 가즈아! 🚀"
-                : result.upRatio > 60
-                  ? "💡 소수파를 노려보세요! 적은 쪽이 더 높은 점수!"
-                  : result.upRatio < 40
-                    ? "💡 직감을 믿어보세요! 다수파가 항상 옳진 않아요!"
-                    : "🍌 바나나 껍질에 미끄러졌다... 다시 도전!"}
+                  ? "소수파의 반란! 침팬지 역전승! 🧠"
+                  : WIN_LOSE_COPY.win[copyIdx % WIN_LOSE_COPY.win.length]
+                : WIN_LOSE_COPY.loseSub[copyIdx % WIN_LOSE_COPY.loseSub.length]}
             </p>
 
             {/* Result details */}

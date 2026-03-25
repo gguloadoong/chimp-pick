@@ -1,7 +1,30 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { DailyMission, DailyStreak } from '@prisma/client';
 import type { MissionType } from './dto/checkin.dto';
+
+const MAX_TRANSACTION_RETRIES = 3;
+
+async function withSerializableRetry<T>(
+  fn: () => Promise<T>,
+): Promise<T> {
+  for (let attempt = 0; attempt < MAX_TRANSACTION_RETRIES; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const isSerializationFailure =
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2034';
+      if (isSerializationFailure && attempt < MAX_TRANSACTION_RETRIES - 1) {
+        continue;
+      }
+      throw e;
+    }
+  }
+  // TypeScript 타입 만족용 — 실제로는 도달하지 않음
+  throw new Error('Unreachable');
+}
 
 const MISSION_REWARDS: Record<MissionType, number> = {
   FIRST_PREDICT: 5,
@@ -99,9 +122,11 @@ export class RetentionService {
   }> {
     const todayStr = getKstDateString();
 
-    // 중복 체크 + 스트릭 업데이트를 단일 트랜잭션 안에서 처리
-    // 트랜잭션 밖에서 조회 후 판단하면 동시 요청 시 중복 보상 가능
-    return this.prisma.$transaction(async (tx) => {
+    // Serializable 격리 수준으로 동시 체크인 이중 보상 방지
+    // ReadCommitted(기본값)에서는 두 요청이 동시에 "미체크인" 판단 후 둘 다 보상 가능
+    // P2034(직렬화 충돌) 발생 시 최대 3회 재시도
+    return withSerializableRetry(() =>
+      this.prisma.$transaction(async (tx) => {
       const streak = await tx.dailyStreak.findUnique({
         where: { userId },
       });
@@ -168,7 +193,8 @@ export class RetentionService {
         reward,
         isAlreadyCheckedIn: false,
       };
-    });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }),
+    );
   }
 
   async getTodayMissions(userId: string): Promise<DailyMission[]> {
@@ -211,9 +237,11 @@ export class RetentionService {
     const todayStr = getKstDateString();
     const rewardAmount = MISSION_REWARDS[type];
 
-    // isCompleted 확인과 완료 처리를 단일 트랜잭션 안에서 수행
-    // 트랜잭션 밖에서 조회 후 완료 처리하면 동시 요청 시 중복 보상 가능
-    return this.prisma.$transaction(async (tx) => {
+    // Serializable 격리 수준으로 동시 미션 완료 이중 보상 방지
+    // ReadCommitted(기본값)에서는 두 요청이 동시에 isCompleted=false 판단 후 둘 다 보상 가능
+    // P2034(직렬화 충돌) 발생 시 최대 3회 재시도
+    return withSerializableRetry(() =>
+      this.prisma.$transaction(async (tx) => {
       const mission = await tx.dailyMission.findUnique({
         where: { userId_date_type: { userId, date: todayStr, type } },
       });
@@ -259,7 +287,8 @@ export class RetentionService {
       });
 
       return { completed: true, reward: rewardAmount, alreadyCompleted: false };
-    });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }),
+    );
   }
 
   async getStreakInfo(userId: string): Promise<DailyStreak | null> {

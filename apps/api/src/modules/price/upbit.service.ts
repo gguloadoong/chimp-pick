@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap, OnModuleDestroy } from '@nestjs/common';
 import WebSocket from 'ws';
 import { SocketGateway, PriceUpdatePayload } from '../../gateway/socket.gateway';
 
@@ -25,7 +25,7 @@ interface UpbitTicker {
 }
 
 @Injectable()
-export class UpbitService implements OnModuleInit, OnModuleDestroy {
+export class UpbitService implements OnApplicationBootstrap, OnModuleDestroy {
   private readonly logger = new Logger(UpbitService.name);
   private ws: WebSocket | null = null;
   private reconnectTimer: NodeJS.Timeout | null = null;
@@ -37,7 +37,7 @@ export class UpbitService implements OnModuleInit, OnModuleDestroy {
 
   constructor(private readonly gateway: SocketGateway) {}
 
-  onModuleInit() {
+  onApplicationBootstrap() {
     this.connect();
   }
 
@@ -117,14 +117,18 @@ export class UpbitService implements OnModuleInit, OnModuleDestroy {
   }
 
   private scheduleReconnect() {
-    if (this.reconnectAttempts >= this.maxReconnects) {
-      this.logger.error('Max reconnect attempts reached. Giving up.');
-      return;
-    }
+    const isFastPhase = this.reconnectAttempts < this.maxReconnects;
+    const delay = isFastPhase
+      ? Math.min(1000 * 2 ** this.reconnectAttempts, 30000)
+      : 60_000; // 5회 초과 후 60초 주기 무한 재시도
 
-    const delay = Math.min(1000 * 2 ** this.reconnectAttempts, 30000);
     this.reconnectAttempts++;
-    this.logger.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+
+    if (isFastPhase) {
+      this.logger.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnects})`);
+    } else {
+      this.logger.warn(`Max fast-reconnects exceeded. Retrying every 60s (attempt ${this.reconnectAttempts})`);
+    }
 
     this.reconnectTimer = setTimeout(() => {
       this.connect();

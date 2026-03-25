@@ -59,6 +59,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   broadcastPrice(payload: PriceUpdatePayload) {
+    if (!this.server) return;
     this.server.emit('price:tick', payload);
   }
 }

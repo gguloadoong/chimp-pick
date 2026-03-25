@@ -9,7 +9,11 @@ export default function LoginPage() {
   const router = useRouter();
   const { ensureGuest, isAuthenticated } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
-  const [playerCount] = useState(() => 100 + Math.floor(Math.random() * 200));
+  const [playerCount, setPlayerCount] = useState(0);
+
+  useEffect(() => {
+    setPlayerCount(100 + Math.floor(Math.random() * 200));
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) router.push("/");

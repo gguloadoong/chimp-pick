@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { authApi } from "@/lib/api";
 import type { User } from "@/types";
 
 interface AuthState {
@@ -9,7 +10,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
 
-  ensureGuest: () => void;
+  ensureGuest: () => Promise<void>;
   logout: () => void;
   setUser: (user: User) => void;
   setNickname: (nickname: string) => void;
@@ -25,23 +26,42 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
       referralCode: "",
 
-      ensureGuest: () => {
+      ensureGuest: async () => {
         const { isAuthenticated, referralCode } = get();
         if (isAuthenticated) return;
 
-        const code = referralCode || Math.random().toString(36).slice(2, 8).toUpperCase();
-        set({
-          user: {
-            id: "local-user",
-            nickname: "침팬지유저",
-            avatarLevel: 1,
-            isGuest: true,
-            createdAt: new Date().toISOString(),
-          },
-          isAuthenticated: true,
-          isLoading: false,
-          referralCode: code,
-        });
+        set({ isLoading: true });
+        try {
+          const tokens = await authApi.guest();
+          if (typeof window !== "undefined") {
+            localStorage.setItem("accessToken", tokens.accessToken);
+          }
+          const code = referralCode || Math.random().toString(36).slice(2, 8).toUpperCase();
+          set({
+            user: { ...tokens.user, createdAt: new Date().toISOString() },
+            isAuthenticated: true,
+            isLoading: false,
+            referralCode: code,
+          });
+        } catch {
+          // API 실패 시 로컬 게스트로 폴백 — stale 토큰 제거
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("accessToken");
+          }
+          const code = referralCode || Math.random().toString(36).slice(2, 8).toUpperCase();
+          set({
+            user: {
+              id: `local-${code}`,
+              nickname: "침팬지유저",
+              avatarLevel: 1,
+              isGuest: true,
+              createdAt: new Date().toISOString(),
+            },
+            isAuthenticated: true,
+            isLoading: false,
+            referralCode: code,
+          });
+        }
       },
 
       getInviteUrl: () => {
@@ -51,6 +71,9 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("accessToken");
+        }
         set({
           user: null,
           isAuthenticated: false,

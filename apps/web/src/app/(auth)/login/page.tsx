@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
 import ChimpCharacter from "@/components/character/ChimpCharacter";
@@ -26,14 +26,16 @@ const FEATURES = [
 export default function LoginPage() {
   const router = useRouter();
   const { ensureGuest, isAuthenticated } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) router.push("/");
   }, [isAuthenticated, router]);
 
-  const handleStart = () => {
-    ensureGuest();
-    router.push("/");
+  const handleStart = async () => {
+    setIsLoading(true);
+    await ensureGuest();
+    // 리다이렉트는 isAuthenticated useEffect가 담당
   };
 
   if (isAuthenticated) return null;
@@ -58,15 +60,17 @@ export default function LoginPage() {
 
         {/* CTA */}
         <button
-          onClick={handleStart}
+          onClick={() => void handleStart()}
+          disabled={isLoading}
           className={[
             "w-full max-w-xs rounded-2xl bg-banana py-4 font-heading font-bold text-white text-lg",
             "border-2 border-banana/80 btn-press",
             "transition-all active:scale-95 hover:shadow-lg",
+            isLoading ? "opacity-70 cursor-not-allowed" : "",
           ].join(" ")}
           data-testid="start-button"
         >
-          바로 시작하기 🍌
+          {isLoading ? "시작 중... 🍌" : "바로 시작하기 🍌"}
         </button>
 
         <p className="text-xs text-text-secondary/60 font-sans mt-3">

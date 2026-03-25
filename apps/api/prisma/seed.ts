@@ -1,53 +1,149 @@
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-const NICKNAMES = [
-  '가즈아전사',
-  '떡상마스터',
-  '바나나헌터',
-  '킹콩트레이더',
-  '손절장인',
+// 테스트 계정 (개발용 로그인)
+const TEST_ACCOUNT = {
+  email: 'test@chimppick.com',
+  password: 'password123',
+  nickname: '테스트침팬지',
+};
+
+// 랭킹용 더미 유저
+const RANKED_USERS = [
+  { nickname: '가즈아전사', wins: 47, losses: 13, streak: 7, coins: 2400 },
+  { nickname: '떡상마스터', wins: 38, losses: 22, streak: 3, coins: 1800 },
+  { nickname: '바나나헌터', wins: 31, losses: 19, streak: 5, coins: 1550 },
+  { nickname: '킹콩트레이더', wins: 25, losses: 25, streak: 0, coins: 1200 },
+  { nickname: '손절장인', wins: 12, losses: 38, streak: 0, coins: 450 },
 ];
+
+const SYMBOLS = ['AAPL', 'TSLA', 'BTC', 'ETH', 'NVDA'];
+const TIMEFRAMES = ['1m', '5m', '1h'];
 
 function randomBetween(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-async function main(): Promise<void> {
-  console.log('Seeding database...');
+function randomChoice<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
-  for (const nickname of NICKNAMES) {
-    const coins = randomBetween(100, 1000);
+function winRate(wins: number, losses: number): number {
+  const total = wins + losses;
+  return total === 0 ? 0 : Math.round((wins / total) * 100) / 100;
+}
+
+async function seedTestAccount(): Promise<void> {
+  const hashed = await bcrypt.hash(TEST_ACCOUNT.password, 12);
+  await prisma.user.upsert({
+    where: { email: TEST_ACCOUNT.email },
+    update: {},
+    create: {
+      email: TEST_ACCOUNT.email,
+      password: hashed,
+      nickname: TEST_ACCOUNT.nickname,
+      bananaCoins: 1000,
+      isGuest: false,
+      stats: { create: {} },
+    },
+  });
+  console.log(`✅ 테스트 계정: ${TEST_ACCOUNT.email} / ${TEST_ACCOUNT.password}`);
+}
+
+async function seedRankedUsers(): Promise<void> {
+  for (const data of RANKED_USERS) {
+    // maxStreak를 한 번만 계산 (세 곳에서 다른 값이 되는 버그 방지)
+    const maxStreak = data.streak + randomBetween(0, 5);
+    const statsData = {
+      totalPredictions: data.wins + data.losses,
+      wins: data.wins,
+      losses: data.losses,
+      winRate: winRate(data.wins, data.losses),
+      currentStreak: data.streak,
+      maxStreak,
+    };
 
     const user = await prisma.user.upsert({
-      where: { nickname },
-      update: {},
+      where: { nickname: data.nickname },
+      update: { bananaCoins: data.coins },
       create: {
-        nickname,
-        bananaCoins: coins,
+        nickname: data.nickname,
+        bananaCoins: data.coins,
         isGuest: false,
+        stats: { create: statsData },
       },
     });
 
+    // 기존 stats가 있으면 업데이트
     await prisma.userStats.upsert({
       where: { userId: user.id },
-      update: {},
-      create: {
-        userId: user.id,
-        totalPredictions: 0,
-        wins: 0,
-        losses: 0,
-        winRate: 0,
-        currentStreak: 0,
-        maxStreak: 0,
-      },
+      update: statsData,
+      create: { userId: user.id, ...statsData },
     });
 
-    console.log(`Created user: ${nickname} (${coins} 바나나코인)`);
-  }
+    // 샘플 예측 3건 (누적 잔액 추적)
+    let runningBalance = data.coins;
+    for (let i = 0; i < 3; i++) {
+      const isWin = i < 2; // 2승 1패
+      const entryPrice = randomBetween(100, 50000);
+      const exitPrice = isWin
+        ? entryPrice * (1 + randomBetween(1, 5) / 100)
+        : entryPrice * (1 - randomBetween(1, 5) / 100);
+      const betAmount = randomBetween(50, 200);
+      const reward = isWin ? Math.floor(betAmount * 1.9) : 0;
 
-  console.log('Seeding complete.');
+      const prediction = await prisma.prediction.create({
+        data: {
+          userId: user.id,
+          symbol: randomChoice(SYMBOLS),
+          direction: isWin ? 'UP' : 'DOWN',
+          timeframe: randomChoice(TIMEFRAMES),
+          entryPrice,
+          exitPrice,
+          betAmount,
+          result: isWin ? 'WIN' : 'LOSE',
+          reward,
+          createdAt: new Date(Date.now() - randomBetween(1, 30) * 24 * 60 * 60 * 1000),
+          resolvedAt: new Date(),
+          expiresAt: new Date(),
+        },
+      });
+
+      const txAmount = isWin ? reward : -betAmount;
+      runningBalance += txAmount;
+
+      // 코인 거래 기록 (누적 잔액 반영)
+      await prisma.transaction.create({
+        data: {
+          userId: user.id,
+          type: isWin ? 'WIN' : 'LOSE',
+          amount: txAmount,
+          balanceAfter: runningBalance,
+          predictionId: prediction.id,
+          description: `${prediction.symbol} ${prediction.direction} ${isWin ? '적중' : '실패'}`,
+          createdAt: prediction.createdAt,
+        },
+      });
+    }
+
+    console.log(`✅ ${data.nickname}: ${data.wins}승 ${data.losses}패 (${data.coins} 바나나코인)`);
+  }
+}
+
+async function main(): Promise<void> {
+  console.log('🦍 침팬지픽 DB 시딩 시작...\n');
+
+  await seedTestAccount();
+  await seedRankedUsers();
+
+  console.log('\n🍌 시딩 완료!');
+  console.log('──────────────────────────────────');
+  console.log('개발 서버 로그인:');
+  console.log(`  이메일: ${TEST_ACCOUNT.email}`);
+  console.log(`  비밀번호: ${TEST_ACCOUNT.password}`);
+  console.log('──────────────────────────────────');
 }
 
 main()

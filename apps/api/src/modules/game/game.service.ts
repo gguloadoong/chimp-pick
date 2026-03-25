@@ -216,7 +216,10 @@ export class GameService implements OnModuleInit {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
-      }).format(new Date()).replace(/\. /g, '-').replace('.', '');
+      })
+        .format(new Date())
+        .replace(/\. /g, '-')
+        .replace('.', '');
       const todayStartKst = new Date(`${kstDateStr}T00:00:00+09:00`);
       const tomorrowStartKst = new Date(todayStartKst.getTime() + 24 * 60 * 60 * 1000);
 

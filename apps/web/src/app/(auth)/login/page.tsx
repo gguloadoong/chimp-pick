@@ -9,7 +9,11 @@ export default function LoginPage() {
   const router = useRouter();
   const { ensureGuest, isAuthenticated } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
-  const [playerCount] = useState(() => 100 + Math.floor(Math.random() * 200));
+  const [playerCount, setPlayerCount] = useState(0);
+
+  useEffect(() => {
+    setPlayerCount(100 + Math.floor(Math.random() * 200));
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated) router.push("/");
@@ -23,83 +27,101 @@ export default function LoginPage() {
   if (isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] dot-grid flex flex-col items-center justify-between px-4 pt-10 pb-8 scanlines">
+    <div className="min-h-screen bg-[var(--bg-primary)] relative overflow-hidden flex flex-col items-center scanlines">
 
-      {/* 상단: 캐릭터 + 로고 */}
-      <div className="flex flex-col items-center gap-6 flex-1 justify-center w-full max-w-sm">
+      {/* 레이 버스트 배경 */}
+      <div className="absolute inset-0 pixel-ray-burst pointer-events-none" />
 
-        {/* 침팬지 캐릭터 */}
-        <div className="animate-bounce-chimp">
-          <ChimpCharacter mood="idle" size={120} level={3} />
-        </div>
+      {/* 상단 컬러 밴드 */}
+      <div className="w-full h-2 flex-shrink-0" style={{
+        background: "linear-gradient(to right, #2ce8f5, #feae34, #f77622, #63c74d, #feae34, #2ce8f5)"
+      }} />
 
-        {/* 로고 */}
-        <div className="text-center">
+      {/* 메인 컨텐츠 */}
+      <div className="relative z-10 flex flex-col items-center flex-1 justify-center px-4 pt-4 pb-4 w-full max-w-sm gap-4">
+
+        {/* 타이틀 카드 */}
+        <div className="pixel-card-title bg-[var(--bg-secondary)] w-full p-6 text-center">
+          {/* 픽셀 데코 */}
+          <p className="pixel-font text-[var(--info)] text-[9px] tracking-[0.25em] mb-3">
+            ★ PICK THE WINNER ★
+          </p>
+
+          {/* 침팬지 캐릭터 */}
+          <div className="animate-bounce-chimp mb-3">
+            <ChimpCharacter mood="idle" size={96} level={3} />
+          </div>
+
+          {/* 타이틀 */}
           <h1
-            className="pixel-font text-[var(--brand-primary)] mb-2 leading-relaxed"
-            style={{ fontSize: "clamp(18px, 5vw, 26px)" }}
+            className="pixel-font text-[var(--brand-primary)] leading-tight mb-1"
+            style={{ fontSize: "28px" }}
           >
             침팬지픽
           </h1>
-          <p className="pixel-font text-[var(--fg-secondary)] text-[10px] tracking-widest mb-4">
+          <p className="pixel-font text-[var(--fg-secondary)] text-[9px] tracking-[0.4em] mb-4">
             CHIMP  PICK
           </p>
-          {/* 구분선 */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-0.5 bg-[var(--border-primary)]" />
-            <span className="text-[var(--brand-primary)] text-lg">🍌</span>
-            <div className="flex-1 h-0.5 bg-[var(--border-primary)]" />
+
+          {/* 픽셀 구분선 */}
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex-1 h-px bg-[var(--border-primary)]" />
+            <span className="text-[var(--brand-primary)] text-sm">🍌</span>
+            <div className="flex-1 h-px bg-[var(--border-primary)]" />
           </div>
-          <p className="text-[var(--fg-primary)] font-heading font-bold text-lg leading-snug">
+
+          <p className="font-heading font-bold text-[var(--fg-primary)] text-lg leading-snug">
             UP일까 DOWN일까,
           </p>
-          <p className="text-[var(--brand-primary)] font-heading font-bold text-lg">
+          <p className="font-heading font-bold text-[var(--brand-primary)] text-lg">
             30초 안에 찍어!
           </p>
         </div>
 
-        {/* LIVE 접속자 */}
-        <div className="flex items-center gap-2 pixel-badge px-3 py-1.5 text-[var(--positive)]">
-          <span className="w-2 h-2 rounded-full bg-[var(--positive)] animate-pulse inline-block" />
+        {/* LIVE 배지 */}
+        <div
+          className="pixel-badge flex items-center gap-2 px-3 py-1.5 text-[var(--positive)]"
+        >
+          <span
+            className="w-2 h-2 bg-[var(--positive)] animate-pulse inline-block"
+            style={{ borderRadius: 0 }}
+          />
           <span className="pixel-font text-[9px] tracking-wide">
-            {playerCount}명 게임 중
+            {playerCount}명 LIVE
           </span>
         </div>
       </div>
 
-      {/* 하단: CTA */}
-      <div className="w-full max-w-sm flex flex-col gap-3">
-
-        {/* 메인 CTA */}
+      {/* CTA 영역 */}
+      <div className="relative z-10 w-full max-w-sm px-4 pb-4 flex flex-col gap-3">
         <button
           onClick={() => void handleStart()}
           disabled={isLoading}
           className={[
-            "w-full bg-[var(--brand-primary)] text-[var(--brand-on-primary)]",
-            "pixel-btn-cta py-5 font-heading font-bold text-xl",
+            "w-full pixel-btn-cta py-5 font-heading font-bold text-2xl",
             isLoading ? "opacity-60 cursor-not-allowed" : "",
           ].join(" ")}
           data-testid="start-button"
         >
-          {isLoading ? "로딩 중... 🍌" : "🍌 게임 시작하기"}
+          {isLoading ? "LOADING... 🍌" : "🍌 GAME START"}
         </button>
 
-        <p className="text-center pixel-font text-[8px] text-[var(--fg-tertiary)] tracking-wide">
-          로그인 없이 바로 플레이!
+        <p className="text-center pixel-font text-[8px] text-[var(--fg-tertiary)] tracking-widest">
+          PRESS START — 로그인 없이 바로 플레이
         </p>
 
-        {/* 특징 3가지 */}
-        <div className="grid grid-cols-3 gap-2 mt-2">
+        {/* 특징 3개 */}
+        <div className="grid grid-cols-3 gap-2">
           {[
-            { emoji: "⏱️", label: "30초" },
-            { emoji: "🎯", label: "역배 5배" },
-            { emoji: "🏆", label: "실시간 랭킹" },
+            { emoji: "⏱", label: "30SEC" },
+            { emoji: "🎯", label: "x5 BONUS" },
+            { emoji: "🏆", label: "RANKING" },
           ].map((f) => (
             <div
               key={f.label}
               className="pixel-card bg-[var(--bg-secondary)] p-3 text-center"
             >
-              <p className="text-2xl mb-1">{f.emoji}</p>
+              <p className="text-xl mb-1">{f.emoji}</p>
               <p className="pixel-font text-[8px] text-[var(--fg-secondary)] leading-snug">
                 {f.label}
               </p>
@@ -107,6 +129,11 @@ export default function LoginPage() {
           ))}
         </div>
       </div>
+
+      {/* 하단 컬러 밴드 */}
+      <div className="w-full h-2 flex-shrink-0" style={{
+        background: "linear-gradient(to right, #f77622, #feae34, #2ce8f5, #63c74d, #feae34, #f77622)"
+      }} />
     </div>
   );
 }

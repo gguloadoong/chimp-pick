@@ -24,7 +24,7 @@ export default function BetSlider({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-[var(--fg-secondary)] font-sans">베팅 금액</span>
+        <span className="text-xs text-[var(--fg-secondary)] font-sans">예측 포인트</span>
         <div className="flex items-center gap-1 bg-[var(--brand-secondary)] px-2.5 py-1 rounded-[var(--radius-sm)]">
           <Banana size={12} className="text-[var(--brand-primary)]" />
           <span
@@ -44,7 +44,7 @@ export default function BetSlider({
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(Number(e.target.value))}
-        aria-label="베팅 금액"
+        aria-label="예측 포인트"
         data-testid="bet-slider"
         className="tds-slider w-full"
         style={{ "--track-fill": `${pct}%` } as React.CSSProperties}

@@ -3,6 +3,8 @@
 interface CrowdGaugeProps {
   upPct: number;
   picked?: "UP" | "DOWN" | null;
+  upScore?: number;
+  downScore?: number;
 }
 
 const MONKEY_COUNT = 12;
@@ -30,7 +32,16 @@ function MonkeySilhouette({ flip, delay, size }: { flip: boolean; delay: number;
   );
 }
 
-export default function CrowdGauge({ upPct, picked }: CrowdGaugeProps) {
+function getCrowdComment(upPct: number): string {
+  const diff = Math.abs(upPct - 50);
+  if (diff >= 40) return "🐑 완전 쏠렸다! 역배가 황금!";
+  if (diff >= 30) return "⚡ 군중이 강하게 쏠리는 중!";
+  if (diff >= 20) return "📊 한쪽으로 기울고 있어요";
+  if (diff >= 10) return "🎲 팽팽한 대결!";
+  return "⚖️ 완벽한 균형! 50:50 승부!";
+}
+
+export default function CrowdGauge({ upPct, picked, upScore, downScore }: CrowdGaugeProps) {
   const downPct = 100 - upPct;
   const upCount = Math.round((upPct / 100) * MONKEY_COUNT);
   const downCount = MONKEY_COUNT - upCount;
@@ -40,7 +51,7 @@ export default function CrowdGauge({ upPct, picked }: CrowdGaugeProps) {
   return (
     <div className="rounded-[var(--radius-md)] py-3" data-testid="crowd-gauge">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-[var(--fg-secondary)] font-sans">참여 현황</span>
+        <span className="text-xs font-semibold text-[var(--fg-secondary)] font-sans">군중 예측 분포</span>
         {(upIsMinority || downIsMinority) && (
           <span className="text-xs font-bold text-[var(--brand-primary)] font-sans animate-pulse">
             {upIsMinority ? "⬆️ UP 소수파 보너스!" : "⬇️ DOWN 소수파 보너스!"}
@@ -100,8 +111,20 @@ export default function CrowdGauge({ upPct, picked }: CrowdGaugeProps) {
         </div>
       </div>
 
-      <p className="text-xs text-[var(--fg-tertiary)] text-center mt-2 font-sans">
-        🐵 원숭이가 적은 쪽을 맞추면 더 높은 점수!
+      {/* Score display */}
+      {(upScore !== undefined || downScore !== undefined) && (
+        <div className="flex justify-between mt-2 px-1">
+          <span className={["text-xs font-bold font-sans", upIsMinority ? "text-[var(--brand-primary)]" : "text-[var(--fg-tertiary)]"].join(" ")}>
+            {upIsMinority ? `🔥 +${upScore}점` : `+${upScore}점`}
+          </span>
+          <span className={["text-xs font-bold font-sans", downIsMinority ? "text-[var(--brand-primary)]" : "text-[var(--fg-tertiary)]"].join(" ")}>
+            {downIsMinority ? `🔥 +${downScore}점` : `+${downScore}점`}
+          </span>
+        </div>
+      )}
+
+      <p className="text-xs text-[var(--fg-tertiary)] text-center mt-1 font-sans">
+        {getCrowdComment(upPct)}
       </p>
     </div>
   );

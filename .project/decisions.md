@@ -112,5 +112,28 @@
 - **결정자**: 박도파민 (Designer) + CEO 승인 (2026-03-26)
 - **상태**: 확정 (스프린트 1 구현 예정)
 
+### DEC-012: IAP 코인 이원화 — freeCoins / paidCoins 컬럼 분리 (2026-03-26)
+- **결정**: `User.bananaCoins` 단일 필드를 `freeCoins`(예측용) + `paidCoins`(코스메틱용)으로 분리
+- **대안**: Transaction 히스토리 집계로 잔액 구분
+- **이유**:
+  - 집계 방식은 동시성 경쟁 조건(race condition) 발생 위험. 예측 처리량이 초당 수백 건일 때 불안정
+  - 컬럼 분리는 DB 레벨에서 원자적 UPDATE 가능. 트랜잭션 잠금 범위 최소화
+  - 앱스토어 심사 시 "무료 코인으로만 예측 참여" 흐름을 코드 수준에서 증명 가능
+- **구현 메모**: 마이그레이션 시 기존 `bananaCoins` 값을 `freeCoins`로 복사, `paidCoins`는 0 초기화. `bananaCoins`는 다음 스프린트에서 제거
+- **결정자**: 최풀매수 (BE)
+- **상태**: 확정
+
+---
+### DEC-013: PaymentsModule 아키텍처 — IAP-베팅 완전 분리 (2026-03-26)
+- **결정**: `coinType: FREE | PAID` 이원화 + `IapReceipt` 테이블 신규 생성
+  - FREE 코인(무료 획득)만 예측 참여 가능
+  - PAID 코인(IAP 구매)은 코스메틱 전용
+  - Apple StoreKit 2 / Google Play Billing RTDN 서버 검증
+- **대안**: 단일 코인 풀로 유지하되 UI에서만 분리 표시
+- **이유**: 단일 풀 방식은 심사 시 흐름 증명 불가. 서버 레벨에서 분리해야 Apple 5.3 도박 조항 안전하게 대응
+- **결정자**: 최풀매수 (BE)
+- **상태**: 설계 완료, 구현 대기 (Sprint 1)
+- **참조**: `.project/iap-architecture.md`
+
 ---
 _새 결정 추가 시 DEC-XXX 형식으로 번호 부여_

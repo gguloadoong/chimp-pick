@@ -52,14 +52,14 @@
 - [ ] F3: 바나나코인 이코노미 시뮬 v1 (3SP)
 
 ### 크로스팀 합의 (8 SP)
-- [ ] X1: OpenAPI 스펙 v1 합의 (2SP, FE+BE, 화)
-- [ ] X2: WebSocket 메시지 포맷 확정 (1SP, FE+BE, 화)
-- [ ] X3: 에러 코드 표준화 (1SP, FE+BE+QA, 수)
-- [ ] X4: data-testid 컨벤션 (1SP, FE+QA, 수)
-- [ ] X5: 이벤트 택소노미 리뷰 (1SP, Strategist+BE+FE, 목)
-- [ ] X6: 공유 카드 워크숍 (1SP, Designer+Strategist, 목)
-- [ ] X7: 이코노미 시뮬 리뷰 (0.5SP, Strategist+QA, 금)
-- [ ] X8: 엣지케이스 화면 합의 (0.5SP, Designer+QA, 목)
+- [x] X1: OpenAPI 스펙 v1 합의 (2SP, FE+BE, 화) → agreements.md
+- [x] X2: WebSocket 메시지 포맷 확정 (1SP, FE+BE, 화) → agreements.md
+- [x] X3: 에러 코드 표준화 (1SP, FE+BE+QA, 수) → agreements.md
+- [x] X4: data-testid 컨벤션 (1SP, FE+QA, 수) → agreements.md
+- [x] X5: 이벤트 택소노미 리뷰 (1SP, Strategist+BE+FE, 목) → agreements.md
+- [x] X6: 공유 카드 워크숍 (1SP, Designer+Strategist, 목) → agreements.md
+- [x] X7: 이코노미 시뮬 리뷰 (0.5SP, Strategist+QA, 금) → agreements.md
+- [x] X8: 엣지케이스 화면 합의 (0.5SP, Designer+QA, 목) → agreements.md
 
 ---
 

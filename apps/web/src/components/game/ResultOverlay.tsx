@@ -57,7 +57,7 @@ export default function ResultOverlay({
   const [phase, setPhase] = useState<"drumroll" | "reveal" | "show">("drumroll");
   const [countScore, setCountScore] = useState(0);
   const [canDismiss, setCanDismiss] = useState(false);
-  const [copyIdx] = useState(() => Math.floor(Math.random() * 4));
+  const [copyIdx] = useState(() => Math.floor(Math.random() * Math.max(WIN_LOSE_COPY.win.length, WIN_LOSE_COPY.lose.length)));
 
   const isWin = result.isCorrect;
 

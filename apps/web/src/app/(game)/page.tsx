@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useCallback, useState, useMemo } from "react";
-import { ArrowUp, ArrowDown, Trophy, Users } from "lucide-react";
+import { ArrowUp, ArrowDown, Trophy } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
 import { useAuthStore } from "@/stores/authStore";
-import { useSettingsStore, type RoundDuration } from "@/stores/settingsStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { getPrice, onPriceUpdate, computeStats, setRoundDuration, getCurrentSeason, getSeasonTimeRemaining } from "@/lib/game-engine";
 import { playPickSound, playDrumroll, playWinSound, playLoseSound } from "@/lib/sound";
 import { useToastStore } from "@/stores/toastStore";
@@ -106,10 +106,9 @@ export default function GamePage() {
     claimMissionReward,
     challenge,
     startChallenge,
-    getTodayRounds,
   } = useGameStore();
 
-  const { roundDuration, soundEnabled, hasSeenOnboarding, setRoundDuration: setDuration, toggleSound, markOnboardingSeen, theme, setTheme, accentColor, setAccentColor } = useSettingsStore();
+  const { roundDuration, soundEnabled, hasSeenOnboarding, markOnboardingSeen, theme, setTheme, accentColor, setAccentColor } = useSettingsStore();
 
   const addToast = useToastStore((s) => s.addToast);
 
@@ -163,10 +162,7 @@ export default function GamePage() {
   }, [roundId, roundSymbol]);
 
   useEffect(() => {
-    if (!roundSymbolB || !isComparison) {
-      queueMicrotask(() => { setCurrentPriceBData(null); setPriceBTicks([]); });
-      return;
-    }
+    if (!roundSymbolB || !isComparison) return;
     let first = true;
     const update = () => {
       const price = getPrice(roundSymbolB);

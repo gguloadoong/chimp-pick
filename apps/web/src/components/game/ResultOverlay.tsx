@@ -14,15 +14,70 @@ const WIN_LOSE_COPY = {
     "바나나 수확 완료! 🍌",
     "침팬지 직감은 과학이다! 🧪",
     "월급보다 정확한 예측! 💰",
+    "당신, 혹시 미래를 보십니까? 👁️",
+    "전설이 탄생했다 🏆",
+    "AI도 당신 앞엔 무릎 꿇는다 🤖",
   ],
-  lose: ["바나나 미끄러졌다 🍌", "침팬지도 가끔 틀린다... 😅", "다음 판에 복수하자 🔥", "바나나 증발... 다시 가즈아! 😤"],
+  lose: [
+    "바나나 미끄러졌다 🍌",
+    "침팬지도 가끔 틀린다... 😅",
+    "다음 판에 복수하자 🔥",
+    "바나나 증발... 다시 가즈아! 😤",
+    "오늘도 침팬지한테 졌다 🦍",
+    "AI도 틀릴 때 있어요. 당신은 더. 🤖",
+    "워렌 버핏도 이 종목은 몰랐을 거예요 📉",
+    "다음엔 진짜 올라가요 (보장 없음) ❓",
+    "침팬지가 당신보다 낫다는 과학적 연구가... 🔬",
+    "이쯤 되면 반대로 하면 되는 거 아닐까요? 🔄",
+    "틀린 게 아니라 시장이 잘못된 겁니다 📊",
+    "전 재산 날린 기분? 바나나 몇 개인데요 ㅋ 🍌",
+    "주식의 신도 50% 확률은 못 이깁니다 🎲",
+    "괜찮아요, 다음엔 전략을 바꿔봐요 🧠",
+    "역사 속 모든 투자자도 틀린 날이 있었습니다 📜",
+  ],
   loseSub: [
     "틀려도 괜찮아, 원래 확률은 50%야",
     "소수파를 노려보면 점수가 더 높아요!",
     "직감을 믿어보세요! 다수파가 항상 옳진 않아요!",
     "다음 라운드 파이팅! 🦍",
+    "오늘의 패배는 내일의 승리를 위한 데이터입니다",
+    "침팬지도 처음엔 바나나를 자주 놓쳤어요",
+    "실패는 성공의 어머니, 바나나의 형제",
+    "반대로 찍어보는 것도 전략입니다 (이건 진지한 조언)",
+    "지금 이 순간을 기억하세요. 반면교사로요.",
   ],
 };
+
+/** 시간대·날짜 기반 특별 패배 메시지 */
+function getContextualLoseMessage(): { main: string; sub: string } | null {
+  const hour = new Date().getHours();
+  if (hour >= 22 || hour < 6) {
+    return {
+      main: "새벽에 주식하면 이렇게 됩니다 🌙",
+      sub: "수면이 최고의 투자 전략입니다",
+    };
+  }
+  if (hour >= 9 && hour < 10) {
+    return {
+      main: "장 시작하자마자 이러시면 안 됩니다 ⏰",
+      sub: "아직 오전이에요. 기회는 많아요.",
+    };
+  }
+  const day = new Date().getDay();
+  if (day === 1) {
+    return {
+      main: "월요병이 예측에도 왔군요 😴",
+      sub: "월요일은 원래 다들 틀려요 (거짓말)",
+    };
+  }
+  if (day === 5) {
+    return {
+      main: "불금에 이러시면 안 되죠 🍻",
+      sub: "주말 전에 만회할 기회가 있어요!",
+    };
+  }
+  return null;
+}
 
 interface ConfettiParticle {
   id: number;
@@ -58,6 +113,7 @@ export default function ResultOverlay({
   const [countScore, setCountScore] = useState(0);
   const [canDismiss, setCanDismiss] = useState(false);
   const [copyIdx] = useState(() => Math.floor(Math.random() * Math.max(WIN_LOSE_COPY.win.length, WIN_LOSE_COPY.lose.length)));
+  const [contextualLose] = useState(() => getContextualLoseMessage());
 
   const isWin = result.isCorrect;
 
@@ -212,7 +268,7 @@ export default function ResultOverlay({
             >
               {isWin
                 ? result.score >= 200 ? "역배 적중! 🔥🔥" : result.score >= 100 ? "가즈아! 적중! 🎉" : "맞았다! ✨"
-                : WIN_LOSE_COPY.lose[copyIdx % WIN_LOSE_COPY.lose.length]}
+                : (contextualLose?.main ?? WIN_LOSE_COPY.lose[copyIdx % WIN_LOSE_COPY.lose.length])}
             </h2>
 
             <p className={[
@@ -223,7 +279,7 @@ export default function ResultOverlay({
                 ? result.score >= 200
                   ? "소수파의 반란! 침팬지 역전승! 🧠"
                   : WIN_LOSE_COPY.win[copyIdx % WIN_LOSE_COPY.win.length]
-                : WIN_LOSE_COPY.loseSub[copyIdx % WIN_LOSE_COPY.loseSub.length]}
+                : (contextualLose?.sub ?? WIN_LOSE_COPY.loseSub[copyIdx % WIN_LOSE_COPY.loseSub.length])}
             </p>
 
             {/* Result details */}

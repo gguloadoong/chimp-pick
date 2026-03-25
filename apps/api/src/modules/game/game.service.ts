@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RetentionService } from '../retention/retention.service';
 import { Prediction } from '@prisma/client';
 
 // Timeframe to milliseconds (Sprint 1: short for testing)
@@ -18,7 +19,10 @@ const WIN_MULTIPLIER = 1.9; // per agreements.md X7
 export class GameService implements OnModuleInit {
   private readonly logger = new Logger(GameService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly retentionService: RetentionService,
+  ) {}
 
   async onModuleInit(): Promise<void> {
     await this.reschedulePendingPredictions();
@@ -193,6 +197,29 @@ export class GameService implements OnModuleInit {
         });
       }
     });
+
+    // 리텐션 미션 자동 트리거 — 예측 결과에 영향 없도록 try/catch 격리
+    try {
+      await this.retentionService.completeMission(prediction.userId, 'FIRST_PREDICT');
+
+      // 당일 완료된 예측 건수 확인 후 THREE_PREDICTS 트리거
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayCount = await this.prisma.prediction.count({
+        where: {
+          userId: prediction.userId,
+          result: { in: ['WIN', 'LOSE'] },
+          resolvedAt: { gte: todayStart },
+        },
+      });
+      if (todayCount >= 3) {
+        await this.retentionService.completeMission(prediction.userId, 'THREE_PREDICTS');
+      }
+    } catch (missionErr) {
+      this.logger.warn(
+        `리텐션 미션 업데이트 실패 (predictionId=${predictionId}): ${String(missionErr)}`,
+      );
+    }
   }
 
   async getUserPredictions(

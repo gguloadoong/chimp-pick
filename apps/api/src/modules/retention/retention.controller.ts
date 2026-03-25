@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   Param,
@@ -58,7 +59,7 @@ export class RetentionController {
     @Param('type') type: string,
   ) {
     if (!VALID_MISSION_TYPES.has(type)) {
-      return buildResponse({ error: '유효하지 않은 미션 타입입니다.' });
+      throw new BadRequestException('유효하지 않은 미션 타입입니다.');
     }
     const result = await this.retentionService.completeMission(
       req.user.id,

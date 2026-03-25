@@ -13,7 +13,10 @@ import { useRealtimePrices } from "@/hooks/useRealtimePrices";
 import { usePrediction } from "@/hooks/usePrediction";
 import { AVATAR_LEVELS } from "@/types";
 import type { RoundResult } from "@/types";
+import dynamic from "next/dynamic";
 import MiniChart from "@/components/game/MiniChart";
+
+const CandleChart = dynamic(() => import("@/components/game/CandleChart"), { ssr: false });
 import BetSlider from "@/components/game/BetSlider";
 import CrowdGauge from "@/components/game/CrowdGauge";
 import ResultOverlay from "@/components/game/ResultOverlay";
@@ -427,8 +430,17 @@ export default function GamePage() {
               </p>
             )}
 
-            {/* Mini chart */}
-            <MiniChart prices={priceTicks} height={56} className="mb-3" />
+            {/* Chart — price 카테고리는 캔들차트, 나머지는 라인차트 */}
+            {currentRound?.questionCategory === "price" && currentRound.symbol ? (
+              <CandleChart
+                symbol={currentRound.symbol}
+                timeframe={roundDuration === 60 ? "1m" : roundDuration === 300 ? "5m" : roundDuration === 3600 ? "1h" : "1d"}
+                height={160}
+                className="mb-3"
+              />
+            ) : (
+              <MiniChart prices={priceTicks} height={56} className="mb-3" />
+            )}
 
             {/* Progress bar (time) */}
             {currentRound.phase === "OPEN" && (

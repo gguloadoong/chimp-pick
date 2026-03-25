@@ -11,6 +11,7 @@
     "gen:types": "openapi-typescript ${OPENAPI_URL:-http://localhost:4000}/api/docs-json -o src/types/api.d.ts"
   },
   "dependencies": {
+    "lightweight-charts": "^5.1.0",
     "lucide-react": "^0.577.0",
     "next": "16.2.0",
     "react": "19.2.4",
@@ -25,9 +26,9 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.1.1",
-    "jsdom": "^26.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.0",
+    "jsdom": "^26.0.0",
     "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
     "typescript": "^5",

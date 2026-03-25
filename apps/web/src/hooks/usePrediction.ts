@@ -3,17 +3,8 @@
 import { useState, useCallback, useEffect } from "react";
 import { predictionApi, ApiClientError, type Prediction, type PredictionDirection, type PredictionTimeframe } from "@/lib/api";
 
-// 게임 엔진 심볼("BTC-KRW") → API 심볼("BTC")
-const ENGINE_TO_API: Record<string, string> = {
-  "BTC-KRW": "BTC",
-  "ETH-KRW": "ETH",
-  "XRP-KRW": "XRP",
-  "DOGE-KRW": "DOGE",
-  "SOL-KRW": "SOL",
-};
-
-// 라운드 길이(초) → 타임프레임 문자열
-const DURATION_TO_TIMEFRAME: Record<number, string> = {
+// 라운드 길이(초) → 타임프레임 — 타입을 PredictionTimeframe으로 선언하여 캐스팅 불필요
+const DURATION_TO_TIMEFRAME: Record<number, PredictionTimeframe> = {
   60: "1m",
   300: "5m",
   3600: "1h",
@@ -41,6 +32,12 @@ export function usePrediction({ onSuccess, onError }: UsePredictionOptions = {})
     const timer = setInterval(async () => {
       try {
         const updated = await predictionApi.get(activePrediction.id);
+        // updated가 null이면 예측이 삭제된 것 — 폴링 중단
+        if (!updated) {
+          setActivePrediction(null);
+          clearInterval(timer);
+          return;
+        }
         if (updated.result !== "PENDING") {
           setActivePrediction(updated);
           clearInterval(timer);
@@ -55,18 +52,17 @@ export function usePrediction({ onSuccess, onError }: UsePredictionOptions = {})
 
   const submitPrediction = useCallback(
     async (
-      engineSymbol: string,
+      symbol: string,           // 게임 엔진/BE 모두 "BTC-KRW" 형식 사용
       direction: PredictionDirection,
       roundDurationSec: number,
       betAmount: number,
     ) => {
-      const apiSymbol = ENGINE_TO_API[engineSymbol] ?? engineSymbol;
-      const timeframe = (DURATION_TO_TIMEFRAME[roundDurationSec] ?? "1m") as PredictionTimeframe;
+      const timeframe = DURATION_TO_TIMEFRAME[roundDurationSec] ?? "1m";
 
       setIsSubmitting(true);
       try {
         const prediction = await predictionApi.create({
-          symbol: apiSymbol,
+          symbol,
           direction,
           timeframe,
           betAmount,

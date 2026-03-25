@@ -44,6 +44,7 @@ export default function BetSlider({
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(Number(e.target.value))}
+        aria-label="베팅 금액"
         data-testid="bet-slider"
         className="w-full h-1.5 rounded-full appearance-none cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
         style={{

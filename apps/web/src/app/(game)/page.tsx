@@ -150,12 +150,13 @@ export default function GamePage() {
   });
 
   const handlePick = useCallback((direction: "UP" | "DOWN") => {
+    if (isSubmitting) return; // 중복 제출 방지
     pickDirection(direction);
     if (soundEnabled) playPickSound();
     if (currentRound?.symbol) {
       void submitPrediction(currentRound.symbol, direction, roundDuration, betAmount);
     }
-  }, [pickDirection, soundEnabled, currentRound?.symbol, roundDuration, betAmount, submitPrediction]);
+  }, [isSubmitting, pickDirection, soundEnabled, currentRound?.symbol, roundDuration, betAmount, submitPrediction]);
 
   const handleResultDismiss = useCallback(() => setResolvedResult(null), []);
 

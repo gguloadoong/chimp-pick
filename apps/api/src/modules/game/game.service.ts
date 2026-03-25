@@ -198,18 +198,33 @@ export class GameService implements OnModuleInit {
       }
     });
 
-    // 리텐션 미션 자동 트리거 — 예측 결과에 영향 없도록 try/catch 격리
+    // 리텐션 미션 자동 트리거 — 미션별 독립 try/catch로 격리
+    // FIRST_PREDICT 실패가 THREE_PREDICTS 평가를 막지 않도록 분리
     try {
       await this.retentionService.completeMission(prediction.userId, 'FIRST_PREDICT');
+    } catch (missionErr) {
+      this.logger.warn(
+        `리텐션 미션 업데이트 실패 (FIRST_PREDICT, predictionId=${predictionId}): ${missionErr instanceof Error ? missionErr.message : String(missionErr)}`,
+        missionErr instanceof Error ? missionErr.stack : undefined,
+      );
+    }
 
-      // 당일 완료된 예측 건수 확인 후 THREE_PREDICTS 트리거
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
+    try {
+      // KST 기준 당일 완료 예측 건수 확인 — 서버 TZ 무관하게 동작
+      const kstDateStr = new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(new Date()).replace(/\. /g, '-').replace('.', '');
+      const todayStartKst = new Date(`${kstDateStr}T00:00:00+09:00`);
+      const tomorrowStartKst = new Date(todayStartKst.getTime() + 24 * 60 * 60 * 1000);
+
       const todayCount = await this.prisma.prediction.count({
         where: {
           userId: prediction.userId,
           result: { in: ['WIN', 'LOSE'] },
-          resolvedAt: { gte: todayStart },
+          resolvedAt: { gte: todayStartKst, lt: tomorrowStartKst },
         },
       });
       if (todayCount >= 3) {
@@ -217,7 +232,8 @@ export class GameService implements OnModuleInit {
       }
     } catch (missionErr) {
       this.logger.warn(
-        `리텐션 미션 업데이트 실패 (predictionId=${predictionId}): ${String(missionErr)}`,
+        `리텐션 미션 업데이트 실패 (THREE_PREDICTS, predictionId=${predictionId}): ${missionErr instanceof Error ? missionErr.message : String(missionErr)}`,
+        missionErr instanceof Error ? missionErr.stack : undefined,
       );
     }
   }

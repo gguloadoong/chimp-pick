@@ -329,11 +329,11 @@ export default function ResultOverlay({
                 <div className="h-2 w-full overflow-hidden flex" style={{ borderRadius: 0 }}>
                   <div
                     className="h-full bg-[var(--positive)] transition-all duration-500"
-                    style={{ width: `${result.upRatio}%` }}
+                    style={{ width: `${Number.isFinite(result.upRatio) ? Math.max(0, Math.min(100, result.upRatio)) : 0}%` }}
                   />
                   <div
                     className="h-full bg-[var(--negative)] transition-all duration-500"
-                    style={{ width: `${100 - result.upRatio}%` }}
+                    style={{ width: `${100 - (Number.isFinite(result.upRatio) ? Math.max(0, Math.min(100, result.upRatio)) : 0)}%` }}
                   />
                 </div>
               </div>

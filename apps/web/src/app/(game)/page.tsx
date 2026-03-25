@@ -229,12 +229,13 @@ export default function GamePage() {
   const currentPrice = currentRound ? getPrice(currentRound.symbol) : null;
 
   // 마지막 5초 햅틱 피드백
+  const timeLeftSec = Math.ceil(countdown.timeLeft / 1000);
   useEffect(() => {
-    if (countdown.timeLeft > 5_000 || countdown.timeLeft <= 0 || myPick || currentRound?.phase !== "OPEN") return;
+    if (timeLeftSec > 5 || timeLeftSec <= 0 || myPick || currentRound?.phase !== "OPEN") return;
     if (typeof navigator !== "undefined" && navigator.vibrate) {
       navigator.vibrate(80);
     }
-  }, [Math.ceil(countdown.timeLeft / 1000), myPick, currentRound?.phase]);
+  }, [timeLeftSec, myPick, currentRound?.phase]);
 
   const upPct = currentRound?.upRatio ?? 50;
   const downPct = 100 - upPct;

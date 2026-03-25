@@ -15,6 +15,7 @@ interface AuthState {
   setUser: (user: User) => void;
   setNickname: (nickname: string) => void;
   updateBananaCoins: (coins: number) => void;
+  applyPredictionResult: (result: "WIN" | "LOSE", reward: number | null, betAmount: number) => void;
   referralCode: string;
   getInviteUrl: () => string;
 }
@@ -57,6 +58,7 @@ export const useAuthStore = create<AuthState>()(
               avatarLevel: 1,
               isGuest: true,
               createdAt: new Date().toISOString(),
+              bananaCoins: 1000,
             },
             isAuthenticated: true,
             isLoading: false,
@@ -87,6 +89,17 @@ export const useAuthStore = create<AuthState>()(
         const { user } = get();
         if (!user) return;
         set({ user: { ...user, bananaCoins: coins } });
+      },
+
+      applyPredictionResult: (result, reward, betAmount) => {
+        const { user } = get();
+        if (!user) return;
+        const current = user.bananaCoins;
+        if (result === "WIN" && reward != null) {
+          set({ user: { ...user, bananaCoins: current + reward - betAmount } });
+        } else if (result === "LOSE") {
+          set({ user: { ...user, bananaCoins: Math.max(0, current - betAmount) } });
+        }
       },
 
       setNickname: (nickname: string) => {

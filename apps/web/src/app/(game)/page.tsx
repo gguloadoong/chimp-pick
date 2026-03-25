@@ -150,7 +150,7 @@ export default function GamePage() {
     });
   }, [roundPhase, myPick, resolveMyPick, soundEnabled]);
 
-  const { user, updateBananaCoins } = useAuthStore();
+  const { user, applyPredictionResult } = useAuthStore();
 
   const [betAmount, setBetAmount] = useState(50);
 
@@ -159,19 +159,11 @@ export default function GamePage() {
     onError: (msg) => addToast(msg, "❌", "warning"),
   });
 
-  // 예측 결과 확정 시 바나나코인 잔액 갱신 (낙관적 업데이트)
+  // 예측 결과 확정 시 바나나코인 잔액 갱신 — 스토어 내부에서 현재 잔액 읽어 stale dep 없음
   useEffect(() => {
     if (!activePrediction || activePrediction.result === "PENDING") return;
-    if (activePrediction.result === "WIN" && activePrediction.reward != null) {
-      const current = user?.bananaCoins ?? 1000;
-      updateBananaCoins(current + activePrediction.reward - activePrediction.betAmount);
-    } else if (activePrediction.result === "LOSE") {
-      const current = user?.bananaCoins ?? 1000;
-      updateBananaCoins(Math.max(0, current - activePrediction.betAmount));
-    }
-  // activePrediction.id + result 조합 변경 시에만 실행
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePrediction?.id, activePrediction?.result]);
+    applyPredictionResult(activePrediction.result, activePrediction.reward, activePrediction.betAmount);
+  }, [activePrediction?.id, activePrediction?.result, applyPredictionResult]);
 
   const handlePick = useCallback((direction: "UP" | "DOWN") => {
     if (isSubmitting) return; // 중복 제출 방지
@@ -221,7 +213,7 @@ export default function GamePage() {
             <span className="text-xs text-[var(--fg-secondary)] font-sans bg-[var(--bg-tertiary)] px-2 py-1 rounded-[var(--radius-sm)]">
               오늘 {getTodayRounds()}R
             </span>
-            {user?.bananaCoins != null && (
+            {user != null && (
               <div className="flex items-center gap-1 bg-[var(--brand-secondary)] px-2.5 py-1.5 rounded-[var(--radius-sm)]">
                 <span className="text-xs">🍌</span>
                 <span className="font-mono font-bold text-[var(--brand-primary)] tabular-nums text-sm" data-testid="banana-balance">

@@ -640,7 +640,7 @@ export default function GamePage() {
                 aria-live="polite"
               >
                 {currentRound.phase === "CLOSED"
-                  ? `${myPick.direction === "UP" ? "🚀" : "💀"} 베팅 완료 — 🥁 판정 중...`
+                  ? `${myPick.direction === "UP" ? "🚀" : "💀"} 예측 완료 — 🥁 판정 중...`
                   : `✓ ${myPick.direction === "UP" ? (currentRound.optionA ?? "UP") : (currentRound.optionB ?? "DOWN")} 선택 완료!`}
               </div>
             )}

@@ -34,7 +34,7 @@ export default function LoginPage() {
 
       {/* 상단 컬러 밴드 */}
       <div className="w-full h-2 flex-shrink-0" style={{
-        background: "linear-gradient(to right, #73eff7, #ffcd75, #ef7d57, #a7f070, #ffcd75, #73eff7)"
+        background: "linear-gradient(to right, #2ce8f5, #feae34, #f77622, #63c74d, #feae34, #2ce8f5)"
       }} />
 
       {/* 메인 컨텐츠 */}
@@ -132,7 +132,7 @@ export default function LoginPage() {
 
       {/* 하단 컬러 밴드 */}
       <div className="w-full h-2 flex-shrink-0" style={{
-        background: "linear-gradient(to right, #ef7d57, #ffcd75, #73eff7, #a7f070, #ffcd75, #ef7d57)"
+        background: "linear-gradient(to right, #f77622, #feae34, #2ce8f5, #63c74d, #feae34, #f77622)"
       }} />
     </div>
   );

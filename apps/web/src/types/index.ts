@@ -124,16 +124,14 @@ export interface RankingEntry {
 
 // ===== Constants =====
 export const SYMBOLS: SymbolInfo[] = [
-  { symbol: "BTC-KRW", name: "Bitcoin", nameKr: "비트코인", category: "crypto" },
-  { symbol: "ETH-KRW", name: "Ethereum", nameKr: "이더리움", category: "crypto" },
-  { symbol: "DOGE-KRW", name: "Dogecoin", nameKr: "도지코인", category: "crypto" },
-  { symbol: "SHIB-KRW", name: "Shiba Inu", nameKr: "시바이누", category: "crypto" },
-  { symbol: "XRP-KRW", name: "Ripple", nameKr: "리플", category: "crypto" },
   { symbol: "005930", name: "Samsung", nameKr: "삼성전자", category: "stock" },
   { symbol: "000660", name: "SK Hynix", nameKr: "SK하이닉스", category: "stock" },
   { symbol: "035420", name: "NAVER", nameKr: "네이버", category: "stock" },
   { symbol: "035720", name: "Kakao", nameKr: "카카오", category: "stock" },
   { symbol: "068270", name: "Celltrion", nameKr: "셀트리온", category: "stock" },
+  { symbol: "000270", name: "Kia", nameKr: "기아", category: "stock" },
+  { symbol: "005380", name: "Hyundai Motor", nameKr: "현대차", category: "stock" },
+  { symbol: "051910", name: "LG Chem", nameKr: "LG화학", category: "stock" },
 ];
 
 export const AVATAR_LEVELS = [

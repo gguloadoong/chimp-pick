@@ -52,7 +52,7 @@ type QPool = QEntry[];
 // ── Fun questions (40종) ──
 const FUN_QUESTIONS: QPool = [
   { title: "이번 라운드 UP이 더 많을까?", description: "참여자들의 선택을 예측!", optionA: "UP이 많다", optionB: "DOWN이 많다" },
-  { title: "다음 라운드 종목은 코인일까?", description: "시스템의 선택을 맞춰보세요", optionA: "코인이다", optionB: "주식이다" },
+  { title: "다음 라운드 삼성전자가 나올까?", description: "시스템의 선택을 맞춰보세요", optionA: "삼성전자다", optionB: "다른 종목이다" },
   { title: "오늘 행운이 올까?", description: "침팬지 직감!", optionA: "행운 온다!", optionB: "내일 온다..." },
   { title: "지금 커피 마시는 사람이 더 많을까?", description: "세상 모든 사람의 행동 예측!", optionA: "커피 마시는 중 ☕", optionB: "안 마시는 중" },
   { title: "이 순간 웃고 있는 침팬지가 더 많을까?", description: "전 세계 침팬지 기분 예측", optionA: "웃는 중 😄", optionB: "심각한 중 🤔" },
@@ -189,13 +189,11 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-const CRYPTO_SYMBOLS = SYMBOLS.filter((s) => s.category === "crypto");
 const STOCK_SYMBOLS = SYMBOLS.filter((s) => s.category === "stock");
 
 function generatePriceComparisonQuestion(): Question {
   const meta = CATEGORY_META.price;
-  // Pick same-category pair (crypto vs crypto or stock vs stock)
-  const pool = Math.random() < 0.6 ? CRYPTO_SYMBOLS : STOCK_SYMBOLS;
+  const pool = STOCK_SYMBOLS;
   const idxA = Math.floor(Math.random() * pool.length);
   let idxB = Math.floor(Math.random() * (pool.length - 1));
   if (idxB >= idxA) idxB++;

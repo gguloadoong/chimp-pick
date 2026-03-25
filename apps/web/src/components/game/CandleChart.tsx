@@ -103,6 +103,11 @@ export default function CandleChart({
   }, [symbol, timeframe, height]);
 
   useEffect(() => {
+    const INTERVAL_SEC: Record<string, number> = {
+      "1m": 60, "5m": 300, "15m": 900, "1h": 3600, "4h": 14400, "1d": 86400,
+    };
+    const MAX_CANDLES = 100;
+
     const unsubscribe = onPriceUpdate(() => {
       const series = seriesRef.current;
       const candles = candlesRef.current;
@@ -111,19 +116,10 @@ export default function CandleChart({
       const price = getPrice(symbol);
       const last = candles[candles.length - 1];
       const nowSec = Math.floor(Date.now() / 1000);
+      const intervalSec = INTERVAL_SEC[timeframe] ?? 60;
 
-      const msPerCandle: Record<string, number> = {
-        "1m": 60,
-        "5m": 300,
-        "15m": 900,
-        "1h": 3600,
-        "4h": 14400,
-        "1d": 86400,
-      };
-      const intervalSec = msPerCandle[timeframe] ?? 60;
-      const candleTime = (Math.floor(nowSec / intervalSec) * intervalSec) as Time;
-
-      if (candleTime === last.time) {
+      if (nowSec - (last.time as number) < intervalSec) {
+        // 같은 봉 — 업데이트
         const updated: CandlestickData = {
           time: last.time,
           open: last.open,
@@ -133,7 +129,9 @@ export default function CandleChart({
         };
         candlesRef.current[candles.length - 1] = updated;
         series.update(updated);
-      } else if ((candleTime as number) > (last.time as number)) {
+      } else {
+        // 새 봉
+        const candleTime = (Math.floor(nowSec / intervalSec) * intervalSec) as Time;
         const newCandle: CandlestickData = {
           time: candleTime,
           open: price.price,
@@ -141,8 +139,14 @@ export default function CandleChart({
           low: price.price,
           close: price.price,
         };
-        candlesRef.current.push(newCandle);
-        series.update(newCandle);
+        const next = [...candles, newCandle].slice(-MAX_CANDLES);
+        candlesRef.current = next;
+        if (next.length < candles.length + 1) {
+          // 트리밍 발생 — 전체 다시 세팅
+          series.setData(next);
+        } else {
+          series.update(newCandle);
+        }
       }
     });
     return unsubscribe;

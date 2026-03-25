@@ -434,7 +434,7 @@ export default function GamePage() {
             {currentRound?.questionCategory === "price" && currentRound.symbol ? (
               <CandleChart
                 symbol={currentRound.symbol}
-                timeframe={roundDuration === 60 ? "1m" : roundDuration === 300 ? "5m" : roundDuration === 3600 ? "1h" : "1d"}
+                timeframe="5m"
                 height={160}
                 className="mb-3"
               />

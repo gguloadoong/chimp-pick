@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useCallback, useState, useMemo } from "react";
-import { ArrowUp, ArrowDown, Trophy, Clock, Users, Flame, Star, Settings, Volume2, VolumeX, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowUp, ArrowDown, Trophy } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
 import { useAuthStore } from "@/stores/authStore";
-import { useSettingsStore, ROUND_DURATION_LABELS, ACCENT_COLORS, type RoundDuration, type ThemeMode, type AccentColor } from "@/stores/settingsStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { getPrice, onPriceUpdate, computeStats, setRoundDuration, getCurrentSeason, getSeasonTimeRemaining } from "@/lib/game-engine";
 import { playPickSound, playDrumroll, playWinSound, playLoseSound } from "@/lib/sound";
 import { useToastStore } from "@/stores/toastStore";
@@ -14,10 +14,8 @@ import { useRealtimePrices } from "@/hooks/useRealtimePrices";
 import { usePrediction } from "@/hooks/usePrediction";
 import { AVATAR_LEVELS } from "@/types";
 import type { RoundResult } from "@/types";
-import dynamic from "next/dynamic";
+import type { QuestionCategory } from "@/types";
 import MiniChart from "@/components/game/MiniChart";
-
-const CandleChart = dynamic(() => import("@/components/game/CandleChart"), { ssr: false });
 import BetSlider from "@/components/game/BetSlider";
 import CrowdGauge from "@/components/game/CrowdGauge";
 import ResultOverlay from "@/components/game/ResultOverlay";
@@ -27,16 +25,72 @@ import ChimpCharacter from "@/components/character/ChimpCharacter";
 
 const MAX_CHART_TICKS = 20;
 
-type ChimpMood = "idle" | "thinking" | "up" | "down" | "win" | "lose";
+// ── 카테고리 테마 (색상 + 이모지) ──────────────────────────────────
+const CATEGORY_THEME: Record<QuestionCategory, { color: string; bg: string }> = {
+  price:  { color: "#FFD700", bg: "rgba(255,215,0,0.08)" },
+  fun:    { color: "#FF6B9D", bg: "rgba(255,107,157,0.08)" },
+  trivia: { color: "#4ECDC4", bg: "rgba(78,205,196,0.08)" },
+  sports: { color: "#45B7D1", bg: "rgba(69,183,209,0.08)" },
+  trend:  { color: "#96CEB4", bg: "rgba(150,206,180,0.08)" },
+};
 
-function getChimpMood(
-  pick: { direction: string } | null,
-  phase: string | undefined,
-): ChimpMood {
-  if (phase === "RESOLVED") return "thinking";
-  if (pick?.direction === "UP") return "up";
-  if (pick?.direction === "DOWN") return "down";
-  return "idle";
+// ── 원형 카운트다운 타이머 (SVG) ──────────────────────────────────
+function CircularTimer({
+  pct,
+  timeLeft,
+  catColor,
+}: {
+  pct: number;
+  timeLeft: number;
+  catColor: string;
+}) {
+  const r = 40;
+  const circ = 2 * Math.PI * r; // 251.33
+  const offset = circ * (1 - Math.max(0, Math.min(100, pct)) / 100);
+  const urgent = timeLeft < 10_000;
+  const danger = timeLeft < 5_000;
+  const strokeColor = danger
+    ? "var(--negative)"
+    : urgent
+    ? "var(--warning)"
+    : catColor;
+
+  return (
+    <div className="relative w-24 h-24 mx-auto">
+      <svg className="w-full h-full -rotate-90" viewBox="0 0 96 96">
+        <circle
+          cx="48" cy="48" r={r}
+          fill="none"
+          stroke="var(--bg-tertiary)"
+          strokeWidth="6"
+        />
+        <circle
+          cx="48" cy="48" r={r}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray={circ}
+          strokeDashoffset={offset}
+          style={{ transition: "stroke-dashoffset 0.1s linear, stroke 0.3s ease" }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span
+          className={[
+            "pixel-font text-xl tabular-nums",
+            danger
+              ? "text-[var(--negative)] animate-urgent"
+              : urgent
+              ? "text-[var(--warning)] animate-urgent"
+              : "text-[var(--fg-primary)]",
+          ].join(" ")}
+        >
+          {Math.ceil(timeLeft / 1000)}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export default function GamePage() {
@@ -52,24 +106,10 @@ export default function GamePage() {
     claimMissionReward,
     challenge,
     startChallenge,
-    getTodayRounds,
   } = useGameStore();
 
-  const {
-    roundDuration,
-    soundEnabled,
-    hasSeenOnboarding,
-    setRoundDuration: setDuration,
-    toggleSound,
-    markOnboardingSeen,
-    theme,
-    setTheme,
-    accentColor,
-    setAccentColor,
-  } = useSettingsStore();
+  const { roundDuration, soundEnabled, hasSeenOnboarding, markOnboardingSeen, theme, setTheme, accentColor, setAccentColor } = useSettingsStore();
 
-  const [showSettings, setShowSettings] = useState(false);
-  const [showExtras, setShowExtras] = useState(false);
   const addToast = useToastStore((s) => s.addToast);
 
   useEffect(() => { ensureDailyMissions(); }, [ensureDailyMissions]);
@@ -84,11 +124,12 @@ export default function GamePage() {
   }, [stats.wins]);
 
   const [priceTicks, setPriceTicks] = useState<number[]>([]);
+  const [priceBTicks, setPriceBTicks] = useState<number[]>([]);
   const [resolvedResult, setResolvedResult] = useState<RoundResult | null>(null);
   const [shareResult, setShareResult] = useState<RoundResult | null>(null);
   const [currentPriceBData, setCurrentPriceBData] = useState<ReturnType<typeof getPrice> | null>(null);
+  const [showExtras, setShowExtras] = useState(false);
 
-  // 실시간 업비트 시세 — price:tick 이벤트를 게임 엔진 priceState에 주입
   useRealtimePrices();
 
   const checkAttendance = useGameStore((s) => s.checkAttendance);
@@ -121,8 +162,17 @@ export default function GamePage() {
   }, [roundId, roundSymbol]);
 
   useEffect(() => {
-    if (!roundSymbolB || !isComparison) { setCurrentPriceBData(null); return; }
-    const update = () => setCurrentPriceBData(getPrice(roundSymbolB));
+    if (!roundSymbolB || !isComparison) return;
+    let first = true;
+    const update = () => {
+      const price = getPrice(roundSymbolB);
+      setCurrentPriceBData(price);
+      setPriceBTicks((prev) => {
+        if (first) { first = false; return [price.price]; }
+        const next = [...prev, price.price];
+        return next.length > MAX_CHART_TICKS ? next.slice(-MAX_CHART_TICKS) : next;
+      });
+    };
     update();
     const unsub = onPriceUpdate(update);
     return unsub;
@@ -159,25 +209,23 @@ export default function GamePage() {
     onError: (msg) => addToast(msg, "❌", "warning"),
   });
 
-  // 예측 결과 확정 시 바나나코인 잔액 갱신 — 스토어 내부에서 현재 잔액 읽어 stale dep 없음
   useEffect(() => {
     if (!activePrediction || activePrediction.result === "PENDING") return;
     applyPredictionResult(activePrediction.result, activePrediction.reward, activePrediction.betAmount);
   }, [activePrediction?.id, activePrediction?.result, applyPredictionResult]);
 
   const handlePick = useCallback((direction: "UP" | "DOWN") => {
-    if (isSubmitting) return; // 중복 제출 방지
+    if (isSubmitting) return;
     pickDirection(direction);
     if (soundEnabled) playPickSound();
     if (currentRound?.symbol) {
       void submitPrediction(currentRound.symbol, direction, roundDuration, betAmount);
     }
-  }, [isSubmitting, pickDirection, soundEnabled, currentRound?.symbol, roundDuration, betAmount, submitPrediction]);
+  }, [isSubmitting, pickDirection, soundEnabled, currentRound, roundDuration, betAmount, submitPrediction]);
 
   const handleResultDismiss = useCallback(() => setResolvedResult(null), []);
 
   const canPick = currentRound?.phase === "OPEN" && !myPick;
-  const chimpMood = getChimpMood(myPick, currentRound?.phase);
   const currentPrice = currentRound ? getPrice(currentRound.symbol) : null;
 
   const upPct = currentRound?.upRatio ?? 50;
@@ -187,32 +235,45 @@ export default function GamePage() {
 
   const recentResults = roundHistory.slice(0, 5);
 
+  // 카테고리 테마 주입
+  const catTheme = currentRound
+    ? (CATEGORY_THEME[currentRound.questionCategory] ?? CATEGORY_THEME.trivia)
+    : CATEGORY_THEME.trivia;
+
+  // 소수파 보너스 계산 (선택 후만 의미 있음)
+  const minorityBonus = myPick
+    ? (() => {
+        const myRatio = myPick.direction === "UP" ? upPct : downPct;
+        const minorityRatio = Math.min(upPct, downPct);
+        const isMinority = myRatio === minorityRatio;
+        const bonus = minorityRatio > 0
+          ? Math.min(2.0, 1.0 + (1.0 - (minorityRatio * 2) / 100))
+          : 1.0;
+        return { isMinority, bonus };
+      })()
+    : null;
+
   return (
     <>
-      <div className="max-w-lg mx-auto px-4 pt-4 pb-36 flex flex-col gap-4">
-
-        {/* ── COMPACT HEADER ── */}
+      <div
+        className="max-w-lg mx-auto px-4 pt-4 pb-40 flex flex-col gap-4 dot-grid"
+        style={{ "--cat-color": catTheme.color, "--cat-bg": catTheme.bg } as React.CSSProperties}
+        data-testid="game-root"
+      >
+        {/* ── 최소화 헤더 ── */}
         <div className="flex items-center justify-between" data-testid="game-header">
-          <div className="flex items-center gap-2">
-            <ChimpCharacter
-              mood={chimpMood}
-              size={36}
-              level={avatarLevel.level}
-              className={myPick ? "animate-bounce-chimp" : ""}
-            />
-            <div>
-              <span className="text-base font-heading font-bold text-[var(--fg-primary)]">
-                침팬지픽
-              </span>
-              <span className="text-xs text-[var(--brand-primary)] font-sans font-semibold ml-1.5">
-                {avatarLevel.emoji} Lv.{avatarLevel.level}
-              </span>
-            </div>
+          {/* 카테고리 뱃지 */}
+          <div
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-sans transition-all duration-500 pixel-badge pixel-font"
+            style={{ color: catTheme.color, background: catTheme.bg }}
+          >
+            <span>{currentRound?.questionEmoji ?? "🦍"}</span>
+            <span>{currentRound?.questionLabel ?? "침팬지픽"}</span>
+            {currentRound?.isSpeedRound && <span className="text-xs">⚡</span>}
           </div>
+
+          {/* 잔고 + 점수 */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-[var(--fg-secondary)] font-sans bg-[var(--bg-tertiary)] px-2 py-1 rounded-[var(--radius-sm)]">
-              오늘 {getTodayRounds()}R
-            </span>
             {user != null && (
               <div className="flex items-center gap-1 bg-[var(--brand-secondary)] px-2.5 py-1.5 rounded-[var(--radius-sm)]">
                 <span className="text-xs">🍌</span>
@@ -221,316 +282,207 @@ export default function GamePage() {
                 </span>
               </div>
             )}
-            <div className="flex items-center gap-1.5 bg-[var(--brand-secondary)] px-3 py-1.5 rounded-[var(--radius-sm)]">
-              <Trophy size={13} className="text-[var(--brand-primary)]" />
+            <div className="flex items-center gap-1 bg-[var(--brand-secondary)] px-2.5 py-1.5 rounded-[var(--radius-sm)]">
+              <Trophy size={12} className="text-[var(--brand-primary)]" />
               <span className="font-mono font-bold text-[var(--brand-primary)] tabular-nums text-sm">
                 {totalScore.toLocaleString()}
               </span>
-              <span className="text-xs text-[var(--brand-primary)]/70">점</span>
             </div>
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="p-2 rounded-[var(--radius-sm)] bg-[var(--bg-secondary)] border border-[var(--border-primary)] text-[var(--fg-secondary)] hover:text-[var(--brand-primary)] transition-colors btn-press"
-              aria-label="설정"
-            >
-              <Settings size={15} />
-            </button>
           </div>
         </div>
 
-        {/* ── SETTINGS PANEL ── */}
-        {showSettings && (
-          <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-md)] p-4 border border-[var(--border-primary)] shadow-[var(--shadow-1)]">
-            <p className="text-sm font-semibold text-[var(--fg-primary)] font-sans mb-3">설정</p>
-            <div className="space-y-3">
-              <div>
-                <p className="text-xs text-[var(--fg-secondary)] font-sans mb-1.5">라운드 시간</p>
-                <div className="flex gap-2">
-                  {([60, 300, 3600] as RoundDuration[]).map((d) => (
-                    <button
-                      key={d}
-                      onClick={() => setDuration(d)}
-                      className={[
-                        "flex-1 py-2 rounded-[var(--radius-sm)] text-xs font-bold font-sans border transition-all btn-press",
-                        roundDuration === d
-                          ? "border-[var(--brand-primary)] text-[var(--brand-primary)] bg-[var(--brand-secondary)]"
-                          : "border-[var(--border-primary)] text-[var(--fg-secondary)] bg-[var(--bg-tertiary)] hover:border-[var(--brand-primary)]/40",
-                      ].join(" ")}
-                    >
-                      {ROUND_DURATION_LABELS[d]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-[var(--fg-secondary)] font-sans mb-1.5">테마</p>
-                <div className="flex gap-2">
-                  {(["light", "dark", "system"] as ThemeMode[]).map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setTheme(t)}
-                      className={[
-                        "flex-1 py-2 rounded-[var(--radius-sm)] text-xs font-bold font-sans border transition-all btn-press",
-                        theme === t
-                          ? "border-[var(--brand-primary)] text-[var(--brand-primary)] bg-[var(--brand-secondary)]"
-                          : "border-[var(--border-primary)] text-[var(--fg-secondary)] bg-[var(--bg-tertiary)] hover:border-[var(--brand-primary)]/40",
-                      ].join(" ")}
-                    >
-                      {t === "light" ? "☀️ 라이트" : t === "dark" ? "🌙 다크" : "🖥️ 시스템"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs text-[var(--fg-secondary)] font-sans mb-1.5">액센트 컬러</p>
-                <div className="flex gap-2">
-                  {(Object.entries(ACCENT_COLORS) as [AccentColor, typeof ACCENT_COLORS[AccentColor]][]).map(([key, val]) => (
-                    <button
-                      key={key}
-                      onClick={() => setAccentColor(key)}
-                      className={[
-                        "flex-1 py-2 rounded-[var(--radius-sm)] text-xs font-bold font-sans border transition-all btn-press",
-                        accentColor === key
-                          ? "border-[var(--brand-primary)] text-[var(--brand-primary)] bg-[var(--brand-secondary)]"
-                          : "border-[var(--border-primary)] text-[var(--fg-secondary)] bg-[var(--bg-tertiary)] hover:border-[var(--brand-primary)]/40",
-                      ].join(" ")}
-                    >
-                      {val.emoji}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-[var(--fg-secondary)] font-sans">사운드</span>
-                <button
-                  onClick={toggleSound}
-                  className={[
-                    "flex items-center gap-1 px-3 py-1.5 rounded-[var(--radius-sm)] text-xs font-bold border transition-all btn-press",
-                    soundEnabled
-                      ? "border-[var(--positive)]/30 text-[var(--positive)] bg-[var(--positive-bg)]"
-                      : "border-[var(--border-primary)] text-[var(--fg-secondary)] bg-[var(--bg-tertiary)]",
-                  ].join(" ")}
-                >
-                  {soundEnabled ? <Volume2 size={12} /> : <VolumeX size={12} />}
-                  {soundEnabled ? "ON" : "OFF"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── ZONE 1: HERO ── */}
+        {/* ── 메인 게임 카드 ── */}
         {currentRound ? (
           <div
-            className="bg-[var(--bg-secondary)] rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-2)]"
+            className="bg-[var(--bg-secondary)] pixel-card overflow-hidden scanlines"
             data-testid="round-card"
           >
-            {/* Phase indicator + timer */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span className={[
-                  "w-2 h-2 rounded-full",
-                  currentRound.phase === "OPEN" ? "bg-[var(--positive)] animate-pulse" :
-                  currentRound.phase === "CLOSED" ? "bg-[var(--warning)] animate-pulse" :
-                  currentRound.phase === "RESOLVED" ? "bg-[var(--negative)]" : "bg-[var(--fg-tertiary)]",
-                ].join(" ")} />
-                <span className="text-xs font-semibold font-sans text-[var(--fg-secondary)]">
-                  {currentRound.phase === "OPEN" && (currentRound.isSpeedRound ? "⚡ 스피드 라운드!" : "예측 진행 중")}
-                  {currentRound.phase === "CLOSED" && "결과 계산 중"}
-                  {currentRound.phase === "RESOLVED" && "결과 발표!"}
-                  {currentRound.phase === "WAITING" && "다음 라운드 준비 중"}
-                </span>
-              </div>
-              {currentRound.phase === "OPEN" && (
-                <div className="flex items-center gap-1">
-                  <Clock size={12} className="text-[var(--fg-tertiary)]" />
-                  <span className={[
-                    "font-mono tabular-nums text-sm font-bold",
-                    countdown.timeLeft < 10_000 ? "text-[var(--negative)] animate-urgent" : "text-[var(--fg-primary)]",
-                  ].join(" ")}>
-                    {countdown.formatted}
-                  </span>
-                </div>
-              )}
-            </div>
+            {/* 카테고리 컬러 상단 줄 */}
+            <div className="h-1 w-full transition-all duration-500" style={{ background: catTheme.color }} />
 
-            {/* Category badge + question */}
-            <div className="mb-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="inline-flex items-center h-5 px-2 rounded-full bg-[var(--brand-secondary)] text-[var(--brand-primary)] text-[12px] font-semibold font-sans">
-                  {currentRound.questionEmoji} {currentRound.questionLabel}
-                </span>
-                {currentRound.questionCategory === "price" && (
-                  <span className="inline-flex items-center h-5 px-2 rounded-full bg-[var(--bg-tertiary)] text-[var(--fg-secondary)] text-[12px] font-semibold font-sans">
-                    모의 시세
-                  </span>
-                )}
-              </div>
-              <p className="text-lg font-heading font-bold text-[var(--fg-primary)] leading-snug">
-                {currentRound.questionTitle}
+            <div className="p-5">
+              {/* ROUND N */}
+              <p
+                className="pixel-font text-[9px] tracking-[0.2em] mb-3 transition-colors duration-500"
+                style={{ color: catTheme.color }}
+              >
+                ROUND {currentRound.id?.slice(-3) ?? "—"}
               </p>
-            </div>
 
-            {/* Price display (price category) */}
-            {currentRound.questionCategory === "price" && currentPrice && (
-              <div className="mb-3">
-                {currentRound.isComparison ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Symbol A */}
-                    <div className="bg-[var(--bg-tertiary)] rounded-[var(--radius-md)] p-3">
-                      <p className="text-[12px] text-[var(--fg-secondary)] font-sans mb-1">{currentRound.symbolName}</p>
-                      <p className="text-[20px] font-mono font-bold tabular-nums text-[var(--fg-primary)] leading-none">
-                        {formatPrice(currentPrice.price)}
-                        <span className="text-[11px] font-sans text-[var(--fg-tertiary)] ml-0.5">원</span>
-                      </p>
-                      {(() => {
-                        const diff = currentPrice.price - currentRound.entryPrice;
-                        const pct = currentRound.entryPrice > 0 ? (diff / currentRound.entryPrice) * 100 : 0;
-                        return (
-                          <p className={["text-[12px] font-mono font-bold tabular-nums mt-0.5", pct >= 0 ? "text-[var(--positive)]" : "text-[var(--negative)]"].join(" ")}>
-                            {pct >= 0 ? "+" : ""}{formatChange(pct)}
-                          </p>
-                        );
-                      })()}
-                    </div>
-                    {/* Symbol B */}
-                    <div className="bg-[var(--bg-tertiary)] rounded-[var(--radius-md)] p-3">
-                      <p className="text-[12px] text-[var(--fg-secondary)] font-sans mb-1">{currentRound.symbolNameB}</p>
-                      <p className="text-[20px] font-mono font-bold tabular-nums text-[var(--fg-primary)] leading-none">
-                        {currentPriceBData ? formatPrice(currentPriceBData.price) : "—"}
-                        <span className="text-[11px] font-sans text-[var(--fg-tertiary)] ml-0.5">원</span>
-                      </p>
-                      {currentPriceBData && currentRound.entryPriceB && (() => {
-                        const diff = currentPriceBData.price - currentRound.entryPriceB;
-                        const pct = currentRound.entryPriceB > 0 ? (diff / currentRound.entryPriceB) * 100 : 0;
-                        return (
-                          <p className={["text-[12px] font-mono font-bold tabular-nums mt-0.5", pct >= 0 ? "text-[var(--positive)]" : "text-[var(--negative)]"].join(" ")}>
-                            {pct >= 0 ? "+" : ""}{formatChange(pct)}
-                          </p>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <p className="text-[12px] text-[var(--fg-secondary)] font-sans">시작가</p>
-                      <p className="text-sm font-mono tabular-nums text-[var(--fg-secondary)]">
-                        {formatPrice(currentRound.entryPrice)}원
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[12px] text-[var(--fg-secondary)] font-sans">현재가</p>
-                      <p className="text-[28px] font-bold font-mono tabular-nums text-[var(--fg-primary)] leading-none">
-                        {formatPrice(currentPrice.price)}
-                        <span className="text-[13px] text-[var(--fg-tertiary)] ml-0.5">원</span>
-                      </p>
-                      {(() => {
-                        const diff = currentPrice.price - currentRound.entryPrice;
-                        const pct = currentRound.entryPrice > 0 ? (diff / currentRound.entryPrice) * 100 : 0;
-                        return (
-                          <p className={["text-sm font-mono font-bold tabular-nums", pct >= 0 ? "text-[var(--positive)]" : "text-[var(--negative)]"].join(" ")}>
-                            {pct >= 0 ? "+" : ""}{formatChange(pct)}
-                          </p>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Question desc (non-price) */}
-            {currentRound.questionCategory !== "price" && (
-              <p className="text-sm text-[var(--fg-secondary)] font-sans mb-3">
-                {currentRound.questionDesc}
-              </p>
-            )}
-
-            {/* Chart — price 카테고리는 캔들차트, 나머지는 라인차트 */}
-            {currentRound?.questionCategory === "price" && currentRound.symbol ? (
-              <CandleChart
-                symbol={currentRound.symbol}
-                timeframe="5m"
-                height={160}
-                className="mb-3"
-              />
-            ) : (
-              <MiniChart prices={priceTicks} height={56} className="mb-3" />
-            )}
-
-            {/* Progress bar (time) */}
-            {currentRound.phase === "OPEN" && (
-              <div className="w-full bg-[var(--bg-tertiary)] rounded-full h-1.5 overflow-hidden mb-4">
-                <div
-                  className={[
-                    "h-full rounded-full transition-all duration-100",
-                    countdown.timeLeft < 10_000 ? "bg-[var(--warning)] animate-urgent" : "bg-[var(--brand-primary)]",
-                  ].join(" ")}
-                  style={{ width: `${Math.max(0, Math.min(100, countdown.percentage))}%` }}
-                />
-              </div>
-            )}
-
-            {/* CLOSED: drumroll UX */}
-            {currentRound.phase === "CLOSED" && (
-              <div className="text-center py-4 mb-4">
-                <div className="animate-heartbeat inline-block mb-2">
-                  <span className="text-4xl">🥁</span>
-                </div>
-                <p className="text-sm font-heading font-bold text-[var(--fg-primary)] animate-urgent">
-                  두근두근... 결과 발표 중!
+              {/* 질문 카드 (주인공) */}
+              <div
+                className="p-4 mb-4 border-l-4 transition-all duration-500"
+                style={{ borderColor: catTheme.color, background: catTheme.bg }}
+              >
+                <p className="text-xl font-heading font-bold text-[var(--fg-primary)] leading-snug mb-2">
+                  {currentRound.questionTitle}
                 </p>
-                <div className="w-full bg-[var(--bg-tertiary)] rounded-full h-1.5 overflow-hidden mt-3">
-                  <div className="h-full rounded-full bg-[var(--warning)] animate-urgent w-full" />
-                </div>
-              </div>
-            )}
-
-            {/* RESOLVED: result summary */}
-            {currentRound.phase === "RESOLVED" && currentRound.result && (
-              <div className={[
-                "mb-4 p-3 rounded-[var(--radius-md)] text-center border",
-                currentRound.result === "UP"
-                  ? "bg-[var(--positive-bg)] border-[var(--positive)]/30"
-                  : "bg-[var(--negative-bg)] border-[var(--negative)]/30",
-              ].join(" ")}>
-                <p className="text-base font-bold font-heading text-[var(--fg-primary)]">
-                  결과: {currentRound.result === "UP" ? "📈 UP" : "📉 DOWN"}
-                </p>
-                {currentRound.questionCategory === "price" && (
-                  <p className="text-xs text-[var(--fg-secondary)] font-mono mt-1">
-                    {formatPrice(currentRound.entryPrice)} → {formatPrice(currentRound.exitPrice ?? 0)}원
+                {currentRound.questionCategory !== "price" && currentRound.questionDesc && (
+                  <p className="text-sm text-[var(--fg-secondary)] font-sans">
+                    {currentRound.questionDesc}
                   </p>
                 )}
+
+                {/* 시세 카테고리: VS 배틀 레이아웃 */}
+                {currentRound.questionCategory === "price" && currentPrice && (
+                  <div className="mt-3">
+                    {currentRound.isComparison ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-[var(--bg-primary)] rounded-[var(--radius-sm)] p-2.5 text-center">
+                          <p className="text-[11px] text-[var(--fg-secondary)] font-sans mb-1">{currentRound.symbolName}</p>
+                          <p className="text-lg font-mono font-bold tabular-nums text-[var(--fg-primary)] leading-none">
+                            {formatPrice(currentPrice.price)}
+                            <span className="text-[10px] text-[var(--fg-tertiary)] ml-0.5">원</span>
+                          </p>
+                          {(() => {
+                            const pct = currentRound.entryPrice > 0
+                              ? ((currentPrice.price - currentRound.entryPrice) / currentRound.entryPrice) * 100 : 0;
+                            return (
+                              <p className={["text-[11px] font-mono font-bold tabular-nums mt-0.5", pct >= 0 ? "text-[var(--positive)]" : "text-[var(--negative)]"].join(" ")}>
+                                {pct >= 0 ? "+" : ""}{formatChange(pct)}
+                              </p>
+                            );
+                          })()}
+                          <MiniChart prices={priceTicks} height={32} className="mt-1 opacity-70" />
+                        </div>
+                        <div className="bg-[var(--bg-primary)] rounded-[var(--radius-sm)] p-2.5 text-center">
+                          <p className="text-[11px] text-[var(--fg-secondary)] font-sans mb-1">{currentRound.symbolNameB}</p>
+                          <p className="text-lg font-mono font-bold tabular-nums text-[var(--fg-primary)] leading-none">
+                            {currentPriceBData ? formatPrice(currentPriceBData.price) : "—"}
+                            <span className="text-[10px] text-[var(--fg-tertiary)] ml-0.5">원</span>
+                          </p>
+                          {currentPriceBData && currentRound.entryPriceB && (() => {
+                            const pct = currentRound.entryPriceB > 0
+                              ? ((currentPriceBData.price - currentRound.entryPriceB) / currentRound.entryPriceB) * 100 : 0;
+                            return (
+                              <p className={["text-[11px] font-mono font-bold tabular-nums mt-0.5", pct >= 0 ? "text-[var(--positive)]" : "text-[var(--negative)]"].join(" ")}>
+                                {pct >= 0 ? "+" : ""}{formatChange(pct)}
+                              </p>
+                            );
+                          })()}
+                          <MiniChart prices={priceBTicks} height={32} className="mt-1 opacity-70" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-end justify-between">
+                        <div>
+                          <p className="text-[11px] text-[var(--fg-secondary)] font-sans">시작가</p>
+                          <p className="text-sm font-mono tabular-nums text-[var(--fg-secondary)]">
+                            {formatPrice(currentRound.entryPrice)}원
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[11px] text-[var(--fg-secondary)] font-sans">현재가</p>
+                          <p className="text-2xl font-bold font-mono tabular-nums text-[var(--fg-primary)] leading-none">
+                            {formatPrice(currentPrice.price)}
+                            <span className="text-[11px] text-[var(--fg-tertiary)] ml-0.5">원</span>
+                          </p>
+                          {(() => {
+                            const diff = currentPrice.price - currentRound.entryPrice;
+                            const pct = currentRound.entryPrice > 0 ? (diff / currentRound.entryPrice) * 100 : 0;
+                            return (
+                              <p className={["text-sm font-mono font-bold tabular-nums", pct >= 0 ? "text-[var(--positive)]" : "text-[var(--negative)]"].join(" ")}>
+                                {pct >= 0 ? "+" : ""}{formatChange(pct)}
+                              </p>
+                            );
+                          })()}
+                          <MiniChart prices={priceTicks} height={36} className="mt-1" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
 
-            {/* Crowd gauge inline */}
-            {(currentRound.phase === "OPEN" || currentRound.phase === "CLOSED") && (
-              <CrowdGauge upPct={upPct} picked={myPick?.direction ?? null} />
-            )}
+              {/* 원형 카운트다운 타이머 (OPEN) */}
+              {currentRound.phase === "OPEN" && (
+                <div className="flex flex-col items-center gap-2 mb-4">
+                  <CircularTimer
+                    pct={countdown.percentage}
+                    timeLeft={countdown.timeLeft}
+                    catColor={catTheme.color}
+                  />
+                  {countdown.timeLeft < 10_000 && (
+                    <p className="text-xs font-sans font-semibold text-[var(--warning)] animate-urgent">
+                      {countdown.timeLeft < 5_000 ? "마지막 찬스!" : "서둘러!"}
+                    </p>
+                  )}
+                </div>
+              )}
 
-            {/* 베팅 금액 슬라이더 */}
-            {canPick && (
-              <div
-                className="mt-4 bg-[var(--bg-secondary)] rounded-[var(--radius-md)] p-3 border border-[var(--border-primary)]"
-                data-testid="bet-panel"
-              >
-                <BetSlider
-                  value={betAmount}
-                  min={10}
-                  max={1000}
-                  step={10}
-                  onChange={setBetAmount}
-                  disabled={isSubmitting}
-                />
-              </div>
-            )}
+              {/* CLOSED: 드럼롤 */}
+              {currentRound.phase === "CLOSED" && (
+                <div className="text-center py-4 mb-4">
+                  <div className="animate-heartbeat inline-block mb-2">
+                    <span className="text-4xl">🥁</span>
+                  </div>
+                  <p className="text-sm font-heading font-bold text-[var(--fg-primary)] animate-urgent">
+                    두근두근... 결과 발표 중!
+                  </p>
+                </div>
+              )}
 
+              {/* RESOLVED: 결과 요약 */}
+              {currentRound.phase === "RESOLVED" && currentRound.result && (
+                <div className={[
+                  "mb-4 p-3 rounded-[var(--radius-md)] text-center border",
+                  currentRound.result === "UP"
+                    ? "bg-[var(--positive-bg)] border-[var(--positive)]/30"
+                    : "bg-[var(--negative-bg)] border-[var(--negative)]/30",
+                ].join(" ")}>
+                  <p className="text-base font-bold font-heading text-[var(--fg-primary)]">
+                    정답: {currentRound.result === "UP" ? "📈 UP" : "📉 DOWN"}
+                  </p>
+                  {currentRound.questionCategory === "price" && (
+                    <p className="text-xs text-[var(--fg-secondary)] font-mono mt-1">
+                      {formatPrice(currentRound.entryPrice)} → {formatPrice(currentRound.exitPrice ?? 0)}원
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* 소수파 비율: 선택 후에만 공개 */}
+              {myPick && (currentRound.phase === "OPEN" || currentRound.phase === "CLOSED") && (
+                <div className="mb-4">
+                  <CrowdGauge upPct={upPct} picked={myPick.direction} />
+                  {minorityBonus && minorityBonus.bonus > 1.05 && (
+                    <div className="mt-2 text-center">
+                      <span className={[
+                        "inline-flex items-center gap-1 px-3 py-1 text-xs font-bold font-sans pixel-badge",
+                        minorityBonus.isMinority
+                          ? "bg-[var(--brand-secondary)] text-[var(--brand-primary)]"
+                          : "bg-[var(--bg-tertiary)] text-[var(--fg-secondary)]",
+                      ].join(" ")}>
+                        {minorityBonus.isMinority
+                          ? `⚡ 소수파! 역배 x${minorityBonus.bonus.toFixed(1)} 적용 중`
+                          : `다수파 — 소수파 역배 x${minorityBonus.bonus.toFixed(1)}`}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 베팅 슬라이더 (선택 전만) */}
+              {canPick && (
+                <div
+                  className="bg-[var(--bg-tertiary)] p-3 pixel-card"
+                  data-testid="bet-panel"
+                >
+                  <BetSlider
+                    value={betAmount}
+                    min={10}
+                    max={1000}
+                    step={10}
+                    onChange={setBetAmount}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              )}
+
+            </div>
           </div>
         ) : (
-          <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-lg)] p-8 shadow-[var(--shadow-1)] text-center">
+          <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-lg)] p-8 text-center">
             <div className="animate-bounce-chimp inline-block mb-3">
               <ChimpCharacter mood="idle" size={64} className="mx-auto" />
             </div>
@@ -538,76 +490,11 @@ export default function GamePage() {
           </div>
         )}
 
-        {/* Comparison race card */}
-        {currentRound?.isComparison && myPick && currentPriceBData && currentPrice &&
-          (currentRound.phase === "OPEN" || currentRound.phase === "CLOSED") && (() => {
-            const changeA = currentRound.entryPrice > 0
-              ? ((currentPrice.price - currentRound.entryPrice) / currentRound.entryPrice) * 100 : 0;
-            const changeB = currentRound.entryPriceB && currentRound.entryPriceB > 0
-              ? ((currentPriceBData.price - currentRound.entryPriceB) / currentRound.entryPriceB) * 100 : 0;
-            const maxAbs = Math.max(Math.abs(changeA), Math.abs(changeB), 0.01);
-            const barA = 50 + (changeA - changeB) / (2 * maxAbs) * 45;
-            const barB = 100 - barA;
-            const EPSILON = 0.005;
-            const isTie = Math.abs(changeA - changeB) < EPSILON;
-            const aWinning = !isTie && changeA > changeB;
-            const myPickWinning = !isTie && ((myPick.direction === "UP" && aWinning) || (myPick.direction === "DOWN" && !aWinning));
-            return (
-              <div className={[
-                "bg-[var(--bg-secondary)] rounded-[var(--radius-md)] p-4 border shadow-[var(--shadow-1)]",
-                isTie ? "border-[var(--border-primary)]" : myPickWinning ? "border-[var(--positive)]/40" : "border-[var(--negative)]/40",
-              ].join(" ")}>
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-[var(--fg-secondary)] font-sans">⚡ 실시간 현황</span>
-                  <span className={[
-                    "inline-flex items-center h-5 px-2 rounded-full text-[12px] font-bold font-sans",
-                    isTie ? "bg-[var(--bg-tertiary)] text-[var(--fg-secondary)]"
-                          : myPickWinning ? "bg-[var(--positive-bg)] text-[var(--positive)]"
-                          : "bg-[var(--negative-bg)] text-[var(--negative)]",
-                  ].join(" ")}>
-                    {isTie ? "🤝 동률" : myPickWinning ? "🎯 맞는 중!" : "😬 틀린 중..."}
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono w-16 truncate text-[var(--fg-primary)] font-semibold">
-                      {aWinning && "🏆 "}{currentRound.symbolName}
-                    </span>
-                    <div className="flex-1 bg-[var(--bg-tertiary)] rounded-full h-2.5 overflow-hidden">
-                      <div className="h-full rounded-full bg-[var(--positive)] transition-all duration-500" style={{ width: `${Math.max(4, barA)}%` }} />
-                    </div>
-                    <span className={["text-xs font-mono tabular-nums w-14 text-right font-bold", changeA >= 0 ? "text-[var(--positive)]" : "text-[var(--negative)]"].join(" ")}>
-                      {changeA >= 0 ? "+" : ""}{changeA.toFixed(2)}%
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono w-16 truncate text-[var(--fg-primary)] font-semibold">
-                      {!isTie && !aWinning && "🏆 "}{currentRound.symbolNameB}
-                    </span>
-                    <div className="flex-1 bg-[var(--bg-tertiary)] rounded-full h-2.5 overflow-hidden">
-                      <div className="h-full rounded-full bg-[var(--brand-primary)] transition-all duration-500" style={{ width: `${Math.max(4, barB)}%` }} />
-                    </div>
-                    <span className={["text-xs font-mono tabular-nums w-14 text-right font-bold", changeB >= 0 ? "text-[var(--positive)]" : "text-[var(--negative)]"].join(" ")}>
-                      {changeB >= 0 ? "+" : ""}{changeB.toFixed(2)}%
-                    </span>
-                  </div>
-                </div>
-                <p className="text-xs text-[var(--fg-secondary)] font-sans mt-2 text-center">
-                  내 선택: <span className="font-bold text-[var(--fg-primary)]">
-                    {myPick.direction === "UP" ? currentRound.optionA : currentRound.optionB}
-                  </span>이 더 많이 오르면 승리
-                </p>
-              </div>
-            );
-          })()}
-
-        {/* ── ZONE 2: CONTEXT ── */}
-
-        {/* Challenge */}
+        {/* 챌린지 배너 */}
         {challenge?.active ? (
           <div className="bg-[var(--brand-secondary)] rounded-[var(--radius-md)] p-3 border border-[var(--brand-primary)]/30 text-center">
             <p className="font-heading font-bold text-[var(--brand-primary)] text-sm">
-              🎯 챌린지 진행 중! {challenge.wins}/{5 - challenge.roundsLeft + challenge.wins} 적중 · 남은 {challenge.roundsLeft}라운드
+              🎯 챌린지 {challenge.wins}/{5 - challenge.roundsLeft + challenge.wins} 적중 · 남은 {challenge.roundsLeft}라운드
             </p>
             <p className="text-xs text-[var(--brand-primary)]/70 font-sans mt-1">5연속 적중 시 점수 3배!</p>
           </div>
@@ -620,18 +507,17 @@ export default function GamePage() {
           </button>
         )}
 
-        {/* Extras toggle */}
+        {/* 기록 더보기 토글 */}
         <button
           onClick={() => setShowExtras(!showExtras)}
-          className="w-full py-2.5 rounded-[var(--radius-md)] border border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--fg-secondary)] text-xs font-sans font-semibold transition-all hover:border-[var(--brand-primary)]/40 btn-press flex items-center justify-center gap-1.5"
+          className="w-full py-2 text-xs text-[var(--fg-tertiary)] font-sans font-semibold"
         >
-          {showExtras ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-          {showExtras ? "접기" : `미션 · 기록 · 시즌${stats.currentStreak >= 2 ? ` · 🔥${stats.currentStreak}연승` : ""}`}
+          {showExtras ? "▲ 접기" : `▼ 미션 · 기록 · 시즌${stats.currentStreak >= 2 ? ` · 🔥${stats.currentStreak}연승` : ""}`}
         </button>
 
         {showExtras && (
           <>
-            {/* Streak banner */}
+            {/* 연승 배너 */}
             {stats.currentStreak >= 2 && (
               <div className={[
                 "rounded-[var(--radius-md)] p-3 border text-center",
@@ -639,23 +525,18 @@ export default function GamePage() {
                   ? "bg-[var(--brand-secondary)] border-[var(--brand-primary)]/40"
                   : "bg-[var(--positive-bg)] border-[var(--positive)]/20",
               ].join(" ")}>
-                <div className="flex items-center justify-center gap-1.5">
-                  <Flame size={15} className={stats.currentStreak >= 5 ? "text-[var(--brand-primary)]" : "text-[var(--positive)]"} />
-                  <span className={[
-                    "font-heading font-bold text-sm",
-                    stats.currentStreak >= 5 ? "text-[var(--brand-primary)]" : "text-[var(--positive)]",
-                  ].join(" ")}>
-                    {stats.currentStreak}연승 중!
-                    {stats.currentStreak >= 5 && " 🔥🔥🔥"}
-                    {stats.currentStreak >= 3 && stats.currentStreak < 5 && " 🔥"}
-                  </span>
-                </div>
+                <p className={[
+                  "font-heading font-bold text-sm",
+                  stats.currentStreak >= 5 ? "text-[var(--brand-primary)]" : "text-[var(--positive)]",
+                ].join(" ")}>
+                  🔥 {stats.currentStreak}연승 중!{stats.currentStreak >= 5 && " 🔥🔥🔥"}
+                </p>
               </div>
             )}
 
-            {/* Recent results */}
+            {/* 최근 결과 */}
             {recentResults.length > 0 && (
-              <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-md)] p-4 shadow-[var(--shadow-1)]">
+              <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-md)] p-4">
                 <p className="text-xs font-semibold text-[var(--fg-secondary)] font-sans mb-3">최근 결과</p>
                 <div className="flex gap-2">
                   {recentResults.map((r) => (
@@ -669,10 +550,7 @@ export default function GamePage() {
                       ].join(" ")}
                     >
                       <p className="text-sm font-bold">{r.isCorrect ? "✅" : "❌"}</p>
-                      <p className={[
-                        "text-xs font-mono font-bold tabular-nums",
-                        r.isCorrect ? "text-[var(--positive)]" : "text-[var(--negative)]",
-                      ].join(" ")}>
+                      <p className={["text-xs font-mono font-bold tabular-nums", r.isCorrect ? "text-[var(--positive)]" : "text-[var(--negative)]"].join(" ")}>
                         {r.isCorrect ? `+${r.score}` : "0"}
                       </p>
                     </div>
@@ -681,13 +559,10 @@ export default function GamePage() {
               </div>
             )}
 
-            {/* Daily Missions */}
+            {/* 데일리 미션 */}
             {dailyMissions && (
-              <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-md)] p-4 shadow-[var(--shadow-1)]">
-                <div className="flex items-center gap-1.5 mb-3">
-                  <Star size={13} className="text-[var(--brand-primary)]" />
-                  <span className="text-sm font-semibold text-[var(--fg-primary)] font-sans">오늘의 미션</span>
-                </div>
+              <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-md)] p-4">
+                <p className="text-sm font-semibold text-[var(--fg-primary)] font-sans mb-3">⭐ 오늘의 미션</p>
                 <div className="space-y-2">
                   {dailyMissions.missions.map((mission, idx) => {
                     const progress = dailyMissions.progress[idx];
@@ -700,9 +575,7 @@ export default function GamePage() {
                         "bg-[var(--bg-primary)] border-[var(--border-primary)]",
                       ].join(" ")}>
                         <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-xs font-semibold text-[var(--fg-primary)] font-sans">
-                            {mission.title}
-                          </span>
+                          <span className="text-xs font-semibold text-[var(--fg-primary)] font-sans">{mission.title}</span>
                           {progress.completed && !progress.claimed ? (
                             <button
                               onClick={() => claimMissionReward(mission.id)}
@@ -713,18 +586,13 @@ export default function GamePage() {
                           ) : progress.claimed ? (
                             <span className="text-xs text-[var(--fg-secondary)] font-sans">완료 ✅</span>
                           ) : (
-                            <span className="text-xs text-[var(--fg-secondary)] font-mono tabular-nums">
-                              {progress.current}/{mission.target}
-                            </span>
+                            <span className="text-xs text-[var(--fg-secondary)] font-mono tabular-nums">{progress.current}/{mission.target}</span>
                           )}
                         </div>
                         <p className="text-xs text-[var(--fg-secondary)] font-sans mb-1.5">{mission.description}</p>
                         <div className="w-full bg-[var(--bg-tertiary)] rounded-full h-1.5 overflow-hidden">
                           <div
-                            className={[
-                              "h-full rounded-full transition-all duration-300",
-                              progress.completed ? "bg-[var(--brand-primary)]" : "bg-[var(--positive)]",
-                            ].join(" ")}
+                            className={["h-full rounded-full transition-all duration-300", progress.completed ? "bg-[var(--brand-primary)]" : "bg-[var(--positive)]"].join(" ")}
                             style={{ width: `${pct}%` }}
                           />
                         </div>
@@ -735,35 +603,25 @@ export default function GamePage() {
               </div>
             )}
 
-            {/* Season info */}
-            <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-md)] p-3 border border-[var(--border-primary)] text-center">
+            {/* 시즌 정보 */}
+            <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-md)] p-3 text-center">
               <p className="text-xs text-[var(--fg-secondary)] font-sans">
                 🏆 {getCurrentSeason().label} 시즌 · 남은 시간 {getSeasonTimeRemaining().days}일 {getSeasonTimeRemaining().hours}시간
               </p>
             </div>
-
-            {/* Tomorrow bonus teaser */}
-            {stats.totalRounds > 0 && (
-              <div className="bg-[var(--brand-secondary)] rounded-[var(--radius-md)] p-3 border border-[var(--brand-primary)]/20 text-center">
-                <p className="text-xs text-[var(--brand-primary)] font-sans font-semibold">
-                  🍌 내일 다시 오면 출석 보너스! ({Math.min(7, (useGameStore.getState().attendance.streak || 0) + 1)}일차 보상 대기중)
-                </p>
-              </div>
-            )}
           </>
         )}
 
-        {/* Footer */}
         <p className="text-center text-xs text-[var(--fg-tertiary)] font-sans">
           소수파 보너스 최대 5배 · ⚡ 스피드 라운드 1.5배!
         </p>
       </div>
 
-      {/* ── 하단 고정 UP/DOWN CTA (TDS) ── */}
+      {/* ── 하단 고정 A/B 선택 버튼 ── */}
       {currentRound && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--bg-primary)]/95 backdrop-blur-sm px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--bg-primary)]/95 backdrop-blur-sm border-t-2 border-[rgba(255,255,255,0.1)] px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]">
           <div className="max-w-lg mx-auto flex flex-col gap-2">
-            {/* 선택 완료 상태 표시 */}
+            {/* 선택 완료 상태 */}
             {myPick && (currentRound.phase === "OPEN" || currentRound.phase === "CLOSED") && (
               <div
                 className={[
@@ -775,24 +633,22 @@ export default function GamePage() {
               >
                 {currentRound.phase === "CLOSED"
                   ? `${myPick.direction === "UP" ? "🚀" : "💀"} 베팅 완료 — 🥁 판정 중...`
-                  : `${myPick.direction === "UP" ? "🚀" : "💀"} ${myPick.direction === "UP" ? (currentRound.optionA ?? "UP") : (currentRound.optionB ?? "DOWN")} 선택 완료!`}
+                  : `✓ ${myPick.direction === "UP" ? (currentRound.optionA ?? "UP") : (currentRound.optionB ?? "DOWN")} 선택 완료!`}
               </div>
             )}
-            {/* UP / DOWN 버튼 */}
+
             <div className="grid grid-cols-2 gap-3" data-testid="pick-buttons">
               <button
                 data-testid="btn-up"
                 disabled={!canPick}
                 onClick={() => handlePick("UP")}
                 className={[
-                  "flex flex-col items-center justify-center gap-1.5 py-[18px] rounded-xl",
+                  "flex flex-col items-center justify-center gap-1.5 py-[18px] pixel-btn-up",
                   "bg-[var(--positive)] text-white font-semibold text-base font-sans transition-all duration-150 select-none btn-press",
-                  myPick?.direction === "UP" ? "scale-[1.02]" : "",
-                  !canPick && !myPick
-                    ? "opacity-40 cursor-not-allowed pointer-events-none"
-                    : myPick && myPick.direction !== "UP"
-                      ? "opacity-30 pointer-events-none"
-                      : "cursor-pointer",
+                  myPick?.direction === "UP" ? "ring-2 ring-white/40 scale-[1.02]" : "",
+                  !canPick && !myPick ? "opacity-40 cursor-not-allowed pointer-events-none"
+                    : myPick && myPick.direction !== "UP" ? "opacity-30 pointer-events-none"
+                    : "cursor-pointer",
                 ].join(" ")}
                 aria-label="UP 예측"
               >
@@ -812,14 +668,12 @@ export default function GamePage() {
                 disabled={!canPick}
                 onClick={() => handlePick("DOWN")}
                 className={[
-                  "flex flex-col items-center justify-center gap-1.5 py-[18px] rounded-xl",
+                  "flex flex-col items-center justify-center gap-1.5 py-[18px] pixel-btn-down",
                   "bg-[var(--negative)] text-white font-semibold text-base font-sans transition-all duration-150 select-none btn-press",
-                  myPick?.direction === "DOWN" ? "scale-[1.02]" : "",
-                  !canPick && !myPick
-                    ? "opacity-40 cursor-not-allowed pointer-events-none"
-                    : myPick && myPick.direction !== "DOWN"
-                      ? "opacity-30 pointer-events-none"
-                      : "cursor-pointer",
+                  myPick?.direction === "DOWN" ? "ring-2 ring-white/40 scale-[1.02]" : "",
+                  !canPick && !myPick ? "opacity-40 cursor-not-allowed pointer-events-none"
+                    : myPick && myPick.direction !== "DOWN" ? "opacity-30 pointer-events-none"
+                    : "cursor-pointer",
                 ].join(" ")}
                 aria-label="DOWN 예측"
               >

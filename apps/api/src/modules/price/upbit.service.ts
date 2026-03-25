@@ -111,8 +111,8 @@ export class UpbitService implements OnModuleInit, OnModuleDestroy {
 
       this.priceCache.set(symbol, payload);
       this.gateway.broadcastPrice(payload);
-    } catch {
-      // Ignore parse errors (binary frames, etc.)
+    } catch (err) {
+      this.logger.debug(`Failed to handle Upbit WS message: ${err}`);
     }
   }
 

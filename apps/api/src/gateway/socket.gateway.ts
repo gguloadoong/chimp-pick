@@ -19,7 +19,11 @@ export interface PriceUpdatePayload {
 }
 
 @WebSocketGateway({
-  cors: { origin: '*' },
+  cors: {
+    origin: process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(',')
+      : ['http://localhost:3001', 'http://localhost:3000'],
+  },
   transports: ['websocket', 'polling'],
 })
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -55,9 +59,6 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   broadcastPrice(payload: PriceUpdatePayload) {
-    // Room subscribers (symbol-specific)
-    this.server.to(`symbol:${payload.symbol}`).emit('price:update', payload);
-    // Also broadcast to everyone for the ticker bar
-    this.server.emit('price:update', payload);
+    this.server.emit('price:tick', payload);
   }
 }

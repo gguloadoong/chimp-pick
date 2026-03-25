@@ -114,7 +114,7 @@ export default function GamePage() {
 
   useEffect(() => { ensureDailyMissions(); }, [ensureDailyMissions]);
   useEffect(() => { setRoundDuration(roundDuration); }, [roundDuration]);
-  useEffect(() => { setTheme(theme === "system" ? "dark" : theme); setAccentColor(accentColor); }, []);
+  useEffect(() => { setTheme("dark"); setAccentColor(accentColor); }, []);
 
   const stats = useMemo(() => computeStats(roundHistory), [roundHistory]);
   const avatarLevel = useMemo(() => {

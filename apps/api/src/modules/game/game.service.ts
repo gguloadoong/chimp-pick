@@ -49,14 +49,17 @@ export class GameService {
 
     // Entry price: use mock for Sprint 1 (Upbit integration in #60 not yet merged)
     const { getCurrentPriceValue } = await import('../../mock/price-generator.js');
-    const entryPrice = getCurrentPriceValue(body.symbol) ?? 0;
+    const entryPrice = getCurrentPriceValue(body.symbol);
+    if (!entryPrice) {
+      throw new BadRequestException('지원하지 않는 종목입니다.');
+    }
 
     const delayMs = TIMEFRAME_MS[body.timeframe] ?? 10_000;
     const expiresAt = new Date(Date.now() + delayMs);
 
     // Atomic: create prediction + deduct coins + record transaction
     const prediction = await this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
+      const updatedUser = await tx.user.update({
         where: { id: userId },
         data: { bananaCoins: { decrement: body.betAmount } },
       });
@@ -74,13 +77,12 @@ export class GameService {
         },
       });
 
-      const updatedUser = await tx.user.findUnique({ where: { id: userId } });
       await tx.transaction.create({
         data: {
           userId,
           type: 'BET',
           amount: -body.betAmount,
-          balanceAfter: updatedUser!.bananaCoins,
+          balanceAfter: updatedUser.bananaCoins,
           predictionId: newPrediction.id,
           description: `${body.symbol} ${body.direction} 예측 베팅`,
         },
@@ -122,9 +124,19 @@ export class GameService {
       });
 
       if (won) {
-        await tx.user.update({
+        const updatedUser = await tx.user.update({
           where: { id: prediction.userId },
           data: { bananaCoins: { increment: reward } },
+        });
+        await tx.transaction.create({
+          data: {
+            userId: prediction.userId,
+            type: 'WIN',
+            amount: reward,
+            balanceAfter: updatedUser.bananaCoins,
+            predictionId,
+            description: `${prediction.symbol} ${prediction.direction} 예측 적중 보상`,
+          },
         });
       }
 
@@ -150,20 +162,6 @@ export class GameService {
             winRate: newTotal > 0 ? Math.round((newWins / newTotal) * 100) / 100 : 0,
             currentStreak: newStreak,
             maxStreak: newMaxStreak,
-          },
-        });
-      }
-
-      if (won) {
-        const user = await tx.user.findUnique({ where: { id: prediction.userId } });
-        await tx.transaction.create({
-          data: {
-            userId: prediction.userId,
-            type: 'WIN',
-            amount: reward,
-            balanceAfter: user!.bananaCoins,
-            predictionId,
-            description: `${prediction.symbol} ${prediction.direction} 예측 적중 보상`,
           },
         });
       }

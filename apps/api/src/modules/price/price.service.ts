@@ -1,33 +1,21 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import {
-  getPrice,
-  getAllPrices,
-  generateCandles,
-  startPriceUpdater,
-  PriceData,
-  Candle,
-} from '../../mock/price-generator';
+import { Injectable } from '@nestjs/common';
+import { UpbitService } from './upbit.service';
+import { PriceUpdatePayload } from '../../gateway/socket.gateway';
+import { generateCandles, Candle } from '../../mock/price-generator';
 
 @Injectable()
-export class PriceService implements OnModuleInit, OnModuleDestroy {
-  private timer: NodeJS.Timeout | null = null;
+export class PriceService {
+  constructor(private readonly upbit: UpbitService) {}
 
-  onModuleInit() {
-    this.timer = startPriceUpdater(2000);
+  getCurrentPrice(symbol: string): PriceUpdatePayload | null {
+    return this.upbit.getLatestPrice(symbol);
   }
 
-  onModuleDestroy() {
-    if (this.timer) clearInterval(this.timer);
+  getAllPrices(): PriceUpdatePayload[] {
+    return this.upbit.getAllLatestPrices();
   }
 
-  getCurrentPrice(symbol: string): PriceData {
-    return getPrice(symbol);
-  }
-
-  getAllPrices(): PriceData[] {
-    return getAllPrices();
-  }
-
+  // Candle history: mock until TimescaleDB aggregation is implemented (Sprint 2)
   getCandles(symbol: string, timeframe: string, limit: number): Candle[] {
     return generateCandles(symbol, timeframe, limit);
   }

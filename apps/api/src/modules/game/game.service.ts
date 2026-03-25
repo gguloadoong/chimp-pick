@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prediction } from '@prisma/client';
 
@@ -15,8 +15,35 @@ const VALID_DIRECTIONS = ['UP', 'DOWN'];
 const WIN_MULTIPLIER = 1.9; // per agreements.md X7
 
 @Injectable()
-export class GameService {
+export class GameService implements OnModuleInit {
+  private readonly logger = new Logger(GameService.name);
+
   constructor(private readonly prisma: PrismaService) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.reschedulePendingPredictions();
+  }
+
+  private async reschedulePendingPredictions(): Promise<void> {
+    const pending = await this.prisma.prediction.findMany({
+      where: { result: 'PENDING' },
+      select: { id: true, expiresAt: true },
+    });
+
+    const now = Date.now();
+    for (const [index, prediction] of pending.entries()) {
+      const remainingMs = prediction.expiresAt.getTime() - now;
+      // 이미 만료된 것도 처리, 동시 처리로 인한 DB 부하 분산을 위해 50ms 간격
+      const delay = Math.max(remainingMs, 0) + index * 50;
+      setTimeout(() => {
+        void this.resolvePrediction(prediction.id);
+      }, delay);
+    }
+
+    if (pending.length > 0) {
+      this.logger.log(`${pending.length}개의 PENDING 예측 재스케줄링 완료`);
+    }
+  }
 
   async createPrediction(
     userId: string,

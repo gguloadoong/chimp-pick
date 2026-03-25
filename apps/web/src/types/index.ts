@@ -5,6 +5,7 @@ export interface User {
   avatarLevel: number;
   isGuest: boolean;
   createdAt: string;
+  bananaCoins?: number;
 }
 
 // ===== Round =====

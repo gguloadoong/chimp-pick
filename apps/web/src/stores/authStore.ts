@@ -14,6 +14,7 @@ interface AuthState {
   logout: () => void;
   setUser: (user: User) => void;
   setNickname: (nickname: string) => void;
+  updateBananaCoins: (coins: number) => void;
   referralCode: string;
   getInviteUrl: () => string;
 }
@@ -38,7 +39,7 @@ export const useAuthStore = create<AuthState>()(
           }
           const code = referralCode || Math.random().toString(36).slice(2, 8).toUpperCase();
           set({
-            user: { ...tokens.user, createdAt: new Date().toISOString() },
+            user: { ...tokens.user, createdAt: new Date().toISOString(), bananaCoins: tokens.user.bananaCoins },
             isAuthenticated: true,
             isLoading: false,
             referralCode: code,
@@ -81,6 +82,12 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setUser: (user: User) => set({ user }),
+
+      updateBananaCoins: (coins: number) => {
+        const { user } = get();
+        if (!user) return;
+        set({ user: { ...user, bananaCoins: coins } });
+      },
 
       setNickname: (nickname: string) => {
         const { user } = get();

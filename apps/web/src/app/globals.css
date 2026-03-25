@@ -1,10 +1,11 @@
+@import url("https://cdn.jsdelivr.net/npm/galmuri@latest/dist/galmuri.css");
 @import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap");
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
 
 @font-face {
-  font-family: "Galmuri11";
-  src: url("https://cdn.jsdelivr.net/gh/quiple/galmuri/dist/Galmuri11.woff2") format("woff2");
-  font-weight: 400;
+  font-family: 'NeoDunggeunmo';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.3/NeoDunggeunmo.woff') format('woff');
+  font-weight: normal;
   font-display: swap;
 }
 @import "tailwindcss";
@@ -50,7 +51,8 @@
   /* === Typography === */
   --font-sans:    "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-heading: "Fredoka", "Pretendard Variable", "Pretendard", sans-serif;
-  --font-mono:    "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+  --font-mono:    "Galmuri11", "JetBrains Mono", "SF Mono", ui-monospace, monospace;
+  --font-pixel:   "Galmuri11", "NeoDunggeunmo", monospace;
 
   /* === Border Radius === */
   --radius-sm:   8px;
@@ -59,12 +61,12 @@
   --radius-full: 9999px;
 
   /* === Shadows — TDS: 배경색 계층으로 elevation 표현, shadow 없음 === */
-  --shadow-1: none;
-  --shadow-2: none;
-  --shadow-3: none;
-  --shadow-glow-positive: none;
-  --shadow-glow-negative: none;
-  --shadow-glow-brand:    none;
+  --shadow-1: 2px 2px 0 #0f0f1a;
+  --shadow-2: 3px 3px 0 #0f0f1a;
+  --shadow-3: 4px 4px 0 #0f0f1a;
+  --shadow-glow-positive: 3px 3px 0 #0f0f1a;
+  --shadow-glow-negative: 3px 3px 0 #0f0f1a;
+  --shadow-glow-brand:    3px 3px 0 #0f0f1a;
 }
 
 /* === Primitive Color Definitions === */
@@ -104,38 +106,38 @@
   --primitive-dark-300: #2E2E2E;
   --primitive-dark-400: #3A3A3A;
 
-  /* === Semantic Tokens (Dark — TDS default) === */
-  --bg-primary:    var(--primitive-dark-100);
-  --bg-secondary:  var(--primitive-dark-200);
-  --bg-tertiary:   var(--primitive-dark-300);
-  --bg-elevated:   var(--primitive-dark-300);
+  /* === Semantic Tokens (Dark — Pixel Retro / Sweetie 16) === */
+  --bg-primary:    #1a1c2c;
+  --bg-secondary:  #29366f;
+  --bg-tertiary:   #3a4466;
+  --bg-elevated:   #3a4466;
 
-  --fg-primary:    var(--primitive-gray-0);
-  --fg-secondary:  #8B8B8B;
-  --fg-tertiary:   #4E4E4E;
-  --fg-inverse:    var(--primitive-dark-100);
+  --fg-primary:    #f4f4f4;
+  --fg-secondary:  #94b0c2;
+  --fg-tertiary:   #566c86;
+  --fg-inverse:    #1a1c2c;
 
-  --brand-primary:    var(--primitive-banana-500);
-  --brand-secondary:  rgba(255, 184, 0, 0.10);
-  --brand-on-primary: var(--primitive-dark-100);
+  --brand-primary:    #ffcd75;
+  --brand-secondary:  rgba(255, 205, 117, 0.15);
+  --brand-on-primary: #1a1c2c;
 
-  --positive:       var(--primitive-green-500);
-  --positive-bg:    rgba(5, 192, 114, 0.10);
-  --positive-hover: var(--primitive-green-600);
-  --negative:       var(--primitive-red-500);
-  --negative-bg:    rgba(240, 68, 82, 0.10);
-  --negative-hover: var(--primitive-red-600);
-  --warning:        var(--primitive-orange-500);
-  --warning-bg:     rgba(245, 166, 35, 0.10);
-  --info:           var(--primitive-blue-500);
-  --info-bg:        rgba(49, 130, 246, 0.10);
+  --positive:       #a7f070;
+  --positive-bg:    rgba(167, 240, 112, 0.12);
+  --positive-hover: #8bd65a;
+  --negative:       #b13e53;
+  --negative-bg:    rgba(177, 62, 83, 0.12);
+  --negative-hover: #921535;
+  --warning:        #ef7d57;
+  --warning-bg:     rgba(239, 125, 87, 0.12);
+  --info:           #73eff7;
+  --info-bg:        rgba(115, 239, 247, 0.12);
 
-  --border-primary:   rgba(255, 255, 255, 0.08);
-  --border-secondary: rgba(255, 255, 255, 0.04);
-  --border-focus:     var(--primitive-blue-500);
+  --border-primary:   #3b5dc9;
+  --border-secondary: rgba(59, 93, 201, 0.35);
+  --border-focus:     #73eff7;
 
-  --interactive-hover:  rgba(255, 255, 255, 0.06);
-  --interactive-active: rgba(255, 255, 255, 0.10);
+  --interactive-hover:  rgba(115, 239, 247, 0.08);
+  --interactive-active: rgba(115, 239, 247, 0.15);
 }
 
 /* html.dark = :root (다크가 기본) — 명시적 클래스 지원용 no-op */
@@ -362,68 +364,96 @@ input[type="range"].tds-slider:disabled::-webkit-slider-thumb {
   cursor: not-allowed;
 }
 
-/* === Pixel Art Theme (Level C) === */
+/* === Pixel Art Theme — Retro Pixel / Sweetie 16 === */
 
-/* 도트 그리드 배경 */
+/* 도트 그리드 배경 (더 선명하게) */
 .dot-grid {
-  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgba(59, 93, 201, 0.15) 1px, transparent 1px);
   background-size: 16px 16px;
 }
 
-/* 픽셀 카드 — sharp corner + depth shadow */
+/* 픽셀 카드 — 하드 픽셀 그림자 (블러 없음) */
 .pixel-card {
-  border-radius: 0 !important;
-  border: 2px solid rgba(255, 255, 255, 0.10);
-  box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 0.7);
+  border-radius: 4px !important;
+  border: 3px solid #3b5dc9;
+  box-shadow: 4px 4px 0 0 #0f0f1a;
+}
+
+/* 픽셀 카드 (강조 색상 테두리용) */
+.pixel-card-accent {
+  border-radius: 4px !important;
+  border: 3px solid var(--cat-color, #3b5dc9);
+  box-shadow: 4px 4px 0 0 #0f0f1a;
 }
 
 /* 픽셀 뱃지 */
 .pixel-badge {
-  border-radius: 0 !important;
+  border-radius: 2px !important;
   border: 2px solid currentColor;
-  letter-spacing: 0.04em;
+  box-shadow: 2px 2px 0 0 #0f0f1a;
+  letter-spacing: 0.08em;
 }
 
-/* 픽셀 UP 버튼 */
+/* 픽셀 UP 버튼 — 파스텔 라임 + 하드 그림자 */
 .pixel-btn-up {
-  border-radius: 0 !important;
-  box-shadow: 0 6px 0 0 #028a4f;
-  transition: transform 80ms ease, box-shadow 80ms ease;
+  border-radius: 4px !important;
+  background-color: #a7f070 !important;
+  color: #1a1c2c !important;
+  border: 3px solid #265c42;
+  border-bottom-width: 6px;
+  box-shadow: 0 0 0 1px #0f0f1a;
+  transition: transform 80ms ease, border-bottom-width 80ms ease, box-shadow 80ms ease;
 }
 .pixel-btn-up:active:not(:disabled) {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 0 #028a4f;
-}
-.pixel-btn-up.scale-\[1\.02\] {
-  box-shadow: 0 6px 0 0 #028a4f, 0 0 0 3px rgba(5, 192, 114, 0.4);
+  transform: translateY(3px);
+  border-bottom-width: 3px;
 }
 
-/* 픽셀 DOWN 버튼 */
+/* 픽셀 DOWN 버튼 — 딥 픽셀 레드 */
 .pixel-btn-down {
-  border-radius: 0 !important;
-  box-shadow: 0 6px 0 0 #a82e38;
-  transition: transform 80ms ease, box-shadow 80ms ease;
+  border-radius: 4px !important;
+  background-color: #b13e53 !important;
+  color: #f4f4f4 !important;
+  border: 3px solid #5a0e1e;
+  border-bottom-width: 6px;
+  box-shadow: 0 0 0 1px #0f0f1a;
+  transition: transform 80ms ease, border-bottom-width 80ms ease, box-shadow 80ms ease;
 }
 .pixel-btn-down:active:not(:disabled) {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 0 #a82e38;
-}
-.pixel-btn-down.scale-\[1\.02\] {
-  box-shadow: 0 6px 0 0 #a82e38, 0 0 0 3px rgba(240, 68, 82, 0.4);
+  transform: translateY(3px);
+  border-bottom-width: 3px;
 }
 
 /* 픽셀 CTA 버튼 (랜딩) */
 .pixel-btn-cta {
-  border-radius: 0 !important;
-  box-shadow: 0 6px 0 0 #c48800;
-  transition: transform 80ms ease, box-shadow 80ms ease;
+  border-radius: 4px !important;
+  background-color: #ffcd75 !important;
+  color: #1a1c2c !important;
+  border: 3px solid #ab5236;
+  border-bottom-width: 6px;
+  box-shadow: 0 0 0 1px #0f0f1a;
+  transition: transform 80ms ease, border-bottom-width 80ms ease;
 }
 .pixel-btn-cta:active:not(:disabled) {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 0 #c48800;
+  transform: translateY(3px);
+  border-bottom-width: 3px;
+  animation: none;
 }
 
-/* 스캔라인 오버레이 */
+/* Kahoot 스타일 — 픽 후 버튼 상태 */
+.pixel-btn-unchosen {
+  opacity: 0.2;
+  filter: saturate(0);
+  transform: scale(0.93) translateY(2px);
+  transition: all 200ms ease;
+}
+.pixel-btn-chosen {
+  transform: scale(1.04);
+  box-shadow: 0 0 0 3px #f4f4f4, 0 0 0 4px #0f0f1a;
+  transition: all 200ms ease;
+}
+
+/* 스캔라인 오버레이 (더 미세하게) */
 .scanlines {
   position: relative;
   overflow: hidden;
@@ -435,9 +465,9 @@ input[type="range"].tds-slider:disabled::-webkit-slider-thumb {
   background: repeating-linear-gradient(
     0deg,
     transparent,
-    transparent 3px,
-    rgba(0, 0, 0, 0.07) 3px,
-    rgba(0, 0, 0, 0.07) 4px
+    transparent 2px,
+    rgba(0, 0, 0, 0.04) 2px,
+    rgba(0, 0, 0, 0.04) 4px
   );
   pointer-events: none;
   z-index: 10;
@@ -445,44 +475,43 @@ input[type="range"].tds-slider:disabled::-webkit-slider-thumb {
 
 /* 픽셀 폰트 유틸 */
 .pixel-font {
-  font-family: "Galmuri11", var(--font-pixel), "Press Start 2P", monospace;
+  font-family: 'Galmuri11', 'NeoDunggeunmo', monospace;
   image-rendering: pixelated;
+}
+
+/* 레트로 레이블 (카테고리 뱃지 전용) */
+.retro-label {
+  font-family: 'NeoDunggeunmo', 'Galmuri11', monospace;
+  image-rendering: pixelated;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 /* 픽셀 결과 플래시 */
 @keyframes pixel-flash-green {
-  0%   { background-color: rgba(5, 192, 114, 0); }
-  20%  { background-color: rgba(5, 192, 114, 0.35); }
-  100% { background-color: rgba(5, 192, 114, 0); }
+  0%   { background-color: rgba(167, 240, 112, 0); }
+  20%  { background-color: rgba(167, 240, 112, 0.4); }
+  100% { background-color: rgba(167, 240, 112, 0); }
 }
 @keyframes pixel-flash-red {
-  0%   { background-color: rgba(240, 68, 82, 0); }
-  20%  { background-color: rgba(240, 68, 82, 0.35); }
-  100% { background-color: rgba(240, 68, 82, 0); }
+  0%   { background-color: rgba(177, 62, 83, 0); }
+  20%  { background-color: rgba(177, 62, 83, 0.4); }
+  100% { background-color: rgba(177, 62, 83, 0); }
 }
 .pixel-flash-green { animation: pixel-flash-green 0.6s ease-out; }
 .pixel-flash-red   { animation: pixel-flash-red 0.6s ease-out; }
 
 /* 픽셀 펄스 (CTA 버튼) */
 @keyframes pixel-pulse {
-  0%, 100% { box-shadow: 0 6px 0 0 #c48800, 0 0 0 0 rgba(255, 184, 0, 0.5); }
-  50%       { box-shadow: 0 6px 0 0 #c48800, 0 0 0 10px rgba(255, 184, 0, 0); }
+  0%, 100% {
+    box-shadow: 0 0 0 1px #0f0f1a, 0 0 0 0 rgba(255, 205, 117, 0.6);
+    border-bottom-width: 6px;
+  }
+  50% {
+    box-shadow: 0 0 0 1px #0f0f1a, 0 0 12px 0 rgba(255, 205, 117, 0);
+    border-bottom-width: 6px;
+  }
 }
 .pixel-btn-cta:not(:disabled) {
   animation: pixel-pulse 2s ease-in-out infinite;
-}
-.pixel-btn-cta:active:not(:disabled) {
-  animation: none;
-}
-
-/* Kahoot 스타일 — 픽 후 미선택 버튼 */
-.pixel-btn-unchosen {
-  opacity: 0.2;
-  filter: saturate(0);
-  transform: scale(0.93) translateY(2px);
-  transition: all 200ms ease;
-}
-.pixel-btn-chosen {
-  transform: scale(1.04);
-  transition: all 200ms ease;
 }

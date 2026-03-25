@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Fredoka, Press_Start_2P } from "next/font/google";
+import { JetBrains_Mono, Fredoka } from "next/font/google";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -12,13 +12,6 @@ const fredoka = Fredoka({
   variable: "--font-fredoka",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const pressStart2P = Press_Start_2P({
-  variable: "--font-pixel",
-  subsets: ["latin"],
-  weight: "400",
   display: "swap",
 });
 
@@ -45,7 +38,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${jetbrainsMono.variable} ${fredoka.variable} ${pressStart2P.variable} dark h-full`}
+      className={`${jetbrainsMono.variable} ${fredoka.variable} dark h-full`}
     >
       <body className="min-h-full flex flex-col bg-[var(--bg-primary)] text-[var(--fg-primary)] antialiased">
         {children}

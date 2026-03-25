@@ -54,6 +54,17 @@ async function seedTestAccount(): Promise<void> {
 
 async function seedRankedUsers(): Promise<void> {
   for (const data of RANKED_USERS) {
+    // maxStreak를 한 번만 계산 (세 곳에서 다른 값이 되는 버그 방지)
+    const maxStreak = data.streak + randomBetween(0, 5);
+    const statsData = {
+      totalPredictions: data.wins + data.losses,
+      wins: data.wins,
+      losses: data.losses,
+      winRate: winRate(data.wins, data.losses),
+      currentStreak: data.streak,
+      maxStreak,
+    };
+
     const user = await prisma.user.upsert({
       where: { nickname: data.nickname },
       update: { bananaCoins: data.coins },
@@ -61,43 +72,19 @@ async function seedRankedUsers(): Promise<void> {
         nickname: data.nickname,
         bananaCoins: data.coins,
         isGuest: false,
-        stats: {
-          create: {
-            totalPredictions: data.wins + data.losses,
-            wins: data.wins,
-            losses: data.losses,
-            winRate: winRate(data.wins, data.losses),
-            currentStreak: data.streak,
-            maxStreak: data.streak + randomBetween(0, 5),
-          },
-        },
+        stats: { create: statsData },
       },
     });
 
     // 기존 stats가 있으면 업데이트
     await prisma.userStats.upsert({
       where: { userId: user.id },
-      update: {
-        totalPredictions: data.wins + data.losses,
-        wins: data.wins,
-        losses: data.losses,
-        winRate: winRate(data.wins, data.losses),
-        currentStreak: data.streak,
-        maxStreak: data.streak + randomBetween(0, 5),
-      },
-      create: {
-        userId: user.id,
-        totalPredictions: data.wins + data.losses,
-        wins: data.wins,
-        losses: data.losses,
-        winRate: winRate(data.wins, data.losses),
-        currentStreak: data.streak,
-        maxStreak: data.streak + randomBetween(0, 5),
-      },
+      update: statsData,
+      create: { userId: user.id, ...statsData },
     });
 
-    // 샘플 예측 3건
-    const predictions = [];
+    // 샘플 예측 3건 (누적 잔액 추적)
+    let runningBalance = data.coins;
     for (let i = 0; i < 3; i++) {
       const isWin = i < 2; // 2승 1패
       const entryPrice = randomBetween(100, 50000);
@@ -123,15 +110,17 @@ async function seedRankedUsers(): Promise<void> {
           expiresAt: new Date(),
         },
       });
-      predictions.push(prediction);
 
-      // 코인 거래 기록
+      const txAmount = isWin ? reward : -betAmount;
+      runningBalance += txAmount;
+
+      // 코인 거래 기록 (누적 잔액 반영)
       await prisma.transaction.create({
         data: {
           userId: user.id,
           type: isWin ? 'WIN' : 'LOSE',
-          amount: isWin ? reward : -betAmount,
-          balanceAfter: data.coins,
+          amount: txAmount,
+          balanceAfter: runningBalance,
           predictionId: prediction.id,
           description: `${prediction.symbol} ${prediction.direction} ${isWin ? '적중' : '실패'}`,
           createdAt: prediction.createdAt,

@@ -9,9 +9,12 @@ import { playPickSound, playDrumroll, playWinSound, playLoseSound } from "@/lib/
 import { useToastStore } from "@/stores/toastStore";
 import { formatPrice, formatChange } from "@/lib/format";
 import { useCountdown } from "@/hooks/useCountdown";
+import { useRealtimePrices } from "@/hooks/useRealtimePrices";
+import { usePrediction } from "@/hooks/usePrediction";
 import { AVATAR_LEVELS } from "@/types";
 import type { RoundResult } from "@/types";
 import MiniChart from "@/components/game/MiniChart";
+import BetSlider from "@/components/game/BetSlider";
 import CrowdGauge from "@/components/game/CrowdGauge";
 import ResultOverlay from "@/components/game/ResultOverlay";
 import ShareCard from "@/components/game/ShareCard";
@@ -81,6 +84,9 @@ export default function GamePage() {
   const [shareResult, setShareResult] = useState<RoundResult | null>(null);
   const [currentPriceBData, setCurrentPriceBData] = useState<ReturnType<typeof getPrice> | null>(null);
 
+  // 실시간 업비트 시세 — price:tick 이벤트를 게임 엔진 priceState에 주입
+  useRealtimePrices();
+
   const checkAttendance = useGameStore((s) => s.checkAttendance);
   useEffect(() => { checkAttendance(); }, [checkAttendance]);
 
@@ -140,10 +146,21 @@ export default function GamePage() {
     });
   }, [roundPhase, myPick, resolveMyPick, soundEnabled]);
 
+  const [betAmount, setBetAmount] = useState(50);
+
+  const { submitPrediction, isSubmitting } = usePrediction({
+    onSuccess: () => addToast("예측 등록 완료! 🍌", "✅", "success"),
+    onError: (msg) => addToast(msg, "❌", "warning"),
+  });
+
   const handlePick = useCallback((direction: "UP" | "DOWN") => {
+    if (isSubmitting) return; // 중복 제출 방지
     pickDirection(direction);
     if (soundEnabled) playPickSound();
-  }, [pickDirection, soundEnabled]);
+    if (currentRound?.symbol) {
+      void submitPrediction(currentRound.symbol, direction, roundDuration, betAmount);
+    }
+  }, [isSubmitting, pickDirection, soundEnabled, currentRound?.symbol, roundDuration, betAmount, submitPrediction]);
 
   const handleResultDismiss = useCallback(() => setResolvedResult(null), []);
 
@@ -463,6 +480,23 @@ export default function GamePage() {
             {/* Crowd gauge inline */}
             {(currentRound.phase === "OPEN" || currentRound.phase === "CLOSED") && (
               <CrowdGauge upPct={upPct} picked={myPick?.direction ?? null} />
+            )}
+
+            {/* 베팅 금액 슬라이더 */}
+            {canPick && (
+              <div
+                className="mt-4 bg-[var(--bg-secondary)] rounded-[var(--radius-md)] p-3 border border-[var(--border-primary)]"
+                data-testid="bet-panel"
+              >
+                <BetSlider
+                  value={betAmount}
+                  min={10}
+                  max={1000}
+                  step={10}
+                  onChange={setBetAmount}
+                  disabled={isSubmitting}
+                />
+              </div>
             )}
 
             {/* UP/DOWN pick buttons */}

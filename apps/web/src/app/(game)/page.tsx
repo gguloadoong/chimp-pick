@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useState, useMemo } from "react";
 import { ArrowUp, ArrowDown, Trophy, Clock, Users, Flame, Star, Settings, Volume2, VolumeX, ChevronDown, ChevronUp } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
+import { useAuthStore } from "@/stores/authStore";
 import { useSettingsStore, ROUND_DURATION_LABELS, ACCENT_COLORS, type RoundDuration, type ThemeMode, type AccentColor } from "@/stores/settingsStore";
 import { getPrice, onPriceUpdate, computeStats, setRoundDuration, getCurrentSeason, getSeasonTimeRemaining } from "@/lib/game-engine";
 import { playPickSound, playDrumroll, playWinSound, playLoseSound } from "@/lib/sound";
@@ -149,12 +150,20 @@ export default function GamePage() {
     });
   }, [roundPhase, myPick, resolveMyPick, soundEnabled]);
 
+  const { user, applyPredictionResult } = useAuthStore();
+
   const [betAmount, setBetAmount] = useState(50);
 
-  const { submitPrediction, isSubmitting } = usePrediction({
+  const { submitPrediction, isSubmitting, activePrediction } = usePrediction({
     onSuccess: () => addToast("예측 등록 완료! 🍌", "✅", "success"),
     onError: (msg) => addToast(msg, "❌", "warning"),
   });
+
+  // 예측 결과 확정 시 바나나코인 잔액 갱신 — 스토어 내부에서 현재 잔액 읽어 stale dep 없음
+  useEffect(() => {
+    if (!activePrediction || activePrediction.result === "PENDING") return;
+    applyPredictionResult(activePrediction.result, activePrediction.reward, activePrediction.betAmount);
+  }, [activePrediction?.id, activePrediction?.result, applyPredictionResult]);
 
   const handlePick = useCallback((direction: "UP" | "DOWN") => {
     if (isSubmitting) return; // 중복 제출 방지
@@ -204,6 +213,14 @@ export default function GamePage() {
             <span className="text-xs text-[var(--fg-secondary)] font-sans bg-[var(--bg-tertiary)] px-2 py-1 rounded-[var(--radius-sm)]">
               오늘 {getTodayRounds()}R
             </span>
+            {user != null && (
+              <div className="flex items-center gap-1 bg-[var(--brand-secondary)] px-2.5 py-1.5 rounded-[var(--radius-sm)]">
+                <span className="text-xs">🍌</span>
+                <span className="font-mono font-bold text-[var(--brand-primary)] tabular-nums text-sm" data-testid="banana-balance">
+                  {user.bananaCoins.toLocaleString()}
+                </span>
+              </div>
+            )}
             <div className="flex items-center gap-1.5 bg-[var(--brand-secondary)] px-3 py-1.5 rounded-[var(--radius-sm)]">
               <Trophy size={13} className="text-[var(--brand-primary)]" />
               <span className="font-mono font-bold text-[var(--brand-primary)] tabular-nums text-sm">

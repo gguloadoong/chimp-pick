@@ -11,12 +11,7 @@ import {
 import { GameService } from './game.service';
 import { AuthGuard } from '../../guards/auth.guard';
 import type { AuthenticatedRequest } from '../../guards/auth.guard';
-import {
-  generateId,
-  predictions,
-  PredictionDirection,
-  PredictionTimeframe,
-} from '../../mock/data';
+import { generateId } from '../../mock/data';
 
 function buildResponse(data: unknown) {
   return {
@@ -35,35 +30,35 @@ export class GameController {
 
   @UseGuards(AuthGuard)
   @Post()
-  createPrediction(
+  async createPrediction(
     @Req() req: AuthenticatedRequest,
     @Body()
     body: {
       symbol: string;
-      direction: PredictionDirection;
-      timeframe: PredictionTimeframe;
+      direction: string;
+      timeframe: string;
       betAmount: number;
     },
   ) {
-    const prediction = this.gameService.createPrediction(req.user.id, body);
+    const prediction = await this.gameService.createPrediction(req.user.id, body);
     return buildResponse(prediction);
   }
 
   @UseGuards(AuthGuard)
   @Get('active')
-  getActivePrediction(@Req() req: AuthenticatedRequest) {
-    const prediction = this.gameService.getActivePrediction(req.user.id);
+  async getActivePrediction(@Req() req: AuthenticatedRequest) {
+    const prediction = await this.gameService.getActivePrediction(req.user.id);
     return buildResponse(prediction);
   }
 
   @UseGuards(AuthGuard)
   @Get('history')
-  getPredictionHistory(
+  async getPredictionHistory(
     @Req() req: AuthenticatedRequest,
     @Query('page') page = '1',
     @Query('limit') limit = '20',
   ) {
-    const result = this.gameService.getUserPredictions(
+    const result = await this.gameService.getUserPredictions(
       req.user.id,
       parseInt(page, 10),
       parseInt(limit, 10),
@@ -73,10 +68,8 @@ export class GameController {
 
   @UseGuards(AuthGuard)
   @Get(':id')
-  getPrediction(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
-    const prediction = predictions.find(
-      (p) => p.id === id && p.userId === req.user.id,
-    );
+  async getPrediction(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
+    const prediction = await this.gameService.getPrediction(req.user.id, id);
     return buildResponse(prediction ?? null);
   }
 }

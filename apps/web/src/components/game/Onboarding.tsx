@@ -17,7 +17,7 @@ const STEPS = [
   },
   {
     mood: "up" as const,
-    title: "30초마다 새 라운드!",
+    title: "매 라운드마다 새 문제!",
     description: "시스템이 랜덤 종목을 출제해요. UP 또는 DOWN을 선택하세요!",
     emoji: "⏱️",
   },

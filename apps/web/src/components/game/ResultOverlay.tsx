@@ -5,6 +5,7 @@ import type { RoundResult } from "@/types";
 import { formatPrice } from "@/lib/format";
 import Button from "@/components/ui/Button";
 import ChimpCharacter from "@/components/character/ChimpCharacter";
+import AdSlot from "@/components/ui/AdSlot";
 
 const CONFETTI_ITEMS = ["🍌", "🎉", "⭐", "🎊", "✨", "💫", "🏆", "🎈"];
 
@@ -404,6 +405,11 @@ export default function ResultOverlay({
             >
               {isWin ? `+${countScore}점 🏆` : "0점"}
             </div>
+
+            {/* Ad slot (패배 시만 노출) */}
+            {!isWin && (
+              <AdSlot placement="result-lose" className="mb-4" />
+            )}
 
             {/* Actions */}
             <div className="flex gap-2">

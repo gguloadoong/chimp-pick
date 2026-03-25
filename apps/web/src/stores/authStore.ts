@@ -94,7 +94,7 @@ export const useAuthStore = create<AuthState>()(
       applyPredictionResult: (result, reward, betAmount) => {
         const { user } = get();
         if (!user) return;
-        const current = user.bananaCoins;
+        const current = user.bananaCoins ?? 0;
         if (result === "WIN" && reward != null) {
           set({ user: { ...user, bananaCoins: current + reward - betAmount } });
         } else if (result === "LOSE") {

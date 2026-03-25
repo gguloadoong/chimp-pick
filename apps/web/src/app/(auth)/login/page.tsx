@@ -63,10 +63,10 @@ export default function LoginPage() {
           onClick={() => void handleStart()}
           disabled={isLoading}
           className={[
-            "w-full max-w-xs rounded-2xl bg-banana py-4 font-heading font-bold text-white text-lg",
-            "border-2 border-banana/80 btn-press",
-            "transition-all active:scale-95 hover:shadow-lg",
-            isLoading ? "opacity-70 cursor-not-allowed" : "",
+            "w-full max-w-lg rounded-xl bg-[var(--brand-primary)] py-[18px]",
+            "font-sans font-semibold text-[17px] text-[var(--brand-on-primary)]",
+            "btn-press transition-opacity",
+            isLoading ? "opacity-60 cursor-not-allowed" : "",
           ].join(" ")}
           data-testid="start-button"
         >
@@ -84,7 +84,7 @@ export default function LoginPage() {
           {FEATURES.map((f) => (
             <div
               key={f.title}
-              className="flex items-center gap-4 p-4 bg-white rounded-2xl border-2 border-card-border clay-sm"
+              className="flex items-center gap-4 p-4 bg-[var(--bg-secondary)] rounded-[var(--radius-lg)]"
             >
               <span className="text-3xl">{f.emoji}</span>
               <div>

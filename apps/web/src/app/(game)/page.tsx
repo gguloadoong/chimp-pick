@@ -189,7 +189,7 @@ export default function GamePage() {
 
   return (
     <>
-      <div className="max-w-lg mx-auto px-4 pt-4 pb-24 flex flex-col gap-4">
+      <div className="max-w-lg mx-auto px-4 pt-4 pb-36 flex flex-col gap-4">
 
         {/* ── COMPACT HEADER ── */}
         <div className="flex items-center justify-between" data-testid="game-header">
@@ -217,7 +217,7 @@ export default function GamePage() {
               <div className="flex items-center gap-1 bg-[var(--brand-secondary)] px-2.5 py-1.5 rounded-[var(--radius-sm)]">
                 <span className="text-xs">🍌</span>
                 <span className="font-mono font-bold text-[var(--brand-primary)] tabular-nums text-sm" data-testid="banana-balance">
-                  {user.bananaCoins.toLocaleString()}
+                  {(user.bananaCoins ?? 0).toLocaleString()}
                 </span>
               </div>
             )}
@@ -528,86 +528,6 @@ export default function GamePage() {
               </div>
             )}
 
-            {/* UP/DOWN pick buttons */}
-            <div className="grid grid-cols-2 gap-3 mt-4" data-testid="pick-buttons">
-              <button
-                data-testid="btn-up"
-                disabled={!canPick}
-                onClick={() => handlePick("UP")}
-                className={[
-                  "flex flex-col items-center justify-center gap-2 py-5 rounded-[var(--radius-md)]",
-                  "border-2 font-bold text-xl font-sans transition-all duration-150 select-none btn-press",
-                  myPick?.direction === "UP"
-                    ? "border-[var(--positive)] bg-[var(--positive-bg)] text-[var(--positive)] shadow-[var(--shadow-glow-positive)] scale-[1.02]"
-                    : "border-[var(--positive)] bg-[var(--bg-secondary)] text-[var(--positive)] hover:bg-[var(--positive-bg)]",
-                  !canPick && !myPick
-                    ? "opacity-40 cursor-not-allowed pointer-events-none"
-                    : myPick && myPick.direction !== "UP"
-                      ? "opacity-30 pointer-events-none"
-                      : "cursor-pointer",
-                ].join(" ")}
-                aria-label="UP 예측"
-              >
-                <ArrowUp size={28} strokeWidth={3} />
-                <span className="text-base font-heading font-bold tracking-wide">
-                  {currentRound?.optionA ?? "UP 🚀"}
-                </span>
-                {canPick && (
-                  <span className="text-xs font-sans text-[var(--positive)]/70">
-                    {upPct < 50 ? `🔥 ${upScore}점` : `${upScore}점`}
-                  </span>
-                )}
-              </button>
-
-              <button
-                data-testid="btn-down"
-                disabled={!canPick}
-                onClick={() => handlePick("DOWN")}
-                className={[
-                  "flex flex-col items-center justify-center gap-2 py-5 rounded-[var(--radius-md)]",
-                  "border-2 font-bold text-xl font-sans transition-all duration-150 select-none btn-press",
-                  myPick?.direction === "DOWN"
-                    ? "border-[var(--negative)] bg-[var(--negative-bg)] text-[var(--negative)] shadow-[var(--shadow-glow-negative)] scale-[1.02]"
-                    : "border-[var(--negative)] bg-[var(--bg-secondary)] text-[var(--negative)] hover:bg-[var(--negative-bg)]",
-                  !canPick && !myPick
-                    ? "opacity-40 cursor-not-allowed pointer-events-none"
-                    : myPick && myPick.direction !== "DOWN"
-                      ? "opacity-30 pointer-events-none"
-                      : "cursor-pointer",
-                ].join(" ")}
-                aria-label="DOWN 예측"
-              >
-                <ArrowDown size={28} strokeWidth={3} />
-                <span className="text-base font-heading font-bold tracking-wide">
-                  {currentRound?.optionB ?? "DOWN 💀"}
-                </span>
-                {canPick && (
-                  <span className="text-xs font-sans text-[var(--negative)]/70">
-                    {downPct < 50 ? `🔥 ${downScore}점` : `${downScore}점`}
-                  </span>
-                )}
-              </button>
-            </div>
-
-            {/* My pick status */}
-            {myPick && (currentRound.phase === "OPEN" || currentRound.phase === "CLOSED") && (
-              <div
-                className={[
-                  "mt-3 rounded-[var(--radius-sm)] p-2.5 border text-center",
-                  myPick.direction === "UP"
-                    ? "bg-[var(--positive-bg)] border-[var(--positive)]/30 text-[var(--positive)]"
-                    : "bg-[var(--negative-bg)] border-[var(--negative)]/30 text-[var(--negative)]",
-                ].join(" ")}
-                role="status"
-                aria-live="polite"
-              >
-                <p className="font-bold font-sans text-sm">
-                  {currentRound.phase === "CLOSED"
-                    ? `${myPick.direction === "UP" ? "🚀" : "💀"} 베팅 완료 — 🥁 판정 중...`
-                    : `${myPick.direction === "UP" ? "🚀" : "💀"} ${myPick.direction === "UP" ? (currentRound.optionA ?? "UP") : (currentRound.optionB ?? "DOWN")} 선택 완료!`}
-                </p>
-              </div>
-            )}
           </div>
         ) : (
           <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-lg)] p-8 shadow-[var(--shadow-1)] text-center">
@@ -838,6 +758,89 @@ export default function GamePage() {
           소수파 보너스 최대 5배 · ⚡ 스피드 라운드 1.5배!
         </p>
       </div>
+
+      {/* ── 하단 고정 UP/DOWN CTA (TDS) ── */}
+      {currentRound && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--bg-primary)]/95 backdrop-blur-sm px-4 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]">
+          <div className="max-w-lg mx-auto flex flex-col gap-2">
+            {/* 선택 완료 상태 표시 */}
+            {myPick && (currentRound.phase === "OPEN" || currentRound.phase === "CLOSED") && (
+              <div
+                className={[
+                  "rounded-[var(--radius-sm)] py-2 text-center text-sm font-semibold font-sans",
+                  myPick.direction === "UP" ? "text-[var(--positive)]" : "text-[var(--negative)]",
+                ].join(" ")}
+                role="status"
+                aria-live="polite"
+              >
+                {currentRound.phase === "CLOSED"
+                  ? `${myPick.direction === "UP" ? "🚀" : "💀"} 베팅 완료 — 🥁 판정 중...`
+                  : `${myPick.direction === "UP" ? "🚀" : "💀"} ${myPick.direction === "UP" ? (currentRound.optionA ?? "UP") : (currentRound.optionB ?? "DOWN")} 선택 완료!`}
+              </div>
+            )}
+            {/* UP / DOWN 버튼 */}
+            <div className="grid grid-cols-2 gap-3" data-testid="pick-buttons">
+              <button
+                data-testid="btn-up"
+                disabled={!canPick}
+                onClick={() => handlePick("UP")}
+                className={[
+                  "flex flex-col items-center justify-center gap-1.5 py-[18px] rounded-xl",
+                  "font-semibold text-base font-sans transition-all duration-150 select-none btn-press",
+                  myPick?.direction === "UP"
+                    ? "bg-[var(--positive)] text-white scale-[1.02]"
+                    : "bg-[var(--positive)] text-white",
+                  !canPick && !myPick
+                    ? "opacity-40 cursor-not-allowed pointer-events-none"
+                    : myPick && myPick.direction !== "UP"
+                      ? "opacity-30 pointer-events-none"
+                      : "cursor-pointer",
+                ].join(" ")}
+                aria-label="UP 예측"
+              >
+                <ArrowUp size={24} strokeWidth={3} />
+                <span className="font-heading font-bold tracking-wide text-sm">
+                  {currentRound?.optionA ?? "UP 🚀"}
+                </span>
+                {canPick && (
+                  <span className="text-[11px] opacity-80">
+                    {upPct < 50 ? `🔥 ${upScore}점` : `${upScore}점`}
+                  </span>
+                )}
+              </button>
+
+              <button
+                data-testid="btn-down"
+                disabled={!canPick}
+                onClick={() => handlePick("DOWN")}
+                className={[
+                  "flex flex-col items-center justify-center gap-1.5 py-[18px] rounded-xl",
+                  "font-semibold text-base font-sans transition-all duration-150 select-none btn-press",
+                  myPick?.direction === "DOWN"
+                    ? "bg-[var(--negative)] text-white scale-[1.02]"
+                    : "bg-[var(--negative)] text-white",
+                  !canPick && !myPick
+                    ? "opacity-40 cursor-not-allowed pointer-events-none"
+                    : myPick && myPick.direction !== "DOWN"
+                      ? "opacity-30 pointer-events-none"
+                      : "cursor-pointer",
+                ].join(" ")}
+                aria-label="DOWN 예측"
+              >
+                <ArrowDown size={24} strokeWidth={3} />
+                <span className="font-heading font-bold tracking-wide text-sm">
+                  {currentRound?.optionB ?? "DOWN 💀"}
+                </span>
+                {canPick && (
+                  <span className="text-[11px] opacity-80">
+                    {downPct < 50 ? `🔥 ${downScore}점` : `${downScore}점`}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {resolvedResult && (
         <ResultOverlay

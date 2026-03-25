@@ -27,7 +27,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#FFF8E1",
+  themeColor: "#191919",
 };
 
 export default function RootLayout({
@@ -38,7 +38,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${jetbrainsMono.variable} ${fredoka.variable} h-full`}
+      className={`${jetbrainsMono.variable} ${fredoka.variable} dark h-full`}
     >
       <body className="min-h-full flex flex-col bg-[var(--bg-primary)] text-[var(--fg-primary)] antialiased">
         {children}

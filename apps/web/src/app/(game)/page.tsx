@@ -453,7 +453,7 @@ export default function GamePage() {
               {/* 소수파 비율: 선택 후에만 공개 */}
               {myPick && (currentRound.phase === "OPEN" || currentRound.phase === "CLOSED") && (
                 <div className="mb-4">
-                  <CrowdGauge upPct={upPct} picked={myPick.direction} />
+                  <CrowdGauge upPct={upPct} picked={myPick.direction} upScore={upScore} downScore={downScore} />
                   {minorityBonus && minorityBonus.bonus > 1.05 && (
                     <div className="mt-2 text-center">
                       <span className={[

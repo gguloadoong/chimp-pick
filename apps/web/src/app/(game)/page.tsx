@@ -22,6 +22,7 @@ import ResultOverlay from "@/components/game/ResultOverlay";
 import ShareCard from "@/components/game/ShareCard";
 import Onboarding from "@/components/game/Onboarding";
 import ChimpCharacter from "@/components/character/ChimpCharacter";
+import RetentionPanel from "@/components/game/RetentionPanel";
 
 const MAX_CHART_TICKS = 20;
 
@@ -624,6 +625,17 @@ export default function GamePage() {
         <p className="text-center text-xs text-[var(--fg-tertiary)] font-sans">
           소수파 보너스 최대 5배 · ⚡ 스피드 라운드 1.5배!
         </p>
+
+        {/* ── 리텐션 패널: 스트릭 + 미션 ── */}
+        <RetentionPanel
+          streak={3}
+          maxStreak={7}
+          missions={[
+            { type: "FIRST_PREDICT", isCompleted: true, reward: 5 },
+            { type: "THREE_PREDICTS", isCompleted: false, reward: 10 },
+            { type: "SHARE", isCompleted: false, reward: 15 },
+          ]}
+        />
       </div>
 
       {/* ── 하단 고정 A/B 선택 버튼 ── */}

@@ -16,10 +16,32 @@ const fredoka = Fredoka({
 });
 
 export const metadata: Metadata = {
-  title: "침팬지픽 — 주식/코인 Up/Down 예측 배틀",
-  description: "주식·코인·상식 UP/DOWN 예측 배틀! 소수파 보너스로 고득점을 노려보세요.",
+  title: "침팬지픽 — 예측 배틀 게임",
+  description: "주식·코인 UP/DOWN을 예측하고 바나나코인을 모아라! 🦍",
   icons: { icon: "/favicon.ico" },
   manifest: "/manifest.json",
+  openGraph: {
+    title: "침팬지픽 — 예측 배틀 게임",
+    description: "나도 한 번 맞춰볼까? 주식·코인 UP/DOWN 예측 게임",
+    url: "https://chimp-pick.vercel.app",
+    siteName: "침팬지픽",
+    images: [
+      {
+        url: "https://chimp-pick.vercel.app/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "침팬지픽 — 예측 배틀 게임",
+      },
+    ],
+    locale: "ko_KR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "침팬지픽 — 예측 배틀 게임",
+    description: "나도 한 번 맞춰볼까?",
+    images: ["https://chimp-pick.vercel.app/og-image.png"],
+  },
 };
 
 export const viewport: Viewport = {

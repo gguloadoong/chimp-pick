@@ -47,9 +47,7 @@ export default function BetSlider({
         aria-label="베팅 금액"
         data-testid="bet-slider"
         className="tds-slider w-full"
-        style={{
-          background: `linear-gradient(to right, var(--brand-primary) ${pct}%, var(--bg-tertiary) ${pct}%)`,
-        }}
+        style={{ "--track-fill": `${pct}%` } as React.CSSProperties}
       />
 
       <div className="flex justify-between text-xs text-[var(--fg-secondary)] font-mono">

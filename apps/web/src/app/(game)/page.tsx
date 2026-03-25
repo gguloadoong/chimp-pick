@@ -786,10 +786,8 @@ export default function GamePage() {
                 onClick={() => handlePick("UP")}
                 className={[
                   "flex flex-col items-center justify-center gap-1.5 py-[18px] rounded-xl",
-                  "font-semibold text-base font-sans transition-all duration-150 select-none btn-press",
-                  myPick?.direction === "UP"
-                    ? "bg-[var(--positive)] text-white scale-[1.02]"
-                    : "bg-[var(--positive)] text-white",
+                  "bg-[var(--positive)] text-white font-semibold text-base font-sans transition-all duration-150 select-none btn-press",
+                  myPick?.direction === "UP" ? "scale-[1.02]" : "",
                   !canPick && !myPick
                     ? "opacity-40 cursor-not-allowed pointer-events-none"
                     : myPick && myPick.direction !== "UP"
@@ -815,10 +813,8 @@ export default function GamePage() {
                 onClick={() => handlePick("DOWN")}
                 className={[
                   "flex flex-col items-center justify-center gap-1.5 py-[18px] rounded-xl",
-                  "font-semibold text-base font-sans transition-all duration-150 select-none btn-press",
-                  myPick?.direction === "DOWN"
-                    ? "bg-[var(--negative)] text-white scale-[1.02]"
-                    : "bg-[var(--negative)] text-white",
+                  "bg-[var(--negative)] text-white font-semibold text-base font-sans transition-all duration-150 select-none btn-press",
+                  myPick?.direction === "DOWN" ? "scale-[1.02]" : "",
                   !canPick && !myPick
                     ? "opacity-40 cursor-not-allowed pointer-events-none"
                     : myPick && myPick.direction !== "DOWN"

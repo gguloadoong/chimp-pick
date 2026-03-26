@@ -11,6 +11,8 @@ import { RankingModule } from './modules/ranking/ranking.module';
 import { RewardModule } from './modules/reward/reward.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { RetentionModule } from './modules/retention/retention.module';
+import { AnalystModule } from './modules/analyst/analyst.module';
+import { CalendarModule } from './modules/calendar/calendar.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { RetentionModule } from './modules/retention/retention.module';
     RewardModule,
     PaymentsModule,
     RetentionModule,
+    AnalystModule,
+    CalendarModule,
   ],
   controllers: [AppController],
   providers: [AppService],

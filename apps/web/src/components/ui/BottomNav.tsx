@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, BarChart2, Trophy, User, Newspaper } from "lucide-react";
+import { Home, BarChart2, Trophy, User, Newspaper, Activity } from "lucide-react";
 import { type ReactNode } from "react";
 
 interface NavItem {
@@ -14,6 +14,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { href: "/", label: "홈", icon: <Home size={22} aria-hidden="true" /> },
   { href: "/feed", label: "시황", icon: <Newspaper size={22} aria-hidden="true" /> },
+  { href: "/human-indicator", label: "인간지표", icon: <Activity size={22} aria-hidden="true" /> },
   { href: "/stats", label: "통계", icon: <BarChart2 size={22} aria-hidden="true" /> },
   { href: "/ranking", label: "랭킹", icon: <Trophy size={22} aria-hidden="true" /> },
   { href: "/profile", label: "프로필", icon: <User size={22} aria-hidden="true" /> },

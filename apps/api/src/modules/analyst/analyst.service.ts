@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AnalystPost, UserPosition } from '@prisma/client';
+import { SocketGateway } from '../../gateway/socket.gateway';
 
 export type AnalystPostWithMeta = AnalystPost & {
   _count: { positions: number };
@@ -24,7 +25,10 @@ export class AnalystService {
   private readonly logger = new Logger(AnalystService.name);
   private readonly genAI: GoogleGenerativeAI;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly socketGateway: SocketGateway,
+  ) {
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? '');
   }
 
@@ -53,7 +57,7 @@ export class AnalystService {
     direction: 'LONG' | 'SHORT',
   ): Promise<{ post: AnalystPost; position: UserPosition }> {
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      const result = await this.prisma.$transaction(async (tx) => {
         // 기존 포지션 조회
         const existing = await tx.userPosition.findUnique({
           where: { userId_postId: { userId, postId } },
@@ -123,6 +127,23 @@ export class AnalystService {
 
         return { post: updatedPost, position };
       });
+
+      // 트랜잭션 커밋 후 브로드캐스트 (WebSocket은 트랜잭션 밖에서 호출)
+      const { longCount, shortCount } = result.post;
+      const totalVotes = longCount + shortCount;
+      const longPct = totalVotes > 0 ? (longCount / totalVotes) * 100 : 0;
+      const shortPct = totalVotes > 0 ? (shortCount / totalVotes) * 100 : 0;
+
+      this.socketGateway.broadcastPosition({
+        postId,
+        longCount,
+        shortCount,
+        longPct,
+        shortPct,
+        totalVotes,
+      });
+
+      return result;
     } catch (error) {
       this.logger.error(`reactToPost 실패 — userId=${userId}, postId=${postId}`, error);
       throw error;

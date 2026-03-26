@@ -25,6 +25,7 @@ model User {
   iapReceipts   IapReceipt[]
   streakInfo    DailyStreak?
   dailyMissions DailyMission[]
+  positions     UserPosition[]
 }
 
 model DailyStreak {
@@ -158,4 +159,50 @@ model PriceCandle {
 
   @@unique([symbol, timeframe, timestamp])
   @@index([symbol, timestamp])
+}
+
+// Sprint 3 — AI 시황 콘텐츠 + 소셜 반응 플랫폼
+
+model AnalystPost {
+  id        String   @id @default(cuid())
+  character String   // LONG | SHORT | NEUTRAL | WAVE
+  content   String   @db.Text
+  reasoning String?  @db.Text
+  symbols   String[] // ["BTC", "ETH", "SPY"]
+  eventType String?  // FOMC | CPI | NFP | PCE | EARNINGS | KR_RATE
+  timeframe String   // DAILY | MID | LONG
+  longCount Int      @default(0)
+  shortCount Int     @default(0)
+  createdAt DateTime @default(now())
+
+  positions      UserPosition[]
+  humanIndicator HumanIndicator?
+}
+
+model UserPosition {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String
+  direction String   // LONG | SHORT
+  createdAt DateTime @default(now())
+
+  user User        @relation(fields: [userId], references: [id])
+  post AnalystPost @relation(fields: [postId], references: [id])
+
+  @@unique([userId, postId])
+  @@index([postId])
+  @@index([userId])
+}
+
+model HumanIndicator {
+  id         String   @id @default(cuid())
+  postId     String   @unique
+  longPct    Float    @default(0) // 롱 비율 (0~100)
+  shortPct   Float    @default(0) // 숏 비율 (0~100)
+  totalVotes Int      @default(0)
+  updatedAt  DateTime @updatedAt
+
+  post AnalystPost @relation(fields: [postId], references: [id])
+
+  @@index([postId])
 }

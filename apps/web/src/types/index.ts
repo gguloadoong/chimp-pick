@@ -110,6 +110,21 @@ export interface SymbolInfo {
   category: SymbolCategory;
 }
 
+// ===== Retention =====
+export interface StreakInfo {
+  currentStreak: number;
+  maxStreak: number;
+  lastCheckinAt: string | null;
+}
+
+export type DailyMissionType = "FIRST_PREDICT" | "THREE_PREDICTS" | "SHARE";
+
+export interface DailyMission {
+  type: DailyMissionType;
+  isCompleted: boolean;
+  reward: number;
+}
+
 // ===== Ranking =====
 export interface RankingEntry {
   rank: number;

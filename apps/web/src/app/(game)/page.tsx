@@ -13,6 +13,7 @@ import { formatPrice, formatChange } from "@/lib/format";
 import { useCountdown } from "@/hooks/useCountdown";
 import { useRealtimePrices } from "@/hooks/useRealtimePrices";
 import { usePrediction } from "@/hooks/usePrediction";
+import { useRetention } from "@/hooks/useRetention";
 import { AVATAR_LEVELS } from "@/types";
 import type { RoundResult } from "@/types";
 import type { QuestionCategory } from "@/types";
@@ -214,6 +215,13 @@ export default function GamePage() {
     onError: (msg) => addToast(msg, "❌", "warning"),
   });
 
+  const { checkin, completeMission } = useRetention();
+
+  // 페이지 진입 시 자동 체크인 (게스트는 useRetention 내부에서 skip)
+  useEffect(() => {
+    void checkin();
+  }, [checkin]);
+
   useEffect(() => {
     if (!activePrediction || activePrediction.result === "PENDING") return;
     applyPredictionResult(activePrediction.result, activePrediction.reward, activePrediction.betAmount);
@@ -225,8 +233,9 @@ export default function GamePage() {
     if (soundEnabled) playPickSound();
     if (currentRound?.symbol) {
       void submitPrediction(currentRound.symbol, direction, roundDuration, betAmount);
+      void completeMission("FIRST_PREDICT");
     }
-  }, [isSubmitting, pickDirection, soundEnabled, currentRound, roundDuration, betAmount, submitPrediction]);
+  }, [isSubmitting, pickDirection, soundEnabled, currentRound, roundDuration, betAmount, submitPrediction, completeMission]);
 
   const handleResultDismiss = useCallback(() => setResolvedResult(null), []);
 
@@ -651,15 +660,7 @@ export default function GamePage() {
         </p>
 
         {/* ── 리텐션 패널: 스트릭 + 미션 ── */}
-        <RetentionPanel
-          streak={3}
-          maxStreak={7}
-          missions={[
-            { type: "FIRST_PREDICT", isCompleted: true, reward: 5 },
-            { type: "THREE_PREDICTS", isCompleted: false, reward: 10 },
-            { type: "SHARE", isCompleted: false, reward: 15 },
-          ]}
-        />
+        <RetentionPanel />
       </div>
 
       {/* ── 하단 고정 A/B 선택 버튼 ── */}

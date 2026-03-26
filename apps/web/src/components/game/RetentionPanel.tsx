@@ -26,6 +26,8 @@ export default function RetentionPanel({
   maxStreak,
   missions,
 }: RetentionPanelProps) {
+  const safeStreak = Math.max(0, streak);
+  const safeMaxStreak = Math.max(0, maxStreak);
   const completedCount = missions.filter((m) => m.isCompleted).length;
 
   return (
@@ -39,7 +41,7 @@ export default function RetentionPanel({
               출석 스트릭
             </p>
             <p className="font-heading font-bold text-[var(--fg-primary)] text-sm leading-tight">
-              {streak}일째 연속 출석 중
+              {safeStreak}일째 연속 출석 중
             </p>
           </div>
         </div>
@@ -48,15 +50,15 @@ export default function RetentionPanel({
             최고
           </p>
           <p className="font-mono font-bold text-[var(--brand-primary)] text-sm tabular-nums">
-            {maxStreak}일
+            {safeMaxStreak}일
           </p>
         </div>
       </div>
 
       {/* 스트릭 시각 바 — 최대 7칸 */}
-      <div className="flex gap-1.5" role="img" aria-label={`스트릭 ${streak}일`}>
+      <div className="flex gap-1.5" role="img" aria-label={`스트릭 ${safeStreak}일`}>
         {Array.from({ length: 7 }).map((_, i) => {
-          const active = i < Math.min(streak, 7);
+          const active = i < Math.min(safeStreak, 7);
           return (
             <div
               key={i}

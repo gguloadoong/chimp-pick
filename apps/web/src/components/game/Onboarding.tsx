@@ -116,7 +116,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
         {current.arrow === "down" && <Arrow direction="down" />}
 
         {/* 스텝 인디케이터 */}
-        <div className="flex justify-center gap-2 mb-5 mt-2" aria-label={`${step + 1}단계 / ${STEPS.length}단계`}>
+        <div className="flex justify-center gap-2 mb-5 mt-2" role="group" aria-label={`${step + 1}단계 / ${STEPS.length}단계`}>
           {STEPS.map((_, i) => (
             <div
               key={i}

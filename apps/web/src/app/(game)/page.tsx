@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowUp, ArrowDown, Trophy } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -96,6 +97,7 @@ function CircularTimer({
 }
 
 export default function GamePage() {
+  const router = useRouter();
   const {
     currentRound,
     myPick,
@@ -762,7 +764,7 @@ export default function GamePage() {
         <GuestNudge
           onSignup={() => {
             setShowGuestNudge(false);
-            window.location.href = "/login";
+            router.push("/login");
           }}
           onDismiss={() => setShowGuestNudge(false)}
         />

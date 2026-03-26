@@ -1,6 +1,446 @@
-<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+
+  <!-- Background -->
   <rect width="1200" height="630" fill="#1a1a2e"/>
-  <text x="600" y="280" font-family="monospace" font-size="80" fill="#feae34" text-anchor="middle">🦍</text>
-  <text x="600" y="390" font-family="monospace" font-size="48" fill="#ffffff" text-anchor="middle">침팬지픽</text>
-  <text x="600" y="460" font-family="monospace" font-size="28" fill="#63c74d" text-anchor="middle">UP/DOWN 예측 배틀 게임</text>
+
+  <!-- Pixel grid texture (subtle scanlines) -->
+  <rect width="1200" height="630" fill="url(#scanline)" opacity="0.08"/>
+
+  <!-- Left panel bg -->
+  <rect x="0" y="0" width="560" height="630" fill="#16162a"/>
+
+  <!-- Divider line (pixel style) -->
+  <rect x="558" y="0" width="4" height="630" fill="#feae34"/>
+  <rect x="560" y="0" width="2" height="630" fill="#c47a00"/>
+
+  <!-- === CHIMP PIXEL ART (8px grid) === -->
+  <!-- Color palette:
+       fur dark:   #5c3d1e
+       fur mid:    #7a5230
+       fur light:  #9b6b3a
+       face:       #d4a055
+       face dark:  #b87c30
+       eye white:  #e8e8d0
+       eye pupil:  #1a1a1e
+       mouth:      #1a1a1e
+       ear inner:  #c4704a
+       banana:     #feae34
+       banana tip: #c47a00
+  -->
+
+  <!-- === HEAD AREA === -->
+  <!-- Top fur (crown) -->
+  <rect x="172" y="80"  width="16" height="8" fill="#5c3d1e"/>
+  <rect x="188" y="72"  width="16" height="8" fill="#5c3d1e"/>
+  <rect x="204" y="64"  width="64" height="8" fill="#5c3d1e"/>
+  <rect x="268" y="72"  width="16" height="8" fill="#5c3d1e"/>
+  <rect x="284" y="80"  width="16" height="8" fill="#5c3d1e"/>
+
+  <!-- Head sides top -->
+  <rect x="156" y="88"  width="16" height="8" fill="#7a5230"/>
+  <rect x="300" y="88"  width="16" height="8" fill="#7a5230"/>
+
+  <!-- Ear left -->
+  <rect x="140" y="112" width="16" height="8" fill="#7a5230"/>
+  <rect x="132" y="120" width="24" height="8" fill="#9b6b3a"/>
+  <rect x="132" y="128" width="24" height="8" fill="#c4704a"/>
+  <rect x="140" y="136" width="16" height="8" fill="#9b6b3a"/>
+
+  <!-- Ear right -->
+  <rect x="316" y="112" width="16" height="8" fill="#7a5230"/>
+  <rect x="316" y="120" width="24" height="8" fill="#9b6b3a"/>
+  <rect x="316" y="128" width="24" height="8" fill="#c4704a"/>
+  <rect x="316" y="136" width="16" height="8" fill="#9b6b3a"/>
+
+  <!-- Head main block -->
+  <rect x="156" y="96"  width="160" height="8" fill="#7a5230"/>
+  <rect x="148" y="104" width="176" height="8" fill="#7a5230"/>
+  <rect x="148" y="112" width="176" height="8" fill="#9b6b3a"/>
+  <rect x="148" y="120" width="176" height="8" fill="#9b6b3a"/>
+  <rect x="148" y="128" width="176" height="8" fill="#9b6b3a"/>
+  <rect x="148" y="136" width="176" height="8" fill="#9b6b3a"/>
+  <rect x="148" y="144" width="176" height="8" fill="#9b6b3a"/>
+
+  <!-- Face area (lighter) -->
+  <rect x="172" y="112" width="128" height="8" fill="#d4a055"/>
+  <rect x="164" y="120" width="144" height="8" fill="#d4a055"/>
+  <rect x="164" y="128" width="144" height="8" fill="#d4a055"/>
+  <rect x="164" y="136" width="144" height="8" fill="#d4a055"/>
+  <rect x="164" y="144" width="144" height="8" fill="#d4a055"/>
+
+  <!-- Head lower -->
+  <rect x="148" y="152" width="176" height="8" fill="#9b6b3a"/>
+  <rect x="164" y="152" width="144" height="8" fill="#d4a055"/>
+
+  <!-- Eyes left -->
+  <rect x="188" y="120" width="16" height="8" fill="#e8e8d0"/>
+  <rect x="188" y="128" width="16" height="8" fill="#e8e8d0"/>
+  <rect x="192" y="124" width="8"  height="8" fill="#1a1a1e"/>
+  <!-- Eyeshine left -->
+  <rect x="192" y="124" width="4"  height="4" fill="#ffffff"/>
+
+  <!-- Eyes right -->
+  <rect x="268" y="120" width="16" height="8" fill="#e8e8d0"/>
+  <rect x="268" y="128" width="16" height="8" fill="#e8e8d0"/>
+  <rect x="272" y="124" width="8"  height="8" fill="#1a1a1e"/>
+  <!-- Eyeshine right -->
+  <rect x="272" y="124" width="4"  height="4" fill="#ffffff"/>
+
+  <!-- Nose -->
+  <rect x="220" y="140" width="8"  height="4" fill="#7a5230"/>
+  <rect x="240" y="140" width="8"  height="4" fill="#7a5230"/>
+
+  <!-- Mouth / smile area -->
+  <rect x="196" y="152" width="80" height="8" fill="#b87c30"/>
+  <rect x="196" y="160" width="80" height="8" fill="#b87c30"/>
+  <rect x="204" y="160" width="64" height="8" fill="#1a1a1e"/>
+  <!-- Teeth -->
+  <rect x="212" y="164" width="12" height="4" fill="#ffffff"/>
+  <rect x="232" y="164" width="12" height="4" fill="#ffffff"/>
+  <rect x="252" y="164" width="12" height="4" fill="#ffffff"/>
+
+  <!-- Chin -->
+  <rect x="196" y="168" width="80" height="8" fill="#d4a055"/>
+  <rect x="180" y="168" width="16" height="8" fill="#9b6b3a"/>
+  <rect x="276" y="168" width="16" height="8" fill="#9b6b3a"/>
+
+  <!-- === NECK === -->
+  <rect x="204" y="176" width="64" height="8" fill="#9b6b3a"/>
+  <rect x="212" y="184" width="48" height="8" fill="#7a5230"/>
+
+  <!-- === BODY === -->
+  <rect x="180" y="192" width="112" height="8"  fill="#5c3d1e"/>
+  <rect x="172" y="200" width="128" height="8"  fill="#7a5230"/>
+  <rect x="164" y="208" width="144" height="8"  fill="#7a5230"/>
+  <rect x="164" y="216" width="144" height="8"  fill="#9b6b3a"/>
+  <rect x="164" y="224" width="144" height="8"  fill="#9b6b3a"/>
+  <rect x="164" y="232" width="144" height="8"  fill="#9b6b3a"/>
+  <rect x="164" y="240" width="144" height="8"  fill="#7a5230"/>
+  <rect x="172" y="248" width="128" height="8"  fill="#7a5230"/>
+  <rect x="180" y="256" width="112" height="8"  fill="#5c3d1e"/>
+
+  <!-- Belly (lighter) -->
+  <rect x="196" y="208" width="80" height="8"  fill="#c49050"/>
+  <rect x="196" y="216" width="80" height="8"  fill="#c49050"/>
+  <rect x="196" y="224" width="80" height="8"  fill="#d4a055"/>
+  <rect x="196" y="232" width="80" height="8"  fill="#c49050"/>
+
+  <!-- === LEFT ARM (holds banana) === -->
+  <rect x="132" y="200" width="32" height="8"  fill="#7a5230"/>
+  <rect x="124" y="208" width="40" height="8"  fill="#9b6b3a"/>
+  <rect x="116" y="216" width="48" height="8"  fill="#9b6b3a"/>
+  <rect x="108" y="224" width="48" height="8"  fill="#7a5230"/>
+  <rect x="100" y="232" width="40" height="8"  fill="#7a5230"/>
+  <!-- Hand left -->
+  <rect x="92"  y="240" width="32" height="8"  fill="#9b6b3a"/>
+  <rect x="84"  y="248" width="24" height="8"  fill="#9b6b3a"/>
+  <rect x="84"  y="256" width="16" height="8"  fill="#9b6b3a"/>
+
+  <!-- === RIGHT ARM (pointing up) === -->
+  <rect x="308" y="200" width="32" height="8"  fill="#7a5230"/>
+  <rect x="308" y="208" width="40" height="8"  fill="#9b6b3a"/>
+  <rect x="316" y="192" width="40" height="8"  fill="#9b6b3a"/>
+  <rect x="324" y="184" width="40" height="8"  fill="#7a5230"/>
+  <rect x="332" y="176" width="32" height="8"  fill="#7a5230"/>
+  <!-- Hand right (pointing) -->
+  <rect x="340" y="160" width="24" height="8"  fill="#9b6b3a"/>
+  <rect x="348" y="152" width="16" height="8"  fill="#9b6b3a"/>
+  <rect x="348" y="144" width="8"  height="8"  fill="#9b6b3a"/>
+  <!-- Finger pointing -->
+  <rect x="352" y="136" width="8"  height="8"  fill="#9b6b3a"/>
+  <rect x="356" y="128" width="8"  height="8"  fill="#9b6b3a"/>
+  <rect x="356" y="120" width="8"  height="8"  fill="#9b6b3a"/>
+
+  <!-- === LEGS === -->
+  <!-- Left leg -->
+  <rect x="188" y="264" width="40" height="8"  fill="#5c3d1e"/>
+  <rect x="188" y="272" width="32" height="8"  fill="#7a5230"/>
+  <rect x="184" y="280" width="32" height="8"  fill="#7a5230"/>
+  <rect x="180" y="288" width="32" height="8"  fill="#9b6b3a"/>
+  <!-- Left foot -->
+  <rect x="172" y="296" width="40" height="8"  fill="#7a5230"/>
+  <rect x="164" y="304" width="48" height="8"  fill="#9b6b3a"/>
+
+  <!-- Right leg -->
+  <rect x="244" y="264" width="40" height="8"  fill="#5c3d1e"/>
+  <rect x="252" y="272" width="32" height="8"  fill="#7a5230"/>
+  <rect x="256" y="280" width="32" height="8"  fill="#7a5230"/>
+  <rect x="260" y="288" width="32" height="8"  fill="#9b6b3a"/>
+  <!-- Right foot -->
+  <rect x="260" y="296" width="40" height="8"  fill="#7a5230"/>
+  <rect x="260" y="304" width="48" height="8"  fill="#9b6b3a"/>
+
+  <!-- === BANANA (left hand holding) === -->
+  <!-- Banana body -->
+  <rect x="44"  y="244" width="8"  height="8"  fill="#c47a00"/>
+  <rect x="52"  y="236" width="8"  height="8"  fill="#feae34"/>
+  <rect x="60"  y="228" width="8"  height="8"  fill="#feae34"/>
+  <rect x="68"  y="220" width="8"  height="8"  fill="#feae34"/>
+  <rect x="76"  y="212" width="8"  height="8"  fill="#feae34"/>
+  <rect x="60"  y="244" width="8"  height="8"  fill="#feae34"/>
+  <rect x="68"  y="244" width="8"  height="8"  fill="#feae34"/>
+  <rect x="68"  y="236" width="8"  height="8"  fill="#feae34"/>
+  <rect x="76"  y="228" width="8"  height="8"  fill="#feae34"/>
+  <rect x="76"  y="236" width="8"  height="8"  fill="#feae34"/>
+  <!-- Banana tip -->
+  <rect x="76"  y="204" width="8"  height="8"  fill="#c47a00"/>
+  <rect x="84"  y="256" width="8"  height="8"  fill="#c47a00"/>
+
+  <!-- === UP ARROW glow near right arm === -->
+  <rect x="360" y="96" width="8"  height="8"  fill="#63c74d" opacity="0.9"/>
+  <rect x="368" y="88" width="8"  height="8"  fill="#63c74d" opacity="0.9"/>
+  <rect x="376" y="80" width="8"  height="8"  fill="#63c74d" opacity="0.9"/>
+  <rect x="356" y="104" width="8" height="8"  fill="#63c74d" opacity="0.6"/>
+  <rect x="380" y="88"  width="8" height="8"  fill="#63c74d" opacity="0.6"/>
+  <rect x="384" y="96"  width="8" height="8"  fill="#63c74d" opacity="0.4"/>
+
+  <!-- === SCANLINE defs === -->
+  <defs>
+    <pattern id="scanline" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+      <rect width="4" height="1" fill="#000000"/>
+    </pattern>
+    <!-- UP glow -->
+    <filter id="glow-up">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- DOWN glow -->
+    <filter id="glow-down">
+      <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- Title glow -->
+    <filter id="glow-title">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ================================ -->
+  <!-- RIGHT PANEL CONTENT -->
+  <!-- ================================ -->
+
+  <!-- Panel bg accent (subtle) -->
+  <rect x="580" y="0" width="620" height="630" fill="#1e1e38"/>
+
+  <!-- Top accent bar -->
+  <rect x="580" y="0" width="620" height="4" fill="#feae34"/>
+
+  <!-- === TITLE "침팬지픽" === -->
+  <!-- Shadow layer -->
+  <text x="893" y="197"
+        font-family="'Courier New', monospace"
+        font-size="96"
+        font-weight="bold"
+        fill="#7a5000"
+        text-anchor="middle"
+        letter-spacing="4">침팬지픽</text>
+  <!-- Main title -->
+  <text x="890" y="194"
+        font-family="'Courier New', monospace"
+        font-size="96"
+        font-weight="bold"
+        fill="#feae34"
+        text-anchor="middle"
+        letter-spacing="4"
+        filter="url(#glow-title)">침팬지픽</text>
+
+  <!-- Brand mark pixel blocks (decorative — under title) -->
+  <rect x="620" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="636" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="652" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="668" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="684" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="700" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="716" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="732" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="1060" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="1076" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="1092" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="1108" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="1124" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="1140" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="1156" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+  <rect x="1172" y="206" width="8" height="8" fill="#feae34" opacity="0.5"/>
+
+  <!-- Separator line pixel -->
+  <rect x="620" y="218" width="568" height="4" fill="#feae34" opacity="0.3"/>
+
+  <!-- === SUBTITLE === -->
+  <text x="890" y="268"
+        font-family="'Courier New', monospace"
+        font-size="28"
+        fill="#a0a0c0"
+        text-anchor="middle"
+        letter-spacing="2">UP/DOWN 예측 배틀 게임</text>
+
+  <!-- === UP / DOWN BUTTONS === -->
+
+  <!-- UP button block -->
+  <!-- Button shadow (pixel offset) -->
+  <rect x="636" y="318" width="220" height="76" fill="#2a6e3a"/>
+  <!-- Button face -->
+  <rect x="628" y="310" width="220" height="76" fill="#3da84e"/>
+  <!-- Button highlight top -->
+  <rect x="628" y="310" width="220" height="4"  fill="#5fd870"/>
+  <!-- Button highlight left -->
+  <rect x="628" y="310" width="4"   height="76" fill="#5fd870"/>
+  <!-- UP icon blocks (arrow) -->
+  <rect x="664" y="348" width="16" height="8"  fill="#1a2e1e"/>
+  <rect x="672" y="340" width="16" height="8"  fill="#1a2e1e"/>
+  <rect x="680" y="332" width="16" height="8"  fill="#1a2e1e"/>
+  <rect x="660" y="348" width="8"  height="8"  fill="#1a2e1e"/>
+  <rect x="696" y="348" width="8"  height="8"  fill="#1a2e1e"/>
+  <!-- UP label -->
+  <text x="746" y="364"
+        font-family="'Courier New', monospace"
+        font-size="38"
+        font-weight="bold"
+        fill="#1a2e1e"
+        text-anchor="middle"
+        letter-spacing="3">UP</text>
+
+  <!-- DOWN button block -->
+  <!-- Button shadow -->
+  <rect x="944" y="318" width="220" height="76" fill="#7a1e22"/>
+  <!-- Button face -->
+  <rect x="936" y="310" width="220" height="76" fill="#c03038"/>
+  <!-- Button highlight top -->
+  <rect x="936" y="310" width="220" height="4"  fill="#e84855"/>
+  <!-- Button highlight left -->
+  <rect x="936" y="310" width="4"   height="76" fill="#e84855"/>
+  <!-- DOWN icon blocks (arrow) -->
+  <rect x="972" y="332" width="16" height="8"  fill="#2e1a1e"/>
+  <rect x="980" y="340" width="16" height="8"  fill="#2e1a1e"/>
+  <rect x="988" y="348" width="16" height="8"  fill="#2e1a1e"/>
+  <rect x="968" y="332" width="8"  height="8"  fill="#2e1a1e"/>
+  <rect x="1004" y="332" width="8" height="8"  fill="#2e1a1e"/>
+  <!-- DOWN label -->
+  <text x="1068" y="364"
+        font-family="'Courier New', monospace"
+        font-size="38"
+        font-weight="bold"
+        fill="#2e1a1e"
+        text-anchor="middle"
+        letter-spacing="3">DOWN</text>
+
+  <!-- === STAT DISPLAY AREA === -->
+  <!-- Pixel stat boxes -->
+  <rect x="628" y="412" width="104" height="52" fill="#0e1a30"/>
+  <rect x="628" y="412" width="104" height="4"  fill="#63c74d"/>
+  <text x="680" y="436"
+        font-family="'Courier New', monospace"
+        font-size="11"
+        fill="#63c74d"
+        text-anchor="middle">WIN RATE</text>
+  <text x="680" y="455"
+        font-family="'Courier New', monospace"
+        font-size="18"
+        font-weight="bold"
+        fill="#63c74d"
+        text-anchor="middle">73.4%</text>
+
+  <rect x="744" y="412" width="104" height="52" fill="#0e1a30"/>
+  <rect x="744" y="412" width="104" height="4"  fill="#feae34"/>
+  <text x="796" y="436"
+        font-family="'Courier New', monospace"
+        font-size="11"
+        fill="#feae34"
+        text-anchor="middle">BANANA</text>
+  <text x="796" y="455"
+        font-family="'Courier New', monospace"
+        font-size="18"
+        font-weight="bold"
+        fill="#feae34"
+        text-anchor="middle">99,999</text>
+
+  <rect x="860" y="412" width="104" height="52" fill="#0e1a30"/>
+  <rect x="860" y="412" width="104" height="4"  fill="#a070ff"/>
+  <text x="912" y="436"
+        font-family="'Courier New', monospace"
+        font-size="11"
+        fill="#a070ff"
+        text-anchor="middle">STREAK</text>
+  <text x="912" y="455"
+        font-family="'Courier New', monospace"
+        font-size="18"
+        font-weight="bold"
+        fill="#a070ff"
+        text-anchor="middle">x7</text>
+
+  <rect x="976" y="412" width="176" height="52" fill="#0e1a30"/>
+  <rect x="976" y="412" width="176" height="4"  fill="#ff6030"/>
+  <text x="1064" y="436"
+        font-family="'Courier New', monospace"
+        font-size="11"
+        fill="#ff6030"
+        text-anchor="middle">PLAYERS</text>
+  <text x="1064" y="455"
+        font-family="'Courier New', monospace"
+        font-size="18"
+        font-weight="bold"
+        fill="#ff6030"
+        text-anchor="middle">1,247 ONLINE</text>
+
+  <!-- === TICKER STRIP === -->
+  <rect x="580" y="488" width="620" height="36" fill="#0a0a1a"/>
+  <rect x="580" y="488" width="620" height="2"  fill="#feae34" opacity="0.4"/>
+  <rect x="580" y="522" width="620" height="2"  fill="#feae34" opacity="0.4"/>
+  <text x="600" y="511"
+        font-family="'Courier New', monospace"
+        font-size="14"
+        fill="#63c74d">BTC +3.24%</text>
+  <text x="730" y="511"
+        font-family="'Courier New', monospace"
+        font-size="14"
+        fill="#e43b44">ETH -1.87%</text>
+  <text x="850" y="511"
+        font-family="'Courier New', monospace"
+        font-size="14"
+        fill="#63c74d">AAPL +0.94%</text>
+  <text x="990" y="511"
+        font-family="'Courier New', monospace"
+        font-size="14"
+        fill="#63c74d">TSLA +5.12%</text>
+  <text x="1110" y="511"
+        font-family="'Courier New', monospace"
+        font-size="14"
+        fill="#e43b44">NVDA -2.31%</text>
+
+  <!-- === BOTTOM STRIP === -->
+  <rect x="0"   y="580" width="1200" height="50" fill="#12122a"/>
+  <rect x="0"   y="580" width="1200" height="3"  fill="#feae34"/>
+
+  <!-- Left logo mark pixel (chimp icon mini) -->
+  <rect x="24" y="596" width="8" height="8" fill="#7a5230"/>
+  <rect x="32" y="592" width="8" height="8" fill="#9b6b3a"/>
+  <rect x="40" y="592" width="8" height="8" fill="#9b6b3a"/>
+  <rect x="48" y="596" width="8" height="8" fill="#7a5230"/>
+  <rect x="32" y="600" width="8" height="4" fill="#d4a055"/>
+  <rect x="40" y="600" width="8" height="4" fill="#d4a055"/>
+
+  <!-- URL -->
+  <text x="600" y="614"
+        font-family="'Courier New', monospace"
+        font-size="20"
+        fill="#feae34"
+        text-anchor="middle"
+        letter-spacing="3"
+        opacity="0.9">chimp-pick.vercel.app</text>
+
+  <!-- Right pixel decoration -->
+  <rect x="1140" y="592" width="8" height="8" fill="#63c74d" opacity="0.8"/>
+  <rect x="1152" y="596" width="8" height="8" fill="#feae34" opacity="0.8"/>
+  <rect x="1164" y="592" width="8" height="8" fill="#e43b44" opacity="0.8"/>
+
+  <!-- Corner pixel accents -->
+  <rect x="0"    y="0"   width="16" height="16" fill="#feae34" opacity="0.6"/>
+  <rect x="4"    y="4"   width="8"  height="8"  fill="#1a1a2e"/>
+  <rect x="1184" y="0"   width="16" height="16" fill="#feae34" opacity="0.6"/>
+  <rect x="1188" y="4"   width="8"  height="8"  fill="#1a1a2e"/>
+  <rect x="0"    y="614" width="16" height="16" fill="#feae34" opacity="0.6"/>
+  <rect x="4"    y="618" width="8"  height="8"  fill="#1a1a2e"/>
+  <rect x="1184" y="614" width="16" height="16" fill="#feae34" opacity="0.6"/>
+  <rect x="1188" y="618" width="8"  height="8"  fill="#1a1a2e"/>
+
 </svg>

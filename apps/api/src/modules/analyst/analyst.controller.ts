@@ -7,6 +7,7 @@ import {
   Headers,
   Query,
   BadRequestException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiHeader, ApiQuery, ApiBody } from '@nestjs/swagger';
@@ -79,6 +80,9 @@ export class AnalystController {
     },
   })
   async generatePost(@Body() body: GenerateBody) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new ForbiddenException('[개발용] 프로덕션에서는 사용 불가');
+    }
     if (!body.character) {
       throw new BadRequestException('character는 필수입니다.');
     }

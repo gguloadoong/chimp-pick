@@ -126,31 +126,31 @@ const ECONOMIC_EVENTS: EconomicEvent[] = [
 
 @Injectable()
 export class CalendarService {
-  private getTodayInSeoul(): Date {
+  private getTodayStringInSeoul(): string {
     const now = new Date();
-    // Asia/Seoul은 UTC+9이므로 오프셋 적용
     const seoulOffset = 9 * 60;
     const utcMs = now.getTime() + now.getTimezoneOffset() * 60 * 1000;
     const seoulMs = utcMs + seoulOffset * 60 * 1000;
     const seoulDate = new Date(seoulMs);
-    // 시각 정보 제거 후 날짜만 반환
-    seoulDate.setHours(0, 0, 0, 0);
-    return seoulDate;
+    const y = seoulDate.getFullYear();
+    const m = String(seoulDate.getMonth() + 1).padStart(2, '0');
+    const d = String(seoulDate.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
-  private parseDateString(dateStr: string): Date {
+  private addDaysToDateString(dateStr: string, days: number): string {
     const [year, month, day] = dateStr.split('-').map(Number);
-    return new Date(year, month - 1, day);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    date.setUTCDate(date.getUTCDate() + days);
+    return date.toISOString().slice(0, 10);
   }
 
   getUpcomingEvents(days = 30): EconomicEvent[] {
-    const today = this.getTodayInSeoul();
-    const limit = new Date(today);
-    limit.setDate(limit.getDate() + days);
+    const today = this.getTodayStringInSeoul();
+    const limit = this.addDaysToDateString(today, days);
 
     return ECONOMIC_EVENTS.filter((event) => {
-      const eventDate = this.parseDateString(event.date);
-      return eventDate >= today && eventDate <= limit;
+      return event.date >= today && event.date <= limit;
     }).sort((a, b) => a.date.localeCompare(b.date));
   }
 

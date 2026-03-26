@@ -18,6 +18,15 @@ export interface PriceUpdatePayload {
   timestamp: string;
 }
 
+export interface PositionUpdatePayload {
+  postId: string;
+  longCount: number;
+  shortCount: number;
+  longPct: number;
+  shortPct: number;
+  totalVotes: number;
+}
+
 @WebSocketGateway({
   cors: {
     origin: process.env.CORS_ORIGIN
@@ -61,5 +70,10 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   broadcastPrice(payload: PriceUpdatePayload) {
     if (!this.server) return;
     this.server.emit('price:tick', payload);
+  }
+
+  broadcastPosition(payload: PositionUpdatePayload) {
+    if (!this.server) return;
+    this.server.emit('position:update', payload);
   }
 }

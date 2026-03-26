@@ -1,34 +1,79 @@
 "use client";
 
-interface Mission {
-  type: "FIRST_PREDICT" | "THREE_PREDICTS" | "SHARE";
-  isCompleted: boolean;
-  reward: number;
-}
+import type { UseRetentionReturn } from "@/hooks/useRetention";
+import type { DailyMissionResponse } from "@/lib/api";
 
-export interface RetentionPanelProps {
-  streak: number;
-  maxStreak: number;
-  missions: Mission[];
-}
+type MissionType = "FIRST_PREDICT" | "THREE_PREDICTS" | "SHARE";
 
-const MISSION_META: Record<
-  Mission["type"],
-  { label: string; defaultReward: number }
-> = {
-  FIRST_PREDICT: { label: "오늘 첫 예측 🎯", defaultReward: 5 },
-  THREE_PREDICTS: { label: "예측 3회 완료 🔥", defaultReward: 10 },
-  SHARE: { label: "결과 공유하기 📤", defaultReward: 15 },
+const MISSION_META: Record<MissionType, { label: string }> = {
+  FIRST_PREDICT: { label: "오늘 첫 예측 🎯" },
+  THREE_PREDICTS: { label: "예측 3회 완료 🔥" },
+  SHARE: { label: "결과 공유하기 📤" },
 };
 
-export default function RetentionPanel({
-  streak,
-  maxStreak,
-  missions,
-}: RetentionPanelProps) {
-  const safeStreak = Math.max(0, streak);
-  const safeMaxStreak = Math.max(0, maxStreak);
-  const completedCount = missions.filter((m) => m.isCompleted).length;
+function SkeletonBar({ className }: { className?: string }) {
+  return (
+    <div
+      className={[
+        "animate-pulse rounded-full bg-[var(--bg-tertiary)]",
+        className ?? "",
+      ].join(" ")}
+    />
+  );
+}
+
+interface RetentionPanelProps {
+  retention: UseRetentionReturn;
+  isGuest: boolean;
+}
+
+export default function RetentionPanel({ retention, isGuest }: RetentionPanelProps) {
+  const { streak, missions, isLoading } = retention;
+
+  // 게스트 유저 — 로그인 유도 메시지
+  if (isGuest) {
+    return (
+      <div className="bg-[var(--bg-secondary)] border-2 border-[rgba(255,255,255,0.08)] rounded-[var(--radius-md)] p-4 text-center space-y-1">
+        <p className="text-base">🍌</p>
+        <p className="text-sm font-sans text-[var(--fg-secondary)]">
+          로그인하면 스트릭을 쌓을 수 있어요 🍌
+        </p>
+        <p className="text-xs font-sans text-[var(--fg-tertiary)]">
+          매일 출석하고 미션 보상을 받아보세요
+        </p>
+      </div>
+    );
+  }
+
+  // 로딩 스켈레톤
+  if (isLoading) {
+    return (
+      <div className="bg-[var(--bg-secondary)] border-2 border-[rgba(255,255,255,0.08)] rounded-[var(--radius-md)] p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1.5">
+            <SkeletonBar className="h-2 w-16" />
+            <SkeletonBar className="h-3 w-28" />
+          </div>
+          <SkeletonBar className="h-4 w-10" />
+        </div>
+        <div className="flex gap-1.5">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <SkeletonBar key={i} className="flex-1 h-2" />
+          ))}
+        </div>
+        <div className="border-t border-[rgba(255,255,255,0.06)]" />
+        <div className="space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <SkeletonBar key={i} className="h-9 w-full rounded-[var(--radius-sm)]" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const safeStreak = Math.max(0, streak?.currentStreak ?? 0);
+  const safeMaxStreak = Math.max(0, streak?.maxStreak ?? 0);
+  const completedCount = missions.filter((m: DailyMissionResponse) => m.isCompleted).length;
 
   return (
     <div className="bg-[var(--bg-secondary)] border-2 border-[rgba(255,255,255,0.08)] rounded-[var(--radius-md)] p-4 space-y-4">
@@ -64,9 +109,7 @@ export default function RetentionPanel({
               key={i}
               className={[
                 "flex-1 h-2 rounded-full transition-colors duration-300",
-                active
-                  ? "bg-[var(--brand-primary)]"
-                  : "bg-[var(--bg-tertiary)]",
+                active ? "bg-[var(--brand-primary)]" : "bg-[var(--bg-tertiary)]",
               ].join(" ")}
             />
           );
@@ -88,8 +131,8 @@ export default function RetentionPanel({
         </div>
 
         <ul className="space-y-2" role="list">
-          {missions.map((mission) => {
-            const meta = MISSION_META[mission.type];
+          {missions.map((mission: DailyMissionResponse) => {
+            const meta = MISSION_META[mission.type as MissionType];
             return (
               <li
                 key={mission.type}
@@ -120,7 +163,7 @@ export default function RetentionPanel({
                         : "text-[var(--fg-primary)]",
                     ].join(" ")}
                   >
-                    {meta.label}
+                    {meta?.label ?? mission.type}
                   </span>
                 </div>
 

@@ -31,6 +31,24 @@
   "directoryMap": {},
   "hotPaths": [
     {
+      "path": "apps/web/src/app/(game)/page.tsx",
+      "accessCount": 14,
+      "lastAccessed": 1774517604753,
+      "type": "file"
+    },
+    {
+      "path": "apps/web/src/components/game/RetentionPanel.tsx",
+      "accessCount": 8,
+      "lastAccessed": 1774517589954,
+      "type": "file"
+    },
+    {
+      "path": "apps/web/src/lib/api.ts",
+      "accessCount": 6,
+      "lastAccessed": 1774517637254,
+      "type": "directory"
+    },
+    {
       "path": ".project/roadmap.md",
       "accessCount": 3,
       "lastAccessed": 1773948306330,
@@ -41,6 +59,12 @@
       "accessCount": 3,
       "lastAccessed": 1773948306796,
       "type": "file"
+    },
+    {
+      "path": "apps/web/src/types/index.ts",
+      "accessCount": 3,
+      "lastAccessed": 1774516953156,
+      "type": "directory"
     },
     {
       "path": ".project/PRD.md",
@@ -82,6 +106,30 @@
       "path": "package.json",
       "accessCount": 1,
       "lastAccessed": 1773948568049,
+      "type": "file"
+    },
+    {
+      "path": "apps/web/public/og-image.svg",
+      "accessCount": 1,
+      "lastAccessed": 1774516907442,
+      "type": "file"
+    },
+    {
+      "path": "apps/web/src/components/game/ResultOverlay.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1774516908761,
+      "type": "file"
+    },
+    {
+      "path": "apps/web/src",
+      "accessCount": 1,
+      "lastAccessed": 1774516967367,
+      "type": "directory"
+    },
+    {
+      "path": "apps/web/src/hooks/useRetention.ts",
+      "accessCount": 1,
+      "lastAccessed": 1774517549151,
       "type": "file"
     }
   ],

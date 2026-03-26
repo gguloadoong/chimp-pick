@@ -202,6 +202,28 @@ export const rankingApi = {
     request<{ rank: number }>(`/rankings/me?period=${period}`),
 };
 
+// ─── Retention ─────────────────────────────────────────────────────────────
+
+export interface StreakInfoResponse {
+  currentStreak: number;
+  maxStreak: number;
+  lastCheckinAt: string | null;
+}
+
+export interface DailyMissionResponse {
+  type: "FIRST_PREDICT" | "THREE_PREDICTS" | "SHARE";
+  isCompleted: boolean;
+  reward: number;
+}
+
+export const retentionApi = {
+  streak: () => request<StreakInfoResponse>("/retention/streak"),
+  missions: () => request<DailyMissionResponse[]>("/retention/missions"),
+  checkin: () => request<{ streak: number }>("/retention/checkin", { method: "POST" }),
+  completeMission: (type: string) =>
+    request<{ reward: number }>(`/retention/missions/${type}/complete`, { method: "POST" }),
+};
+
 // ─── Rewards ───────────────────────────────────────────────────────────────
 
 export const rewardApi = {

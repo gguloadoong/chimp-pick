@@ -341,7 +341,7 @@ export default function ResultOverlay({
                   </div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-[var(--fg-secondary)] font-sans">결과가</span>
-                    <span className={["font-mono tabular-nums font-bold", isWin ? "text-[var(--positive)]" : "text-[var(--negative)]"].join(" ")}>
+                    <span className={["font-mono tabular-nums font-bold", result.result === "UP" ? "text-[var(--positive)]" : "text-[var(--negative)]"].join(" ")}>
                       {formatPrice(result.exitPrice)}원
                     </span>
                   </div>

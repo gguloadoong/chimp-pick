@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { RetentionService } from '../retention/retention.service';
 import { Prediction } from '@prisma/client';
 
 // Timeframe to milliseconds (Sprint 1: short for testing)
@@ -18,7 +19,10 @@ const WIN_MULTIPLIER = 1.9; // per agreements.md X7
 export class GameService implements OnModuleInit {
   private readonly logger = new Logger(GameService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly retentionService: RetentionService,
+  ) {}
 
   async onModuleInit(): Promise<void> {
     await this.reschedulePendingPredictions();
@@ -193,6 +197,52 @@ export class GameService implements OnModuleInit {
         });
       }
     });
+
+    // 리텐션 미션 자동 트리거 — 미션별 독립 try/catch로 격리
+    // FIRST_PREDICT 실패가 THREE_PREDICTS 평가를 막지 않도록 분리
+    try {
+      await this.retentionService.completeMission(prediction.userId, 'FIRST_PREDICT');
+    } catch (missionErr) {
+      this.logger.warn(
+        `리텐션 미션 업데이트 실패 (FIRST_PREDICT, predictionId=${predictionId}): ${missionErr instanceof Error ? missionErr.message : String(missionErr)}`,
+        missionErr instanceof Error ? missionErr.stack : undefined,
+      );
+    }
+
+    try {
+      // KST 기준 당일 완료 예측 건수 확인 — formatToParts로 locale 포맷 변경에 무관하게 안전하게 추출
+      const kstParts = new Intl.DateTimeFormat('ko-KR', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).formatToParts(new Date());
+      const kstYear = kstParts.find((p) => p.type === 'year')?.value;
+      const kstMonth = kstParts.find((p) => p.type === 'month')?.value;
+      const kstDay = kstParts.find((p) => p.type === 'day')?.value;
+      if (!kstYear || !kstMonth || !kstDay) {
+        throw new Error('KST 날짜 파싱 실패');
+      }
+      const kstDateStr = `${kstYear}-${kstMonth}-${kstDay}`;
+      const todayStartKst = new Date(`${kstDateStr}T00:00:00+09:00`);
+      const tomorrowStartKst = new Date(todayStartKst.getTime() + 24 * 60 * 60 * 1000);
+
+      const todayCount = await this.prisma.prediction.count({
+        where: {
+          userId: prediction.userId,
+          result: { in: ['WIN', 'LOSE'] },
+          resolvedAt: { gte: todayStartKst, lt: tomorrowStartKst },
+        },
+      });
+      if (todayCount >= 3) {
+        await this.retentionService.completeMission(prediction.userId, 'THREE_PREDICTS');
+      }
+    } catch (missionErr) {
+      this.logger.warn(
+        `리텐션 미션 업데이트 실패 (THREE_PREDICTS, predictionId=${predictionId}): ${missionErr instanceof Error ? missionErr.message : String(missionErr)}`,
+        missionErr instanceof Error ? missionErr.stack : undefined,
+      );
+    }
   }
 
   async getUserPredictions(

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { retentionApi, ApiClientError } from "@/lib/api";
 import type { StreakInfoResponse, DailyMissionResponse } from "@/lib/api";
-import { useAuthStore } from "@/stores/authStore";
 
 export interface UseRetentionReturn {
   streak: StreakInfoResponse | null;
@@ -13,10 +12,7 @@ export interface UseRetentionReturn {
   isLoading: boolean;
 }
 
-export function useRetention(): UseRetentionReturn {
-  const user = useAuthStore((s) => s.user);
-  const isGuest = user?.isGuest ?? true;
-
+export function useRetention(isGuest = false): UseRetentionReturn {
   const [streak, setStreak] = useState<StreakInfoResponse | null>(null);
   const [missions, setMissions] = useState<DailyMissionResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);

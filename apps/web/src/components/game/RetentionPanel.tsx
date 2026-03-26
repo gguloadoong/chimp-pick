@@ -1,14 +1,14 @@
 "use client";
 
-import { useRetention } from "@/hooks/useRetention";
-import { useAuthStore } from "@/stores/authStore";
+import type { UseRetentionReturn } from "@/hooks/useRetention";
+import type { DailyMissionResponse } from "@/lib/api";
 
 type MissionType = "FIRST_PREDICT" | "THREE_PREDICTS" | "SHARE";
 
-const MISSION_META: Record<MissionType, { label: string; defaultReward: number }> = {
-  FIRST_PREDICT: { label: "오늘 첫 예측 🎯", defaultReward: 5 },
-  THREE_PREDICTS: { label: "예측 3회 완료 🔥", defaultReward: 10 },
-  SHARE: { label: "결과 공유하기 📤", defaultReward: 15 },
+const MISSION_META: Record<MissionType, { label: string }> = {
+  FIRST_PREDICT: { label: "오늘 첫 예측 🎯" },
+  THREE_PREDICTS: { label: "예측 3회 완료 🔥" },
+  SHARE: { label: "결과 공유하기 📤" },
 };
 
 function SkeletonBar({ className }: { className?: string }) {
@@ -22,10 +22,13 @@ function SkeletonBar({ className }: { className?: string }) {
   );
 }
 
-export default function RetentionPanel() {
-  const user = useAuthStore((s) => s.user);
-  const isGuest = user?.isGuest ?? true;
-  const { streak, missions, isLoading } = useRetention();
+interface RetentionPanelProps {
+  retention: UseRetentionReturn;
+  isGuest: boolean;
+}
+
+export default function RetentionPanel({ retention, isGuest }: RetentionPanelProps) {
+  const { streak, missions, isLoading } = retention;
 
   // 게스트 유저 — 로그인 유도 메시지
   if (isGuest) {
@@ -70,7 +73,7 @@ export default function RetentionPanel() {
 
   const safeStreak = Math.max(0, streak?.currentStreak ?? 0);
   const safeMaxStreak = Math.max(0, streak?.maxStreak ?? 0);
-  const completedCount = missions.filter((m) => m.isCompleted).length;
+  const completedCount = missions.filter((m: DailyMissionResponse) => m.isCompleted).length;
 
   return (
     <div className="bg-[var(--bg-secondary)] border-2 border-[rgba(255,255,255,0.08)] rounded-[var(--radius-md)] p-4 space-y-4">
@@ -106,9 +109,7 @@ export default function RetentionPanel() {
               key={i}
               className={[
                 "flex-1 h-2 rounded-full transition-colors duration-300",
-                active
-                  ? "bg-[var(--brand-primary)]"
-                  : "bg-[var(--bg-tertiary)]",
+                active ? "bg-[var(--brand-primary)]" : "bg-[var(--bg-tertiary)]",
               ].join(" ")}
             />
           );
@@ -130,7 +131,7 @@ export default function RetentionPanel() {
         </div>
 
         <ul className="space-y-2" role="list">
-          {missions.map((mission) => {
+          {missions.map((mission: DailyMissionResponse) => {
             const meta = MISSION_META[mission.type as MissionType];
             return (
               <li

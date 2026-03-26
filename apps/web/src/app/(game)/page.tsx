@@ -215,13 +215,13 @@ export default function GamePage() {
     onError: (msg) => addToast(msg, "❌", "warning"),
   });
 
-  const { checkin, completeMission } = useRetention();
+  const retention = useRetention(user?.isGuest ?? true);
 
   // 페이지 진입 시 자동 체크인 (게스트는 useRetention 내부에서 skip)
   useEffect(() => {
-    void checkin();
-  }, [checkin]);
-
+    void retention.checkin();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     if (!activePrediction || activePrediction.result === "PENDING") return;
     applyPredictionResult(activePrediction.result, activePrediction.reward, activePrediction.betAmount);
@@ -233,9 +233,9 @@ export default function GamePage() {
     if (soundEnabled) playPickSound();
     if (currentRound?.symbol) {
       void submitPrediction(currentRound.symbol, direction, roundDuration, betAmount);
-      void completeMission("FIRST_PREDICT");
+      void retention.completeMission("FIRST_PREDICT");
     }
-  }, [isSubmitting, pickDirection, soundEnabled, currentRound, roundDuration, betAmount, submitPrediction, completeMission]);
+  }, [isSubmitting, pickDirection, soundEnabled, currentRound, roundDuration, betAmount, submitPrediction, retention]);
 
   const handleResultDismiss = useCallback(() => setResolvedResult(null), []);
 
@@ -660,7 +660,7 @@ export default function GamePage() {
         </p>
 
         {/* ── 리텐션 패널: 스트릭 + 미션 ── */}
-        <RetentionPanel />
+        <RetentionPanel retention={retention} isGuest={user?.isGuest ?? true} />
       </div>
 
       {/* ── 하단 고정 A/B 선택 버튼 ── */}

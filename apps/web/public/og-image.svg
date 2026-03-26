@@ -1,0 +1,6 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#1a1a2e"/>
+  <text x="600" y="280" font-family="monospace" font-size="80" fill="#feae34" text-anchor="middle">🦍</text>
+  <text x="600" y="390" font-family="monospace" font-size="48" fill="#ffffff" text-anchor="middle">침팬지픽</text>
+  <text x="600" y="460" font-family="monospace" font-size="28" fill="#63c74d" text-anchor="middle">UP/DOWN 예측 배틀 게임</text>
+</svg>

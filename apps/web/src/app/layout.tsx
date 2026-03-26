@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     siteName: "침팬지픽",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image.svg",
         width: 1200,
         height: 630,
         alt: "침팬지픽 — 예측 배틀 게임",
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "침팬지픽 — 예측 배틀 게임",
     description: "나도 한 번 맞춰볼까?",
-    images: ["/og-image.png"],
+    images: ["/og-image.svg"],
   },
 };
 

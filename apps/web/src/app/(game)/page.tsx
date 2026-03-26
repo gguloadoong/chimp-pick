@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowUp, ArrowDown, Trophy } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -21,6 +22,7 @@ import CrowdGauge from "@/components/game/CrowdGauge";
 import ResultOverlay from "@/components/game/ResultOverlay";
 import ShareCard from "@/components/game/ShareCard";
 import Onboarding from "@/components/game/Onboarding";
+import GuestNudge, { shouldShowGuestNudge } from "@/components/game/GuestNudge";
 import ChimpCharacter from "@/components/character/ChimpCharacter";
 import RetentionPanel from "@/components/game/RetentionPanel";
 
@@ -95,6 +97,7 @@ function CircularTimer({
 }
 
 export default function GamePage() {
+  const router = useRouter();
   const {
     currentRound,
     myPick,
@@ -130,6 +133,7 @@ export default function GamePage() {
   const [shareResult, setShareResult] = useState<RoundResult | null>(null);
   const [currentPriceBData, setCurrentPriceBData] = useState<ReturnType<typeof getPrice> | null>(null);
   const [showExtras, setShowExtras] = useState(false);
+  const [showGuestNudge, setShowGuestNudge] = useState(false);
 
   useRealtimePrices();
 
@@ -225,6 +229,15 @@ export default function GamePage() {
   }, [isSubmitting, pickDirection, soundEnabled, currentRound, roundDuration, betAmount, submitPrediction]);
 
   const handleResultDismiss = useCallback(() => setResolvedResult(null), []);
+
+  // 게스트 넛지: 게스트 유저 + 예측 2회 완료 후 표시
+  const completedPredictions = roundHistory.length;
+  useEffect(() => {
+    if (!user?.isGuest) return;
+    if (completedPredictions < 2) return;
+    if (!shouldShowGuestNudge()) return;
+    setShowGuestNudge(true);
+  }, [user?.isGuest, completedPredictions]);
 
   const canPick = currentRound?.phase === "OPEN" && !myPick;
   const currentPrice = currentRound ? getPrice(currentRound.symbol) : null;
@@ -493,10 +506,21 @@ export default function GamePage() {
           </div>
         ) : (
           <div className="bg-[var(--bg-secondary)] rounded-[var(--radius-lg)] p-8 text-center">
-            <div className="animate-bounce-chimp inline-block mb-3">
+            <div className="animate-bounce-chimp inline-block mb-4">
               <ChimpCharacter mood="idle" size={64} className="mx-auto" />
             </div>
-            <p className="text-[var(--fg-secondary)] font-sans text-sm">라운드 준비 중...</p>
+            <p className="font-heading font-bold text-[var(--fg-primary)] text-lg mb-1">
+              지금은 조용하네요
+            </p>
+            <p className="text-sm text-[var(--fg-secondary)] font-sans mb-6">
+              잠시 후 새 라운드가 시작됩니다
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-[var(--radius-md)] bg-[var(--brand-primary)] text-[var(--brand-on-primary)] font-semibold font-sans text-sm transition-all hover:brightness-105 btn-press"
+            >
+              🔄 새로고침
+            </button>
           </div>
         )}
 
@@ -734,6 +758,16 @@ export default function GamePage() {
 
       {!hasSeenOnboarding && (
         <Onboarding onComplete={markOnboardingSeen} />
+      )}
+
+      {showGuestNudge && (
+        <GuestNudge
+          onSignup={() => {
+            setShowGuestNudge(false);
+            router.push("/login");
+          }}
+          onDismiss={() => setShowGuestNudge(false)}
+        />
       )}
     </>
   );

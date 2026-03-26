@@ -9,5 +9,5 @@ Sentry.init({
   integrations: profilesSampleRate > 0 ? [nodeProfilingIntegration()] : [],
   tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 0.0,
   profilesSampleRate,
-  enabled: process.env.NODE_ENV === 'production',
+  enabled: process.env.NODE_ENV === 'production' && !!process.env.SENTRY_DSN,
 });

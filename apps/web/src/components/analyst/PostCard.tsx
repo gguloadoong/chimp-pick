@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { type AnalystPost } from '@/lib/mock/analyst-posts';
+import { type AnalystPostFromApi } from '@/lib/api/analyst';
 import { CHARACTER_CONFIG, TIMEFRAME_LABEL } from '@/lib/characters';
 
 interface PostCardProps {
-  post: AnalystPost;
+  post: AnalystPostFromApi;
   userReaction?: 'LONG' | 'SHORT' | null;
   onReact: (postId: string, direction: 'LONG' | 'SHORT') => void;
 }

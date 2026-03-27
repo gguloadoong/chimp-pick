@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import PostCard from '@/components/analyst/PostCard';
-import { MOCK_ANALYST_POSTS, type AnalystPost } from '@/lib/mock/analyst-posts';
+import { useAnalystFeed } from '@/hooks/useAnalystFeed';
+import type { AnalystPostFromApi } from '@/lib/api/analyst';
 
 type FilterTab = 'ALL' | 'LONG' | 'SHORT' | 'NEUTRAL';
 
@@ -13,7 +14,7 @@ const FILTER_TABS: { key: FilterTab; label: string; emoji: string }[] = [
   { key: 'NEUTRAL', label: '중립', emoji: '🦧' },
 ];
 
-function filterPosts(posts: AnalystPost[], tab: FilterTab): AnalystPost[] {
+function filterPosts(posts: AnalystPostFromApi[], tab: FilterTab): AnalystPostFromApi[] {
   if (tab === 'ALL') return posts;
   if (tab === 'NEUTRAL') return posts.filter((p) => p.character === 'NEUTRAL' || p.character === 'WAVE');
   return posts.filter((p) => p.character === tab);
@@ -21,24 +22,12 @@ function filterPosts(posts: AnalystPost[], tab: FilterTab): AnalystPost[] {
 
 export default function FeedPage() {
   const [activeTab, setActiveTab] = useState<FilterTab>('ALL');
-  const [userReactions, setUserReactions] = useState<Map<string, 'LONG' | 'SHORT'>>(new Map());
+  const { posts, loading, userReactions, handleReact } = useAnalystFeed();
 
   const filteredPosts = useMemo(
-    () => filterPosts(MOCK_ANALYST_POSTS, activeTab),
-    [activeTab],
+    () => filterPosts(posts, activeTab),
+    [posts, activeTab],
   );
-
-  function handleReact(postId: string, direction: 'LONG' | 'SHORT') {
-    setUserReactions((prev) => {
-      const next = new Map(prev);
-      if (next.get(postId) === direction) {
-        next.delete(postId);
-      } else {
-        next.set(postId, direction);
-      }
-      return next;
-    });
-  }
 
   return (
     <div className="max-w-md mx-auto">
@@ -91,7 +80,12 @@ export default function FeedPage() {
         aria-live="polite"
         className="px-4 py-3 flex flex-col gap-3"
       >
-        {filteredPosts.length === 0 ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3">
+            <span className="text-4xl animate-bounce" role="img" aria-label="로딩 중">🦍</span>
+            <p className="text-sm text-[var(--fg-secondary)]">시황 불러오는 중...</p>
+          </div>
+        ) : filteredPosts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <span className="text-5xl" role="img" aria-label="없음">
               🙈

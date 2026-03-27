@@ -161,7 +161,7 @@ export class AnalystService {
     const fullPrompt = `${prompt}${eventContext}\n\n발언 내용과 근거를 JSON으로 반환하라: { "content": "...", "reasoning": "..." }`;
 
     try {
-      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
       const result = await model.generateContent(fullPrompt);
       const text = result.response.text();
 

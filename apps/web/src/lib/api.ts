@@ -33,7 +33,7 @@ function getToken(): string | null {
   return localStorage.getItem("accessToken");
 }
 
-async function request<T>(
+export async function request<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {

@@ -30,10 +30,20 @@ export interface PredictionResultEvent {
   newBalance: number;
 }
 
+export interface PositionUpdateEvent {
+  postId: string;
+  longCount: number;
+  shortCount: number;
+  longPct: number;
+  shortPct: number;
+  totalVotes: number;
+}
+
 export interface ServerToClientEvents {
   "price:tick": (data: PriceTickEvent) => void;
   "round:update": (data: RoundUpdateEvent) => void;
   "prediction:result": (data: PredictionResultEvent) => void;
+  "position:update": (data: PositionUpdateEvent) => void;
   connect: () => void;
   disconnect: (reason: string) => void;
 }
@@ -53,6 +63,7 @@ interface UseWebSocketOptions {
   onPriceTick?: (data: PriceTickEvent) => void;
   onRoundUpdate?: (data: RoundUpdateEvent) => void;
   onPredictionResult?: (data: PredictionResultEvent) => void;
+  onPositionUpdate?: (data: PositionUpdateEvent) => void;
 }
 
 export function useWebSocket({
@@ -61,6 +72,7 @@ export function useWebSocket({
   onPriceTick,
   onRoundUpdate,
   onPredictionResult,
+  onPositionUpdate,
 }: UseWebSocketOptions = {}) {
   const socketRef = useRef<TypedSocket | null>(null);
 
@@ -118,6 +130,13 @@ export function useWebSocket({
     socket.on("prediction:result", onPredictionResult);
     return () => { socket.off("prediction:result", onPredictionResult); };
   }, [onPredictionResult]);
+
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !onPositionUpdate) return;
+    socket.on("position:update", onPositionUpdate);
+    return () => { socket.off("position:update", onPositionUpdate); };
+  }, [onPositionUpdate]);
 
   return { connect, disconnect, subscribe, unsubscribe };
 }
